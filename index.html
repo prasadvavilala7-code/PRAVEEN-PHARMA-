@@ -1,0 +1,70 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PRAVEEN PHARMA</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial;background:#f3f7fb;color:#183047}
+header{background:#073b66;color:white;text-align:center;padding:25px 12px}
+header h1{margin:0}
+nav{background:#07558c;color:white;text-align:center;padding:13px}
+main{max-width:1000px;margin:auto;padding:20px}
+input{width:100%;padding:13px;border:1px solid #ccc;border-radius:8px;margin:12px 0}
+.products{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:15px}
+.card{background:white;padding:17px;border-radius:12px;box-shadow:0 2px 8px #ddd}
+button{background:#087b57;color:white;border:0;padding:12px 16px;border-radius:7px;margin-top:8px}
+footer{background:#073b66;color:white;text-align:center;padding:22px}
+</style>
+</head>
+<body>
+<header>
+<h1>PRAVEEN PHARMA</h1>
+<p>Wholesale Medicine Supply</p>
+<p>Opposite Union Bank, Sircilla, Telangana</p>
+</header>
+<nav>HOME | MEDICINES | ORDERS | CONTACT</nav>
+<main>
+<h2>Medicine Catalogue</h2>
+<p>Search medicines</p>
+<input id="search" placeholder="Enter medicine name" oninput="showProducts()">
+<div class="products" id="products"></div>
+<h2>My Cart</h2>
+<div id="cart">No items added</div>
+<p><b>Delivery Charges: ₹0 (FREE)</b></p>
+<button onclick="sendOrder()">Order on WhatsApp</button>
+<h2>Contact Us</h2>
+<p>Phone: 9550620353</p>
+<p>Phone: 9398117337</p>
+</main>
+<footer>© PRAVEEN PHARMA</footer>
+<script>
+const medicines=[
+{name:"Paracetamol",pack:"10 Tablets"},
+{name:"Pantoprazole",pack:"10 Tablets"},
+{name:"Vitamin Tablets",pack:"10 Tablets"},
+{name:"Calcium Tablets",pack:"10 Tablets"}
+];
+let cart=[];
+function showProducts(){
+const q=document.getElementById("search").value.toLowerCase();
+const items=medicines.filter(m=>m.name.toLowerCase().includes(q));
+document.getElementById("products").innerHTML=items.map((m,i)=>
+`<div class="card"><h3>${m.name}</h3><p>Pack: ${m.pack}</p><button onclick="addCart('${m.name}')">Add to Cart</button></div>`
+).join("");
+}
+function addCart(name){
+cart.push(name);
+document.getElementById("cart").innerText=cart.join(", ");
+}
+function sendOrder(){
+if(cart.length===0){alert("Please add medicines first");return;}
+const msg="PRAVEEN PHARMA Order:%0A"+cart.join("%0A")+"%0ADelivery: FREE";
+window.open("https://wa.me/919550620353?text="+msg,"_blank");
+}
+showProducts();
+</script>
+</body>
+</html>
