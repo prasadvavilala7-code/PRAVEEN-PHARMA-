@@ -1,1 +1,92 @@
 
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PRAVEEN PHARMA - Admin</title>
+<style>
+body{font-family:Arial;background:#f2f5f9;margin:0;color:#172033}
+header{background:#073b70;color:white;padding:22px;text-align:center}
+main{max-width:900px;margin:20px auto;padding:15px}
+.card{background:white;padding:18px;border-radius:12px;margin-bottom:18px;box-shadow:0 2px 10px #0001}
+input{width:100%;box-sizing:border-box;padding:12px;margin:7px 0;border:1px solid #ccd4df;border-radius:7px}
+button{padding:11px 16px;border:0;border-radius:7px;background:#0877c9;color:white;margin:5px;cursor:pointer}
+.delete{background:#d93636}
+.item{border-bottom:1px solid #ddd;padding:12px 0}
+.small{color:#667085;font-size:13px}
+</style>
+</head>
+<body>
+<header>
+<h1>PRAVEEN PHARMA</h1>
+<p>Admin Panel</p>
+</header>
+<main>
+<div class="card">
+<h2>Add Medicine</h2>
+<input id="name" placeholder="Medicine Name">
+<input id="composition" placeholder="Composition">
+<input id="pack" placeholder="Pack Size">
+<input id="price" type="number" placeholder="Wholesale Price (₹)">
+<input id="stock" type="number" placeholder="Stock Quantity">
+<button onclick="addMedicine()">Add Medicine</button>
+<p class="small">Demo only: prices and stock are stored in this browser.</p>
+</div>
+<div class="card">
+<h2>Medicine Catalogue</h2>
+<div id="list"></div>
+</div>
+</main>
+<script>
+let medicines=JSON.parse(localStorage.getItem("pp_medicines")||"[]");
+function save(){
+ localStorage.setItem("pp_medicines",JSON.stringify(medicines));
+ show();
+}
+function addMedicine(){
+ let name=document.getElementById("name").value.trim();
+ let composition=document.getElementById("composition").value.trim();
+ let pack=document.getElementById("pack").value.trim();
+ let price=document.getElementById("price").value;
+ let stock=document.getElementById("stock").value;
+ if(!name){alert("Enter medicine name");return;}
+ medicines.push({name,composition,pack,price,stock});
+ ["name","composition","pack","price","stock"].forEach(id=>document.getElementById(id).value="");
+ save();
+}
+function removeMedicine(i){
+ if(confirm("Delete this medicine?")){
+ medicines.splice(i,1);save();
+ }
+}
+function editMedicine(i){
+ let m=medicines[i];
+ let name=prompt("Medicine name",m.name);
+ if(name===null)return;
+ let pack=prompt("Pack size",m.pack);
+ if(pack===null)return;
+ let price=prompt("Price",m.price);
+ if(price===null)return;
+ let stock=prompt("Stock quantity",m.stock);
+ if(stock===null)return;
+ medicines[i]={...m,name,pack,price,stock};
+ save();
+}
+function show(){
+ document.getElementById("list").innerHTML=medicines.length?medicines.map((m,i)=>
+ `<div class="item"><b>${escapeText(m.name)}</b><br>
+ ${escapeText(m.composition)}<br>
+ Pack: ${escapeText(m.pack)} | Price: ₹${escapeText(m.price)} | Stock: ${escapeText(m.stock)}
+ <br><button onclick="editMedicine(${i})">Edit</button>
+ <button class="delete" onclick="removeMedicine(${i})">Delete</button></div>`
+ ).join(""):"No medicines added yet.";
+}
+function escapeText(value){
+ return String(value??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+show();
+</script>
+</body>
+</html>
