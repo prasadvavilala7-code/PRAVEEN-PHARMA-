@@ -1,10 +1,11 @@
 
-!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>PRAVEEN PHARMA</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{box-sizing:border-box}
 body{margin:0;font-family:Arial;background:#f3f7fb;color:#183047}
@@ -12,59 +13,205 @@ header{background:#073b66;color:white;text-align:center;padding:25px 12px}
 header h1{margin:0}
 nav{background:#07558c;color:white;text-align:center;padding:13px}
 main{max-width:1000px;margin:auto;padding:20px}
-input{width:100%;padding:13px;border:1px solid #ccc;border-radius:8px;margin:12px 0}
-.products{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:15px}
-.card{background:white;padding:17px;border-radius:12px;box-shadow:0 2px 8px #ddd}
-button{background:#087b57;color:white;border:0;padding:12px 16px;border-radius:7px;margin-top:8px}
+input{width:100%;padding:13px;border:1px solid #ccc;border-radius:8px;margin:8px 0}
+.products{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:15px}
+.card{background:white;padding:17px;border-radius:12px;box-shadow:0 2px 8px #ddd;overflow-wrap:anywhere}
+button{background:#087b57;color:white;border:0;padding:12px 16px;border-radius:7px;margin:5px 3px;cursor:pointer}
+.secondary{background:#07558c}
+.hidden{display:none}
+#status{padding:12px;background:#e8f2fa;border-radius:8px}
 footer{background:#073b66;color:white;text-align:center;padding:22px}
 </style>
 </head>
 <body>
+
 <header>
 <h1>PRAVEEN PHARMA</h1>
 <p>Wholesale Medicine Supply</p>
 <p>Opposite Union Bank, Sircilla, Telangana</p>
 </header>
+
 <nav>HOME | MEDICINES | ORDERS | CONTACT</nav>
+
 <main>
+<section id="loginSection">
+<h2>Admin / Retailer Login</h2>
+<input id="email" type="email" placeholder="Email address">
+<input id="password" type="password" placeholder="Password">
+<button id="loginBtn" onclick="login()">Login</button>
+<p id="loginMessage"></p>
+</section>
+
+<section id="shopSection" class="hidden">
+<p id="welcome"></p>
+<button class="secondary" onclick="logout()">Logout</button>
+
 <h2>Medicine Catalogue</h2>
-<p>Search medicines</p>
-<input id="search" placeholder="Enter medicine name" oninput="showProducts()">
+<input id="search" placeholder="Search medicine name or formula" oninput="showProducts()">
+
+<p id="status">Loading medicines...</p>
 <div class="products" id="products"></div>
+
 <h2>My Cart</h2>
 <div id="cart">No items added</div>
 <p><b>Delivery Charges: ₹0 (FREE)</b></p>
 <button onclick="sendOrder()">Order on WhatsApp</button>
+</section>
+
 <h2>Contact Us</h2>
 <p>Phone: 9550620353</p>
 <p>Phone: 9398117337</p>
 </main>
+
 <footer>© PRAVEEN PHARMA</footer>
+
 <script>
-const medicines=[
-{name:"Paracetamol",pack:"10 Tablets"},
-{name:"Pantoprazole",pack:"10 Tablets"},
-{name:"Vitamin Tablets",pack:"10 Tablets"},
-{name:"Calcium Tablets",pack:"10 Tablets"}
-];
-let cart=[];
+const SUPABASE_URL =
+"https://hdoftqemjttaegkysjyq.supabase.co";
+
+const SUPABASE_KEY =
+"sb_publishable_75Bn2frOUV-LeTqXvgUVtg__jIxuA72";
+
+const db = window.supabase.createClient(
+SUPABASE_URL,
+SUPABASE_KEY
+);
+
+let medicines = [];
+let cart = [];
+
+async function login(){
+ const email=document.getElementById("email").value.trim();
+ const password=document.getElementById("password").value;
+ const msg=document.getElementById("loginMessage");
+
+ if(!email || !password){
+  msg.textContent="Enter email and password.";
+  return;
+ }
+
+ msg.textContent="Checking login...";
+
+ const {data,error}=await db.auth.signInWithPassword({
+  email:email,
+  password:password
+ });
+
+ if(error){
+  msg.textContent="Login failed: "+error.message;
+  return;
+ }
+
+ msg.textContent="Login successful.";
+ await loadShop(data.user);
+}
+
+async function logout(){
+ await db.auth.signOut();
+ cart=[];
+ medicines=[];
+ document.getElementById("shopSection").classList.add("hidden");
+ document.getElementById("loginSection").classList.remove("hidden");
+ document.getElementById("products").innerHTML="";
+ document.getElementById("cart").textContent="No items added";
+ document.getElementById("loginMessage").textContent="";
+}
+
+async function loadShop(user){
+ document.getElementById("loginSection").classList.add("hidden");
+ document.getElementById("shopSection").classList.remove("hidden");
+ document.getElementById("welcome").textContent="Logged in: "+user.email;
+ document.getElementById("status").textContent="Loading medicines...";
+
+ const {data,error}=await db
+  .from("medicines")
+  .select("id,name,composition,pack_size,common_price,category")
+  .eq("is_active",true)
+  .order("name");
+
+ if(error){
+  document.getElementById("status").textContent=
+   "Could not load medicines: "+error.message;
+  return;
+ }
+
+ medicines=data||[];
+ document.getElementById("status").textContent=
+  medicines.length+" medicines loaded.";
+ showProducts();
+}
+
+function safe(value){
+ return String(value??"").replace(/[&<>"']/g,c=>({
+ "&":"&amp;",
+ "<":"&lt;",
+ ">":"&gt;",
+ '"':"&quot;",
+ "'":"&#39;"
+ }[c]));
+}
+
 function showProducts(){
-const q=document.getElementById("search").value.toLowerCase();
-const items=medicines.filter(m=>m.name.toLowerCase().includes(q));
-document.getElementById("products").innerHTML=items.map((m,i)=>
-`<div class="card"><h3>${m.name}</h3><p>Pack: ${m.pack}</p><button onclick="addCart('${m.name}')">Add to Cart</button></div>`
-).join("");
+ const q=document.getElementById("search").value.toLowerCase();
+
+ const items=medicines.filter(m=>
+  (m.name||"").toLowerCase().includes(q) ||
+  (m.composition||"").toLowerCase().includes(q)
+ );
+
+ document.getElementById("products").innerHTML=items.map(m=>`
+ <div class="card">
+ <h3>${safe(m.name)}</h3>
+ <p>${safe(m.composition)}</p>
+ <p>Pack: ${safe(m.pack_size)}</p>
+ <p><b>MRP: ₹${safe(m.common_price)}</b></p>
+ <button data-id="${safe(m.id)}" onclick="addCart(this.dataset.id)">
+ Add to Cart
+ </button>
+ </div>
+ `).join("") || "<p>No medicines found.</p>";
 }
-function addCart(name){
-cart.push(name);
-document.getElementById("cart").innerText=cart.join(", ");
+
+function addCart(id){
+ const medicine=medicines.find(m=>String(m.id)===String(id));
+ if(!medicine)return;
+
+ cart.push(medicine);
+
+ document.getElementById("cart").textContent=
+  cart.map(m=>m.name+" - ₹"+m.common_price).join(" | ");
 }
+
 function sendOrder(){
-if(cart.length===0){alert("Please add medicines first");return;}
-const msg="PRAVEEN PHARMA Order:%0A"+cart.join("%0A")+"%0ADelivery: FREE";
-window.open("https://wa.me/919550620353?text="+msg,"_blank");
+ if(!cart.length){
+  alert("Please add medicines first");
+  return;
+ }
+
+ const lines=cart.map(m=>
+  m.name+" | "+m.pack_size+" | ₹"+m.common_price
+ );
+
+ const msg=
+ "PRAVEEN PHARMA ORDER\n"+
+ lines.join("\n")+
+ "\nDelivery Charges: FREE";
+
+ window.open(
+  "https://wa.me/919550620353?text="+encodeURIComponent(msg),
+  "_blank"
+ );
 }
-showProducts();
+
+async function checkSession(){
+ const {data}=await db.auth.getSession();
+ if(data.session){
+  await loadShop(data.session.user);
+ }
+}
+
+checkSession();
 </script>
 </body>
 </html>
+
