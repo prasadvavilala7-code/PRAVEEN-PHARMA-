@@ -125,7 +125,7 @@ async function loadShop(user){
 
  const {data,error}=await db
   .from("public_medicines")
-  .select("id,name,composition,pack_size,common_price,category")
+  .select("id,name,composition,pack_size,category,image_url")
   .eq("is_active",true)
   .order("name");
 
