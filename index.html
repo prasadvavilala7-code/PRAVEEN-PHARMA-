@@ -164,7 +164,6 @@ function showProducts(){
  <h3>${safe(m.name)}</h3>
  <p>${safe(m.composition)}</p>
  <p>Pack: ${safe(m.pack_size)}</p>
- <p><b>MRP: ₹${safe(m.common_price)}</b></p>
  <button data-id="${safe(m.id)}" onclick="addCart(this.dataset.id)">
  Add to Cart
  </button>
@@ -179,7 +178,7 @@ function addCart(id){
  cart.push(medicine);
 
  document.getElementById("cart").textContent=
-  cart.map(m=>m.name+" - ₹"+m.common_price).join(" | ");
+  cart.map(m=>m.name+" - "+m.pack_size).join(" | ");
 }
 
 function sendOrder(){
@@ -187,6 +186,22 @@ function sendOrder(){
   alert("Please add medicines first");
   return;
  }
+
+ const lines=cart.map(m=>
+  m.name+" | "+m.pack_size
+ );
+
+ const msg=
+ "PRAVEEN PHARMA ORDER\n"+
+ lines.join("\n")+
+ "\nDelivery Charges: FREE";
+
+ window.open(
+  "https://wa.me/919550620353?text="+encodeURIComponent(msg),
+  "_blank"
+ );
+}
+
 
  const lines=cart.map(m=>
   m.name+" | "+m.pack_size+" | ₹"+m.common_price
