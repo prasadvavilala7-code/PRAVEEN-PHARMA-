@@ -124,7 +124,7 @@ async function loadShop(user){
  document.getElementById("status").textContent="Loading medicines...";
 
  const {data,error}=await db
-  ..from("public_medicines")
+  .from("public_medicines")
   .select("id,name,composition,pack_size,common_price,category")
   .eq("is_active",true)
   .order("name");
