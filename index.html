@@ -126,7 +126,10 @@ async function loadShop(user){
  const {data,error}=await db
   .from("public_medicines")
   .select("id,name,composition,pack_size,category,image_url")
-  .eq("is_active",true)
+  const {data,error}=await db
+  .from("public_medicines")
+  .select("id,name,composition,pack_size,category,image_url")
+  .order("name");
   .order("name");
 
  if(error){
