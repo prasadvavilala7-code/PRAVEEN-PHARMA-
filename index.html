@@ -92,7 +92,7 @@ async function loadShop(user){
 }
 async function loadMedicines(){
  el("status").textContent="Loading medicines...";
- const {data,error}=await db.from("medicines").select("id,name,composition,pack_size,category,image_url,common_price,gst_rate").eq("is_active",true).order("name");
+ const {data,error}=await db.from("public_medicines").select("id,name,composition,pack_size,category,image_url,common_price,gst_rate").order("name");
  if(error){el("status").textContent="Could not load medicines: "+error.message;return;}
  medicines=data||[];el("status").textContent=medicines.length+" medicines loaded.";showProducts();
 }
