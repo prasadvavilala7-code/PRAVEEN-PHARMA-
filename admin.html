@@ -1,92 +1,61 @@
-
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PRAVEEN PHARMA - Admin</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PRAVEEN PHARMA | Admin</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-body{font-family:Arial;background:#f2f5f9;margin:0;color:#172033}
-header{background:#073b70;color:white;padding:22px;text-align:center}
-main{max-width:900px;margin:20px auto;padding:15px}
-.card{background:white;padding:18px;border-radius:12px;margin-bottom:18px;box-shadow:0 2px 10px #0001}
-input{width:100%;box-sizing:border-box;padding:12px;margin:7px 0;border:1px solid #ccd4df;border-radius:7px}
-button{padding:11px 16px;border:0;border-radius:7px;background:#0877c9;color:white;margin:5px;cursor:pointer}
-.delete{background:#d93636}
-.item{border-bottom:1px solid #ddd;padding:12px 0}
-.small{color:#667085;font-size:13px}
+*{box-sizing:border-box}body{margin:0;background:#edf4f8;color:#183047;font-family:Arial,sans-serif}header{background:linear-gradient(120deg,#062b49,#07558c,#078b91);color:white;text-align:center;padding:24px 12px}main{max-width:1000px;margin:auto;padding:16px}.panel{background:white;border:1px solid #d7e6ef;border-radius:15px;padding:18px;margin:16px 0;box-shadow:0 6px 20px #16415f12}input{width:100%;padding:12px;border:1px solid #cbdce8;border-radius:8px;margin:6px 0;font:inherit}button{border:0;border-radius:8px;padding:11px 15px;margin:5px 3px;background:#087b67;color:#fff;font:inherit;cursor:pointer}.secondary{background:#07558c}.danger{background:#b42318}.muted{color:#667085;font-size:14px}.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.medicine{display:grid;grid-template-columns:100px 1fr;gap:14px;border-top:1px solid #e5edf2;padding:14px 0}.medicine img{width:100px;height:100px;object-fit:contain;background:#f2f7fa;border-radius:10px}.medicine small{color:#667085}@media(max-width:560px){.row{grid-template-columns:1fr}.medicine{grid-template-columns:78px 1fr}.medicine img{width:78px;height:78px}}
 </style>
 </head>
 <body>
-<header>
-<h1>PRAVEEN PHARMA</h1>
-<p>Admin Panel</p>
-</header>
+<header><h1>PRAVEEN PHARMA</h1><p>Admin Dashboard · Medicine Catalogue</p></header>
 <main>
-<div class="card">
-<h2>Add Medicine</h2>
-<input id="name" placeholder="Medicine Name">
-<input id="composition" placeholder="Composition">
-<input id="pack" placeholder="Pack Size">
-<input id="price" type="number" placeholder="Wholesale Price (₹)">
-<input id="stock" type="number" placeholder="Stock Quantity">
-<button onclick="addMedicine()">Add Medicine</button>
-<p class="small">Demo only: prices and stock are stored in this browser.</p>
-</div>
-<div class="card">
-<h2>Medicine Catalogue</h2>
-<div id="list"></div>
-</div>
+<section class="panel" id="loginPanel">
+<h2>Admin access</h2><p id="loginStatus" class="muted">Checking your signed-in account…</p>
+<p>First sign in using the admin account on the main website, then open this page.</p>
+</section>
+<section class="panel" id="editor" hidden>
+<h2 id="formTitle">Add New Medicine</h2>
+<input id="medicineId" type="hidden">
+<input id="name" placeholder="Medicine name *">
+<input id="composition" placeholder="Composition / information">
+<div class="row"><input id="pack" placeholder="Pack size"><input id="category" placeholder="Category"></div>
+<div class="row"><input id="price" type="number" min="0" step="0.01" placeholder="Common price (₹)"><input id="gst" type="number" min="0" step="0.01" placeholder="GST rate (%)"></div>
+<h3>Medicine photo</h3>
+<p class="muted">Search the medicine photo online, download the correct product image to your phone, then upload it here. Uploaded photos are saved online and visible to all visitors/approved retailers.</p>
+<button type="button" class="secondary" id="searchPhoto">Search medicine photos</button>
+<input id="photoFile" type="file" accept="image/*">
+<div id="photoPreview" class="muted">No new photo selected.</div>
+<button type="button" id="saveMedicine">Save Medicine</button>
+<button type="button" class="secondary" id="clearForm">Clear</button>
+<p id="saveStatus" class="muted" role="status"></p>
+</section>
+<section class="panel" id="catalogue" hidden>
+<h2>Existing medicines</h2><input id="filter" placeholder="Search catalogue">
+<div id="medicineList">Loading…</div>
+</section>
 </main>
 <script>
-let medicines=JSON.parse(localStorage.getItem("pp_medicines")||"[]");
-function save(){
- localStorage.setItem("pp_medicines",JSON.stringify(medicines));
- show();
-}
-function addMedicine(){
- let name=document.getElementById("name").value.trim();
- let composition=document.getElementById("composition").value.trim();
- let pack=document.getElementById("pack").value.trim();
- let price=document.getElementById("price").value;
- let stock=document.getElementById("stock").value;
- if(!name){alert("Enter medicine name");return;}
- medicines.push({name,composition,pack,price,stock});
- ["name","composition","pack","price","stock"].forEach(id=>document.getElementById(id).value="");
- save();
-}
-function removeMedicine(i){
- if(confirm("Delete this medicine?")){
- medicines.splice(i,1);save();
- }
-}
-function editMedicine(i){
- let m=medicines[i];
- let name=prompt("Medicine name",m.name);
- if(name===null)return;
- let pack=prompt("Pack size",m.pack);
- if(pack===null)return;
- let price=prompt("Price",m.price);
- if(price===null)return;
- let stock=prompt("Stock quantity",m.stock);
- if(stock===null)return;
- medicines[i]={...m,name,pack,price,stock};
- save();
-}
-function show(){
- document.getElementById("list").innerHTML=medicines.length?medicines.map((m,i)=>
- `<div class="item"><b>${escapeText(m.name)}</b><br>
- ${escapeText(m.composition)}<br>
- Pack: ${escapeText(m.pack)} | Price: ₹${escapeText(m.price)} | Stock: ${escapeText(m.stock)}
- <br><button onclick="editMedicine(${i})">Edit</button>
- <button class="delete" onclick="removeMedicine(${i})">Delete</button></div>`
- ).join(""):"No medicines added yet.";
-}
-function escapeText(value){
- return String(value??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-}
-show();of
+const SUPABASE_URL="https://hdoftqemjttaegkysjyq.supabase.co";
+const SUPABASE_KEY="sb_publishable_75Bn2frOUV-LeTqXvgUVtg__jIxuA72";
+const ADMIN_ID="9be3d5ee-e09a-4738-9b27-f2fae15e93c7";
+const BUCKET="medicine-images";
+const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+const $=id=>document.getElementById(id);
+let currentUser=null,allMedicines=[],selectedFile=null;
+const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+function clearForm(){["medicineId","name","composition","pack","category","price","gst"].forEach(id=>$(id).value="");$("photoFile").value="";$("photoPreview").textContent="No new photo selected.";selectedFile=null;$("formTitle").textContent="Add New Medicine";$("saveStatus").textContent="";}
+function editMedicine(id){const m=allMedicines.find(x=>x.id===id);if(!m)return;$("medicineId").value=m.id;$("name").value=m.name||"";$("composition").value=m.composition||"";$("pack").value=m.pack_size||"";$("category").value=m.category||"";$("price").value=m.common_price??"";$("gst").value=m.gst_rate??0;$("formTitle").textContent="Edit Medicine";$("photoPreview").textContent=m.image_url?"Current photo is saved. Choose a new file to replace it.":"No photo saved yet.";selectedFile=null;$("photoFile").value="";window.scrollTo({top:0,behavior:"smooth"});}
+function renderList(){const q=$("filter").value.trim().toLowerCase();const list=allMedicines.filter(m=>(m.name||"").toLowerCase().includes(q)||(m.composition||"").toLowerCase().includes(q));$("medicineList").innerHTML=list.map(m=>'<div class="medicine">'+(m.image_url?'<img src="'+esc(m.image_url)+'" alt="'+esc(m.name)+'">':'<div class="muted">No photo</div>')+'<div><b>'+esc(m.name)+'</b><br><small>'+esc(m.composition)+' · '+esc(m.pack_size)+'</small><br><small>Price: ₹'+esc(m.common_price)+' · GST: '+esc(m.gst_rate)+'%</small><br><button type="button" data-edit="'+esc(m.id)+'">Edit / Change photo</button></div></div>').join("")||"No medicines found.";$("medicineList").querySelectorAll("[data-edit]").forEach(b=>b.addEventListener("click",()=>editMedicine(b.dataset.edit)));}
+async function loadMedicines(){const {data,error}=await db.from("medicines").select("id,name,composition,pack_size,category,image_url,common_price,gst_rate,is_active").order("name");if(error){$("saveStatus").textContent="Catalogue error: "+error.message;return;}allMedicines=data||[];renderList();}
+async function uploadPhoto(file,medicineId){const ext=(file.name.split(".").pop()||"jpg").toLowerCase().replace(/[^a-z0-9]/g,"")||"jpg";const path=medicineId+"/"+Date.now()+"."+ext;const {error}=await db.storage.from(BUCKET).upload(path,file,{upsert:false,contentType:file.type||"image/jpeg"});if(error)throw error;const {data}=db.storage.from(BUCKET).getPublicUrl(path);return data.publicUrl;}
+async function saveMedicine(){const name=$("name").value.trim();if(!name){$("saveStatus").textContent="Medicine name is required.";return;}const id=$("medicineId").value;const payload={name,composition:$("composition").value.trim(),pack_size:$("pack").value.trim(),category:$("category").value.trim(),common_price:Number($("price").value||0),gst_rate:Number($("gst").value||0),is_active:true};$("saveMedicine").disabled=true;$("saveStatus").textContent="Saving…";try{if(selectedFile){const photoId=id||crypto.randomUUID();payload.image_url=await uploadPhoto(selectedFile,photoId);}let result;if(id)result=await db.from("medicines").update(payload).eq("id",id);else result=await db.from("medicines").insert(payload);if(result.error)throw result.error;$("saveStatus").textContent="Medicine saved. Photo is publicly available to website visitors.";clearForm();await loadMedicines();}catch(e){$("saveStatus").textContent="Save failed: "+(e.message||String(e))+". Check Storage bucket and policies."; }finally{$("saveMedicine").disabled=false;}}
+async function init(){const {data,error}=await db.auth.getSession();if(error){$("loginStatus").textContent=error.message;return;}currentUser=data.session?.user||null;if(!currentUser){$("loginStatus").textContent="Not signed in. Please log in on the main website first.";return;}if(currentUser.id!==ADMIN_ID){$("loginStatus").textContent="Access denied: this account is not the configured admin.";return;}$("loginStatus").textContent="Admin authenticated."; $("editor").hidden=false;$("catalogue").hidden=false;await loadMedicines();}
+$("searchPhoto").addEventListener("click",()=>{const q=$("name").value.trim();if(!q){$("saveStatus").textContent="Enter medicine name first.";return;}window.open("https://www.google.com/search?tbm=isch&q="+encodeURIComponent(q+" medicine box strip packaging"),"_blank","noopener");});
+$("photoFile").addEventListener("change",e=>{selectedFile=e.target.files?.[0]||null;if(!selectedFile){$("photoPreview").textContent="No new photo selected.";return;}if(!selectedFile.type.startsWith("image/")){selectedFile=null;$("photoPreview").textContent="Please choose an image file.";return;}if(selectedFile.size>5*1024*1024){selectedFile=null;e.target.value="";$("photoPreview").textContent="Image must be 5 MB or smaller.";return;}$("photoPreview").textContent="Selected: "+selectedFile.name;});
+$("saveMedicine").addEventListener("click",saveMedicine);$("clearForm").addEventListener("click",clearForm);$("filter").addEventListener("input",renderList);init();
 </script>
 </body>
 </html>
