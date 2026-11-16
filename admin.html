@@ -64,6 +64,19 @@ a{color:#237344}
 <section class="panel" id="retailerRequests" hidden><h2>New Retailer Requests</h2><div id="pendingRetailers">Loading…</div></section>
 <section class="panel" id="approvedRetailers" hidden><h2>Approved Retailers</h2><div id="approvedList">Loading…</div></section>
 <section class="panel" id="ordersPanel" hidden><h2>Retailer Orders</h2><div id="ordersList">Loading…</div></section>
+<section class="panel" id="masterSettings" hidden>
+<h2>Master Website Settings</h2><p class="muted">Changes here update the public information website. Requires the master-control SQL migration to be run once in Supabase.</p>
+<div class="row"><input id="siteName" placeholder="Business name"><input id="siteTagline" placeholder="Tagline"></div>
+<input id="siteAddress" placeholder="Business address">
+<div class="row"><input id="sitePhone1" placeholder="Primary phone"><input id="sitePhone2" placeholder="Secondary phone"></div>
+<textarea id="siteAbout" rows="3" placeholder="About the business"></textarea>
+<textarea id="siteAnnouncement" rows="2" placeholder="Public announcement (leave blank to hide)"></textarea>
+<button id="saveSettings">Save & Publish Website Info</button><button class="secondary" id="reloadSettings">Reload</button>
+<p id="settingsStatus" class="muted" role="status"></p>
+<h3>Previous settings / Rollback</h3><div id="settingsHistory">Loading…</div>
+</section>
+<section class="panel" id="reportsPanel" hidden><h2>Business Reports</h2><div id="reportSummary">Loading reports…</div><button class="secondary" id="refreshReports">Refresh Reports</button></section>
+<section class="panel" id="backupPanel" hidden><h2>Data Export & Health Check</h2><p class="muted">Export is a browser download of records accessible to this admin account. It is not a full database backup.</p><button id="exportBackup">Export available data (JSON)</button><button class="secondary" id="runHealth">Run connection checks</button><p id="healthStatus" class="muted" role="status"></p></section>
 <section class="panel" id="loginPanel">
 <h2>Admin access</h2><p id="loginStatus" class="muted">Checking your signed-in account…</p>
 <p>First sign in using the admin account on the main website, then open this page.</p>
@@ -128,8 +141,68 @@ async function loadOrders(){
  document.querySelectorAll("[data-order-status]").forEach(sel=>sel.onchange=()=>updateOrderStatus(sel.dataset.orderStatus,sel.value));
 }
 async function updateOrderStatus(id,status){const {error}=await db.from("orders").update({order_status:status}).eq("id",id);if(error){alert("Status update failed: "+error.message);await loadOrders();}}
-async function init(){const {data,error}=await db.auth.getSession();if(error){$("loginStatus").textContent=error.message;return;}currentUser=data.session?.user||null;if(!currentUser){$("loginStatus").textContent="Not signed in. Please log in on the main website first.";return;}if(currentUser.id!==ADMIN_ID){$("loginStatus").textContent="Access denied: this account is not the configured admin.";return;}$("loginStatus").textContent="Admin authenticated."; $("editor").hidden=false;$("catalogue").hidden=false;$("retailerRequests").hidden=false;$("approvedRetailers").hidden=false;$("ordersPanel").hidden=false;await loadMedicines();await loadRetailers();await loadOrders();}
-$("searchPhoto").addEventListener("click",()=>{const q=$("name").value.trim();if(!q){$("saveStatus").textContent="Enter medicine name first.";return;}window.open("https://www.google.com/search?tbm=isch&q="+encodeURIComponent(q+" medicine box strip packaging"),"_blank","noopener");});
+async function init(){const {data,error}=await db.auth.getSession();if(error){$("loginStatus").textContent=error.message;return;}currentUser=data.session?.user||null;if(!currentUser){$("loginStatus").textContent="Not signed in. Please log in on the main website first.";return;}if(currentUser.id!==ADMIN_ID){$("loginStatus").textContent="Access denied: this account is not the configured admin.";return;}$("loginStatus").textContent="Admin authenticated."; $("editor").hidden=false;$("catalogue").hidden=false;$("retailerRequests").hidden=false;$("approvedRetailers").hidden=false;$("ordersPanel").hidden=false;$("masterSettings").hidden=false;$("reportsPanel").hidden=false;$("backupPanel").hidden=false;await loadMedicines();await loadRetailers();await loadOrders();await loadSettings();await loadReports();}
+
+async function loadSettings(){
+ const status=$("settingsStatus");status.textContent="Loading settings…";
+ const {data,error}=await db.from("site_settings").select("*").eq("id",1).maybeSingle();
+ if(error){status.textContent="Settings table not ready. Run supabase/master-control-system.sql in Supabase SQL Editor. Details: "+error.message;return;}
+ if(!data){status.textContent="No settings row found. Run the master-control SQL migration.";return;}
+ $("siteName").value=data.business_name||"";$("siteTagline").value=data.tagline||"";$("siteAddress").value=data.address||"";$("sitePhone1").value=data.phone_primary||"";$("sitePhone2").value=data.phone_secondary||"";$("siteAbout").value=data.about_text||"";$("siteAnnouncement").value=data.announcement||"";status.textContent="Settings loaded. Last updated: "+(data.updated_at||"—");
+ await loadSettingsHistory();
+}
+async function loadSettingsHistory(){
+ const {data,error}=await db.from("site_settings_history").select("id,snapshot,changed_at").order("changed_at",{ascending:false}).limit(10);
+ if(error){$("settingsHistory").textContent="History not available: "+error.message;return;}
+ $("settingsHistory").innerHTML=(data||[]).map(x=>'<div class="medicine"><div><b>Revision #'+esc(x.id)+'</b><br><small>'+esc(new Date(x.changed_at).toLocaleString())+'</small></div><div><button class="secondary" data-rollback="'+esc(x.id)+'">Restore this version</button></div></div>').join("")||"No previous revisions yet.";
+ document.querySelectorAll("[data-rollback]").forEach(b=>b.onclick=()=>rollbackSettings(b.dataset.rollback));
+}
+async function saveSettings(){
+ const payload={business_name:$("siteName").value.trim(),tagline:$("siteTagline").value.trim(),address:$("siteAddress").value.trim(),phone_primary:$("sitePhone1").value.trim(),phone_secondary:$("sitePhone2").value.trim(),about_text:$("siteAbout").value.trim(),announcement:$("siteAnnouncement").value.trim(),updated_at:new Date().toISOString(),updated_by:currentUser.id};
+ if(!payload.business_name||!payload.address){$("settingsStatus").textContent="Business name and address are required.";return;}
+ $("saveSettings").disabled=true;$("settingsStatus").textContent="Saving…";
+ const old=await db.from("site_settings").select("*").eq("id",1).maybeSingle();
+ if(old.error||!old.data){$("settingsStatus").textContent="Cannot read current settings. Run the SQL migration first. "+(old.error?.message||"");$("saveSettings").disabled=false;return;}
+ const hist=await db.from("site_settings_history").insert({snapshot:old.data,changed_by:currentUser.id});
+ if(hist.error){$("settingsStatus").textContent="Could not create rollback snapshot; nothing changed. "+hist.error.message;$("saveSettings").disabled=false;return;}
+ const upd=await db.from("site_settings").update(payload).eq("id",1);
+ $("saveSettings").disabled=false;
+ if(upd.error){$("settingsStatus").textContent="Save failed: "+upd.error.message;return;}
+ $("settingsStatus").textContent="Saved to Supabase. Public website reads these settings when opened/refreshed.";await loadSettings();
+}
+async function rollbackSettings(id){
+ if(!confirm("Restore this saved settings version? Current settings will first be saved to history."))return;
+ const {data:rev,error}=await db.from("site_settings_history").select("snapshot").eq("id",id).single();
+ if(error||!rev?.snapshot){$("settingsStatus").textContent="Could not read revision: "+(error?.message||"Missing snapshot");return;}
+ const cur=await db.from("site_settings").select("*").eq("id",1).single();
+ if(cur.error){$("settingsStatus").textContent=cur.error.message;return;}
+ const h=await db.from("site_settings_history").insert({snapshot:cur.data,changed_by:currentUser.id});
+ if(h.error){$("settingsStatus").textContent="Rollback stopped: could not preserve current version. "+h.error.message;return;}
+ const s=rev.snapshot;const {error:up}=await db.from("site_settings").update({business_name:s.business_name,tagline:s.tagline,address:s.address,phone_primary:s.phone_primary,phone_secondary:s.phone_secondary,about_text:s.about_text,announcement:s.announcement,updated_at:new Date().toISOString(),updated_by:currentUser.id}).eq("id",1);
+ $("settingsStatus").textContent=up?"Restore failed: "+up.message:"Previous settings restored.";await loadSettings();
+}
+async function loadReports(){
+ const [orders,retailers,meds]=await Promise.all([db.from("orders").select("grand_total,order_status,created_at"),db.from("retailer_profiles").select("user_id,approval_status"),db.from("medicines").select("id,is_active")]);
+ const errors=[orders.error,retailers.error,meds.error].filter(Boolean);
+ if(errors.length){$("reportSummary").textContent="Report query issue: "+errors.map(e=>e.message).join(" | ");return;}
+ const os=orders.data||[],rs=retailers.data||[],ms=meds.data||[];
+ const total=os.reduce((n,o)=>n+Number(o.grand_total||0),0),today=new Date().toDateString(),todayOrders=os.filter(o=>new Date(o.created_at).toDateString()===today);
+ $("reportSummary").innerHTML='<div class="row"><div><b>Orders</b><p>'+os.length+'</p></div><div><b>Order value (all time)</b><p>₹'+total.toFixed(2)+'</p></div><div><b>Today orders</b><p>'+todayOrders.length+'</p></div><div><b>Retailers</b><p>'+rs.length+' total · '+rs.filter(r=>r.approval_status==="approved").length+' approved</p></div><div><b>Medicines</b><p>'+ms.length+' total · '+ms.filter(m=>m.is_active!==false).length+' active</p></div></div>';
+}
+async function exportBackup(){
+ $("healthStatus").textContent="Preparing export…";
+ const tables=["site_settings","site_settings_history","medicines","retailer_profiles","retailer_prices","orders","order_items"],out={exported_at:new Date().toISOString(),note:"Admin-accessible browser export; not a full Supabase backup.",tables:{}};
+ for(const t of tables){const {data,error}=await db.from(t).select("*");if(error){out.tables[t]={error:error.message};}else out.tables[t]=data||[];}
+ const blob=new Blob([JSON.stringify(out,null,2)],{type:"application/json"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="praveen-pharma-admin-export-"+new Date().toISOString().slice(0,10)+".json";a.click();URL.revokeObjectURL(url);
+ $("healthStatus").textContent="Export download prepared. Check the tables section for any permission errors in the JSON.";
+}
+async function runHealth(){
+ $("healthStatus").textContent="Checking Supabase tables…";
+ const tables=["site_settings","medicines","retailer_profiles","retailer_prices","orders","order_items"],results=[];
+ for(const t of tables){const {error}=await db.from(t).select("*",{head:true,count:"exact"}).limit(1);results.push(t+": "+(error?"ERROR — "+error.message:"OK"));}
+ $("healthStatus").textContent=results.join(" · ");
+}
+\n$("saveSettings").addEventListener("click",saveSettings);$("reloadSettings").addEventListener("click",loadSettings);$("refreshReports").addEventListener("click",loadReports);$("exportBackup").addEventListener("click",exportBackup);$("runHealth").addEventListener("click",runHealth);\n$("searchPhoto").addEventListener("click",()=>{const q=$("name").value.trim();if(!q){$("saveStatus").textContent="Enter medicine name first.";return;}window.open("https://www.google.com/search?tbm=isch&q="+encodeURIComponent(q+" medicine box strip packaging"),"_blank","noopener");});
 $("photoFile").addEventListener("change",e=>{selectedFile=e.target.files?.[0]||null;if(!selectedFile){$("photoPreview").textContent="No new photo selected.";return;}if(!selectedFile.type.startsWith("image/")){selectedFile=null;$("photoPreview").textContent="Please choose an image file.";return;}if(selectedFile.size>5*1024*1024){selectedFile=null;e.target.value="";$("photoPreview").textContent="Image must be 5 MB or smaller.";return;}$("photoPreview").textContent="Selected: "+selectedFile.name;});
 $("saveMedicine").addEventListener("click",saveMedicine);$("clearForm").addEventListener("click",clearForm);$("filter").addEventListener("input",renderList);init();
 </script>
