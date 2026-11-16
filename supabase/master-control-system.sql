@@ -18,12 +18,16 @@ create table if not exists public.site_settings_history (
 );
 alter table public.site_settings enable row level security;
 alter table public.site_settings_history enable row level security;
+drop policy if exists "Public can read site settings" on public.site_settings;
 create policy "Public can read site settings" on public.site_settings for select using (true);
+drop policy if exists "Admin can manage site settings" on public.site_settings;
 create policy "Admin can manage site settings" on public.site_settings for all to authenticated
 using (auth.uid() = '9be3d5ee-e09a-4738-9b27-f2fae15e93c7'::uuid)
 with check (auth.uid() = '9be3d5ee-e09a-4738-9b27-f2fae15e93c7'::uuid);
+drop policy if exists "Admin can read settings history" on public.site_settings_history;
 create policy "Admin can read settings history" on public.site_settings_history for select to authenticated
 using (auth.uid() = '9be3d5ee-e09a-4738-9b27-f2fae15e93c7'::uuid);
+drop policy if exists "Admin can add settings history" on public.site_settings_history;
 create policy "Admin can add settings history" on public.site_settings_history for insert to authenticated
 with check (auth.uid() = '9be3d5ee-e09a-4738-9b27-f2fae15e93c7'::uuid);
 insert into public.site_settings (id) values (1) on conflict (id) do nothing;
