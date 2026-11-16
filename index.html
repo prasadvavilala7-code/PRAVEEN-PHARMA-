@@ -140,12 +140,13 @@ function showProducts(){
   const showPrices=!!currentUser&&(currentUser.id===ADMIN_ID||canOrder);
   const price=priceFor(m);
   const photo=String(m.image_url||"").trim();
-  const safePhoto=/^https?:\\/\\//i.test(photo)?safe(photo):"";
-  const photoHtml=safePhoto?'<a class="medicine-photo-link" href="'+safePhoto+'" target="_blank" rel="noopener" aria-label="Open '+safe(m.name)+' photo"><img class="medicine-photo" src="'+safePhoto+'" alt="'+safe(m.name)+' medicine photo" loading="lazy" onerror="this.parentElement.outerHTML=\\'<div class="photo-missing">Medicine photo unavailable</div>\\'"></a>':'<div class="photo-missing">Medicine photo not added yet</div>';
+  const safePhoto=(photo.startsWith("https://")||photo.startsWith("http://"))?safe(photo):"";
+  const photoHtml=safePhoto?'<a class="medicine-photo-link" href="'+safePhoto+'" target="_blank" rel="noopener" aria-label="Open '+safe(m.name)+' photo"><img class="medicine-photo" src="'+safePhoto+'" alt="'+safe(m.name)+' medicine photo" loading="lazy"></a>':'<div class="photo-missing">Medicine photo not added yet</div>';
   const priceHtml=showPrices?'<p><b>'+money(price)+'</b></p>':'';
   const cartButton=canOrder?'<button type="button" data-id="'+safe(m.id)+'">Add to Cart</button>':'';
   return '<div class="card">'+photoHtml+'<h3>'+safe(m.name)+'</h3><p>'+safe(m.composition)+'</p><p>Pack: '+safe(m.pack_size)+'</p>'+priceHtml+cartButton+'</div>';
  }).join("")||"<p>No medicines found.</p>";
+ el("products").querySelectorAll(".medicine-photo").forEach(img=>img.addEventListener("error",()=>{const box=document.createElement("div");box.className="photo-missing";box.textContent="Medicine photo unavailable";img.parentElement.replaceWith(box);},{once:true}));
  el("products").querySelectorAll("button[data-id]").forEach(b=>b.addEventListener("click",()=>addCart(b.dataset.id)));
 }
 function addCart(id){
