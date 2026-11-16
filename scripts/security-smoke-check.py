@@ -11,7 +11,7 @@ def require(condition, message):
         raise SystemExit("SECURITY CHECK FAILED: " + message)
     print("PASS: " + message)
 
-ids = re.findall(r'ADMIN_ID\\s*=\\s*["\\']([^"\\']+)', admin + "\\n" + retailer)
+ids = re.findall(r'ADMIN_ID\s*=\s*["\']([^"\']+)', admin + "\n" + retailer)
 require(len(ids) == 2 and len(set(ids)) == 1, "Admin UUID is consistent in Admin and Retailer Portal")
 require(ids[0] in master_sql and ids[0] in storage_sql, "Admin UUID matches settings/audit and storage SQL policies")
 require("sb_publishable_" in admin and "sb_publishable_" in retailer and "sb_publishable_" in public,
