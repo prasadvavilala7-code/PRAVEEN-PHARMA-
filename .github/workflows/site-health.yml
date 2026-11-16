@@ -1,0 +1,31 @@
+name: PRAVEEN PHARMA website health checks
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "30 3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check-sites:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check public website
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --location --max-time 30 "https://prasadvavilala7-code.github.io/PRAVEEN-PHARMA-/" -o /tmp/main.html
+          grep -qi "PRAVEEN" /tmp/main.html
+      - name: Check admin panel
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --location --max-time 30 "https://prasadvavilala7-code.github.io/PRAVEEN-PHARMA-/admin.html" -o /tmp/admin.html
+          grep -qi "PRAVEEN" /tmp/admin.html
+      - name: Check retailer portal
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --location --max-time 30 "https://prasadvavilala7-code.github.io/PRAVEEN-PHARMA-/retailer.html" -o /tmp/retailer.html
+          grep -qi "PRAVEEN" /tmp/retailer.html
