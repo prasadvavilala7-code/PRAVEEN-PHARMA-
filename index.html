@@ -30,6 +30,15 @@ button:hover{filter:brightness(1.06)}
 footer{background:linear-gradient(120deg,#062b49,#07558c);margin-top:24px}
 @media(max-width:520px){main{padding:12px 10px}.panel{padding:15px;margin:13px 0}header{padding:26px 12px}}
 
+
+/* Medicine photo gallery cards */
+.products{grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:18px}
+.medicine-photo-link{display:flex;align-items:center;justify-content:center;width:100%;height:190px;background:linear-gradient(145deg,#f1f7fb,#e4eef5);border-radius:12px;overflow:hidden;margin-bottom:13px;border:1px solid #e0eaf0}
+.medicine-photo{width:100%;height:100%;object-fit:contain;padding:10px;transition:transform .2s ease}
+.medicine-photo-link:hover .medicine-photo{transform:scale(1.06)}
+.photo-missing{height:190px;border-radius:12px;background:linear-gradient(145deg,#f1f7fb,#e4eef5);display:flex;align-items:center;justify-content:center;text-align:center;color:#668095;font-size:14px;margin-bottom:13px}
+.card h3{color:#07558c}
+
 </style>
 </head>
 <body>
@@ -125,7 +134,10 @@ function showProducts(){
  const items=medicines.filter(m=>(m.name||"").toLowerCase().includes(q)||(m.composition||"").toLowerCase().includes(q));
  el("products").innerHTML=items.map(m=>{
   const price=priceFor(m);
-  return '<div class="card"><h3>'+safe(m.name)+'</h3><p>'+safe(m.composition)+'</p><p>Pack: '+safe(m.pack_size)+'</p><p><b>'+money(price)+'</b></p><button type="button" data-id="'+safe(m.id)+'">Add to Cart</button></div>';
+  const photo=String(m.image_url||"").trim();
+  const safePhoto=/^https?:\\/\\//i.test(photo)?safe(photo):"";
+  const photoHtml=safePhoto?'<a class="medicine-photo-link" href="'+safePhoto+'" target="_blank" rel="noopener" aria-label="Open '+safe(m.name)+' photo"><img class="medicine-photo" src="'+safePhoto+'" alt="'+safe(m.name)+' medicine photo" loading="lazy" onerror="this.parentElement.outerHTML=\\'<div class="photo-missing">Medicine photo unavailable</div>\\'"></a>':'<div class="photo-missing">Medicine photo not added yet</div>';
+  return '<div class="card">'+photoHtml+'<h3>'+safe(m.name)+'</h3><p>'+safe(m.composition)+'</p><p>Pack: '+safe(m.pack_size)+'</p><p><b>'+money(price)+'</b></p><button type="button" data-id="'+safe(m.id)+'">Add to Cart</button></div>';
  }).join("")||"<p>No medicines found.</p>";
  el("products").querySelectorAll("button[data-id]").forEach(b=>b.addEventListener("click",()=>addCart(b.dataset.id)));
 }
