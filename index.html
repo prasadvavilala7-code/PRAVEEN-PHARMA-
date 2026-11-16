@@ -53,19 +53,20 @@ footer{background:linear-gradient(120deg,#062b49,#07558c);margin-top:24px}
 <button id="loginBtn" type="button">Login</button>
 <p id="loginMessage" role="status">Sign in with your registered retailer account.</p>
 </section>
+<section id="catalogueSection" class="panel">
+<h2>Medicine Catalogue</h2>
+<p class="muted">Browse medicine photos and information. Prices and ordering are available only to approved retailers.</p>
+<input id="search" placeholder="Search medicine name or formula">
+<p id="status" role="status">Loading medicines...</p>
+<div class="products" id="products"></div>
+</section>
 <section id="shopSection" class="hidden">
 <div class="panel">
 <div id="welcome"></div>
 <button class="secondary" id="logoutBtn" type="button">Logout</button>
 <a id="adminLink" class="hidden" href="admin.html">Open Admin Panel</a>
 </div>
-<div class="panel">
-<h2>Medicine Catalogue</h2>
-<input id="search" placeholder="Search medicine name or formula">
-<p id="status" role="status">Loading medicines...</p>
-<div class="products" id="products"></div>
-</div>
-<div class="panel">
+<div class="panel hidden" id="cartPanel">
 <h2>My Cart</h2>
 <div id="cart">No items added.</div>
 <div id="cartTotal"></div>
@@ -86,7 +87,7 @@ const SUPABASE_URL="https://hdoftqemjttaegkysjyq.supabase.co";
 const SUPABASE_KEY="sb_publishable_75Bn2frOUV-LeTqXvgUVtg__jIxuA72";
 const ADMIN_ID="9be3d5ee-e09a-4738-9b27-f2fae15e93c7";
 const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
-let medicines=[],cart=[],currentUser=null,retailerPrices={};
+let medicines=[],cart=[],currentUser=null,retailerPrices={},canOrder=false;
 const el=id=>document.getElementById(id);
 function safe(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
 function money(v){return "₹"+Number(v||0).toFixed(2);}
@@ -100,31 +101,34 @@ async function login(){
  await loadShop(data.user);
 }
 async function logout(){
- await db.auth.signOut();currentUser=null;medicines=[];cart=[];retailerPrices={};
- el("shopSection").classList.add("hidden");el("loginSection").classList.remove("hidden");
- el("products").innerHTML="";renderCart();el("loginMessage").textContent="You have logged out.";
+ await db.auth.signOut();currentUser=null;medicines=[];cart=[];retailerPrices={};canOrder=false;
+ el("shopSection").classList.add("hidden");el("cartPanel").classList.add("hidden");el("loginSection").classList.remove("hidden");
+ renderCart();el("loginMessage").textContent="You have logged out.";await loadMedicines();
 }
 async function loadShop(user){
- currentUser=user;
- el("loginSection").classList.add("hidden");el("shopSection").classList.remove("hidden");
+ currentUser=user;canOrder=false;retailerPrices={};
+ el("loginSection").classList.add("hidden");el("shopSection").classList.remove("hidden");el("cartPanel").classList.add("hidden");
  el("welcome").textContent="Logged in: "+user.email;
  el("adminLink").classList.toggle("hidden",user.id!==ADMIN_ID);
  if(user.id!==ADMIN_ID){
   const {data:profile,error:profileError}=await db.from("retailer_profiles").select("shop_name,owner_name,phone,approval_status").eq("user_id",user.id).maybeSingle();
   if(profileError){el("status").textContent="Profile check failed: "+profileError.message;return;}
   if(!profile){el("status").textContent="Retailer profile not found. Contact PRAVEEN PHARMA to register.";return;}
-  if(profile.approval_status!=="approved"){el("status").textContent="Your retailer account is "+profile.approval_status+". Prices and ordering are available after admin approval.";return;}
+  if(profile.approval_status!=="approved"){el("status").textContent="Your retailer account is "+profile.approval_status+". Public medicine details are visible; prices and ordering start after admin approval.";await loadMedicines();return;}
   el("customerName").value=profile.shop_name||profile.owner_name||"";
   el("phone").value=profile.phone||"";
   const {data:prices,error:priceError}=await db.from("retailer_prices").select("medicine_id,price").eq("retailer_id",user.id);
   if(priceError){el("status").textContent="Could not load retailer prices: "+priceError.message;return;}
   retailerPrices=Object.fromEntries((prices||[]).map(p=>[p.medicine_id,Number(p.price)]));
+  canOrder=true;el("cartPanel").classList.remove("hidden");
  }else{retailerPrices={};}
  await loadMedicines();
 }
 async function loadMedicines(){
  el("status").textContent="Loading medicines...";
- const {data,error}=await db.from("public_medicines").select("id,name,composition,pack_size,category,image_url,common_price,gst_rate").order("name");
+ const table=(currentUser&&(currentUser.id===ADMIN_ID||canOrder))?"medicines":"public_medicines";
+ const fields=table==="medicines"?"id,name,composition,pack_size,category,image_url,common_price,gst_rate":"id,name,composition,pack_size,category,image_url,gst_rate";
+ const {data,error}=await db.from(table).select(fields).order("name");
  if(error){el("status").textContent="Could not load medicines: "+error.message;return;}
  medicines=data||[];el("status").textContent=medicines.length+" medicines loaded.";showProducts();
 }
@@ -133,11 +137,14 @@ function showProducts(){
  const q=el("search").value.trim().toLowerCase();
  const items=medicines.filter(m=>(m.name||"").toLowerCase().includes(q)||(m.composition||"").toLowerCase().includes(q));
  el("products").innerHTML=items.map(m=>{
+  const showPrices=!!currentUser&&(currentUser.id===ADMIN_ID||canOrder);
   const price=priceFor(m);
   const photo=String(m.image_url||"").trim();
   const safePhoto=/^https?:\\/\\//i.test(photo)?safe(photo):"";
   const photoHtml=safePhoto?'<a class="medicine-photo-link" href="'+safePhoto+'" target="_blank" rel="noopener" aria-label="Open '+safe(m.name)+' photo"><img class="medicine-photo" src="'+safePhoto+'" alt="'+safe(m.name)+' medicine photo" loading="lazy" onerror="this.parentElement.outerHTML=\\'<div class="photo-missing">Medicine photo unavailable</div>\\'"></a>':'<div class="photo-missing">Medicine photo not added yet</div>';
-  return '<div class="card">'+photoHtml+'<h3>'+safe(m.name)+'</h3><p>'+safe(m.composition)+'</p><p>Pack: '+safe(m.pack_size)+'</p><p><b>'+money(price)+'</b></p><button type="button" data-id="'+safe(m.id)+'">Add to Cart</button></div>';
+  const priceHtml=showPrices?'<p><b>'+money(price)+'</b></p>':'';
+  const cartButton=canOrder?'<button type="button" data-id="'+safe(m.id)+'">Add to Cart</button>':'';
+  return '<div class="card">'+photoHtml+'<h3>'+safe(m.name)+'</h3><p>'+safe(m.composition)+'</p><p>Pack: '+safe(m.pack_size)+'</p>'+priceHtml+cartButton+'</div>';
  }).join("")||"<p>No medicines found.</p>";
  el("products").querySelectorAll("button[data-id]").forEach(b=>b.addEventListener("click",()=>addCart(b.dataset.id)));
 }
@@ -185,7 +192,7 @@ el("loginBtn").addEventListener("click",login);
 el("logoutBtn").addEventListener("click",logout);
 el("search").addEventListener("input",showProducts);
 el("placeOrderBtn").addEventListener("click",placeOrder);
-db.auth.getSession().then(({data,error})=>{if(error){el("loginMessage").textContent=error.message;return;}if(data.session)loadShop(data.session.user);});
+db.auth.getSession().then(({data,error})=>{if(error){el("loginMessage").textContent=error.message;loadMedicines();return;}if(data.session)loadShop(data.session.user);else loadMedicines();});
 </script>
 </body>
 </html>
