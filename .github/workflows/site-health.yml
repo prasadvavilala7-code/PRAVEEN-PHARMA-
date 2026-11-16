@@ -70,6 +70,8 @@ jobs:
               raise SystemExit(1)
           print("All inline JavaScript syntax checks passed.")
           PY
+      - name: Run security smoke checks
+        run: python3 scripts/security-smoke-check.py
       - name: Check live public website
         run: |
           set -euo pipefail
