@@ -31,3 +31,26 @@ drop policy if exists "Admin can add settings history" on public.site_settings_h
 create policy "Admin can add settings history" on public.site_settings_history for insert to authenticated
 with check (auth.uid() = '9be3d5ee-e09a-4738-9b27-f2fae15e93c7'::uuid);
 insert into public.site_settings (id) values (1) on conflict (id) do nothing;
+
+-- Admin audit trail for important dashboard actions
+create table if not exists public.admin_activity_logs (
+  id bigint generated always as identity primary key,
+  admin_user_id uuid not null,
+  action text not null,
+  details jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now()
+);
+create index if not exists admin_activity_logs_created_at_idx
+  on public.admin_activity_logs (created_at desc);
+alter table public.admin_activity_logs enable row level security;
+drop policy if exists "Admin can read activity logs" on public.admin_activity_logs;
+create policy "Admin can read activity logs" on public.admin_activity_logs
+  for select to authenticated
+  using (auth.uid() = '9be3d5ee-e09a-4738-9b27-f2fae15e93c7'::uuid);
+drop policy if exists "Admin can insert activity logs" on public.admin_activity_logs;
+create policy "Admin can insert activity logs" on public.admin_activity_logs
+  for insert to authenticated
+  with check (
+    auth.uid() = '9be3d5ee-e09a-4738-9b27-f2fae15e93c7'::uuid
+    and admin_user_id = auth.uid()
+  );
