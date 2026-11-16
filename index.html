@@ -1,199 +1,42 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>PRAVEEN PHARMA | Wholesale Medicine Supply</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-:root{font-family:Arial,sans-serif;color:#183047;background:#f3f7fb}*{box-sizing:border-box}body{margin:0}header{background:#073b66;color:#fff;text-align:center;padding:24px 12px}header h1{margin:0}nav{background:#07558c;color:#fff;text-align:center;padding:12px}main{max-width:1100px;margin:auto;padding:18px}.panel,.card{background:#fff;border-radius:12px;padding:18px;margin:14px 0;box-shadow:0 2px 8px #0001}input,select{width:100%;padding:12px;border:1px solid #cbd5df;border-radius:8px;margin:7px 0;font:inherit}button{background:#087b57;color:#fff;border:0;padding:11px 15px;border-radius:7px;margin:5px 3px;cursor:pointer;font:inherit}.secondary{background:#07558c}.danger{background:#b42318}.hidden{display:none!important}.products{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}.card h3{margin:0 0 8px}.muted{color:#667085;font-size:14px}#status,#loginMessage{padding:11px;background:#e8f2fa;border-radius:8px;overflow-wrap:anywhere}.cartrow{display:flex;justify-content:space-between;gap:8px;align-items:center;border-bottom:1px solid #eee;padding:9px 0}footer{background:#073b66;color:#fff;text-align:center;padding:20px}@media(max-width:520px){main{padding:10px}.cartrow{align-items:flex-start;flex-direction:column}}
-
-/* Clear, separate visual sections */
-body{min-height:100vh;color:#183047;background:linear-gradient(135deg,#eaf4fb 0%,#f7fbff 52%,#e7f1f8 100%);background-attachment:fixed}
-header{background:linear-gradient(120deg,#062b49,#07558c 62%,#078b91);padding:32px 14px;box-shadow:0 8px 24px #063b6026}
-header h1{letter-spacing:1.4px}
-nav{background:#06466f;letter-spacing:.5px}
-main{padding-top:24px;padding-bottom:30px}
-.panel{border-radius:16px;padding:20px;margin:18px 0;background:#fff;border:1px solid #d7e6ef;box-shadow:0 8px 22px rgba(20,65,95,.09)}
-#loginSection{background:linear-gradient(135deg,#fff 0%,#eef8ff 100%);border:1px solid #b9d9eb;border-top:5px solid #087da5}
-#shopSection> .panel:nth-child(1){background:#f0f8ff;border-left:5px solid #087da5}
-#shopSection> .panel:nth-child(2){background:#fff;border-left:5px solid #079b83}
-#shopSection> .panel:nth-child(3){background:#f1fbf7;border-left:5px solid #15936f}
-main>section.panel:last-child{background:#fff8ed;border-left:5px solid #e0a044}
-.card{background:#fff;border:1px solid #dce8ef;border-radius:14px;padding:17px;box-shadow:0 5px 16px rgba(24,65,95,.08)}
-.card:hover{transform:translateY(-2px);box-shadow:0 10px 22px rgba(24,65,95,.14)}
-h2{color:#07558c}
-input,select{background:#fbfdff;border:1px solid #cbdce8}
-input:focus,select:focus{outline:2px solid #087da52b;border-color:#087da5}
-button{background:linear-gradient(110deg,#087b67,#079b83);box-shadow:0 3px 9px #087b5726}
-button:hover{filter:brightness(1.06)}
-footer{background:linear-gradient(120deg,#062b49,#07558c);margin-top:24px}
-@media(max-width:520px){main{padding:12px 10px}.panel{padding:15px;margin:13px 0}header{padding:26px 12px}}
-
-
-/* Medicine photo gallery cards */
-.products{grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:18px}
-.medicine-photo-link{display:flex;align-items:center;justify-content:center;width:100%;height:190px;background:linear-gradient(145deg,#f1f7fb,#e4eef5);border-radius:12px;overflow:hidden;margin-bottom:13px;border:1px solid #e0eaf0}
-.medicine-photo{width:100%;height:100%;object-fit:contain;padding:10px;transition:transform .2s ease}
-.medicine-photo-link:hover .medicine-photo{transform:scale(1.06)}
-.photo-missing{height:190px;border-radius:12px;background:linear-gradient(145deg,#f1f7fb,#e4eef5);display:flex;align-items:center;justify-content:center;text-align:center;color:#668095;font-size:14px;margin-bottom:13px}
-.card h3{color:#07558c}
-
-</style>
-</head>
+*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;color:#203447;background:#f4f8fb;line-height:1.6}
+header{padding:42px 16px;text-align:center;color:#fff;background:linear-gradient(120deg,#062b49,#07558c,#078b91)}
+header h1{margin:0;font-size:clamp(28px,5vw,42px);letter-spacing:1px}header p{margin:8px 0 0}
+main{max-width:900px;margin:28px auto;padding:0 16px}.panel{background:#fff;border:1px solid #dce7ee;border-radius:16px;padding:24px;margin:18px 0;box-shadow:0 5px 18px #12334a10}
+h2{color:#07558c;margin-top:0}.muted{color:#667788}.contact{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.call{display:block;padding:16px;border-radius:10px;text-align:center;text-decoration:none;background:#087b67;color:#fff;font-weight:bold}
+footer{text-align:center;padding:22px;background:#062b49;color:#fff;margin-top:35px}
+#announcement{background:#fff7e8;border-left:5px solid #e0a044}a{overflow-wrap:anywhere}
+@media(max-width:520px){.panel{padding:18px}header{padding:32px 12px}}
+</style></head>
 <body>
-<header><h1>PRAVEEN PHARMA</h1><p>Wholesale Medicine Supply</p><p>Opposite Union Bank, Sircilla, Telangana</p></header>
-<nav aria-label="Main navigation"><a href="./index.html" style="color:#fff;text-decoration:none;margin:0 10px;font-weight:bold">Home / Medicines</a><a href="./retailer.html" style="color:#fff;text-decoration:none;margin:0 10px;font-weight:bold">Retailer Portal</a><a href="./admin.html" style="color:#fff;text-decoration:none;margin:0 10px;font-weight:bold">Admin Dashboard</a></nav>
+<header><h1 id="businessName">PRAVEEN PHARMA</h1><p id="tagline">Wholesale Medicine Supply</p><p id="addressHeader">Opposite Union Bank, Sircilla, Telangana</p></header>
 <main>
-<section id="loginSection" class="panel">
-<h2>Retailer Login</h2>
-<p class="muted">Approved retailer account required to view prices and place orders.</p>
-<input id="email" type="email" autocomplete="username" placeholder="Email address">
-<input id="password" type="password" autocomplete="current-password" placeholder="Password">
-<button id="loginBtn" type="button">Login</button>
-<p id="loginMessage" role="status">Sign in with your registered retailer account.</p>
-</section>
-<section id="catalogueSection" class="panel">
-<h2>Medicine Catalogue</h2>
-<p class="muted">Browse medicine photos and information. Prices and ordering are available only to approved retailers.</p>
-<input id="search" placeholder="Search medicine name or formula">
-<p id="status" role="status">Loading medicines...</p>
-<div class="products" id="products"></div>
-</section>
-<section id="shopSection" class="hidden">
-<div class="panel">
-<div id="welcome"></div>
-<button class="secondary" id="logoutBtn" type="button">Logout</button>
-<a id="adminLink" class="hidden" href="admin.html">Open Admin Panel</a>
-</div>
-<div class="panel hidden" id="cartPanel">
-<h2>My Cart</h2>
-<div id="cart">No items added.</div>
-<div id="cartTotal"></div>
-<h3>Order Details</h3>
-<input id="customerName" placeholder="Contact person / shop name">
-<input id="phone" type="tel" placeholder="Phone number">
-<select id="deliveryMethod"><option value="home_delivery">Home delivery (₹0)</option><option value="shop_pickup">Shop pickup (₹0)</option></select>
-<p><b>Delivery charge: ₹0</b></p>
-<button id="placeOrderBtn" type="button">Place Order</button>
-<p id="orderMessage" role="status"></p>
-</div>
-</section>
-<section class="panel"><h2>Contact Us</h2><p>Phone: <a href="tel:+919550620353">9550620353</a></p><p>Phone: <a href="tel:+919398117337">9398117337</a></p></section>
-</main>
-<footer>© PRAVEEN PHARMA</footer>
+<section class="panel" id="announcementPanel" hidden><h2>Announcement</h2><p id="announcement"></p></section>
+<section class="panel"><h2>About Us</h2><p id="aboutText">Wholesale medicine supply in Sircilla.</p></section>
+<section class="panel"><h2>Contact PRAVEEN PHARMA</h2><p class="muted" id="addressText">Opposite Union Bank, Sircilla, Telangana</p><div class="contact"><a class="call" id="phonePrimary" href="tel:+919550620353">Call 9550620353</a><a class="call" id="phoneSecondary" href="tel:+919398117337">Call 9398117337</a></div></section>
+</main><footer>© <span id="footerName">PRAVEEN PHARMA</span></footer>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-const SUPABASE_URL="https://hdoftqemjttaegkysjyq.supabase.co";
-const SUPABASE_KEY="sb_publishable_75Bn2frOUV-LeTqXvgUVtg__jIxuA72";
-const ADMIN_ID="9be3d5ee-e09a-4738-9b27-f2fae15e93c7";
-const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
-let medicines=[],cart=[],currentUser=null,retailerPrices={},canOrder=false;
-const el=id=>document.getElementById(id);
-function safe(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
-function money(v){return "₹"+Number(v||0).toFixed(2);}
-async function login(){
- const email=el("email").value.trim(),password=el("password").value;
- if(!email||!password){el("loginMessage").textContent="Enter email and password.";return;}
- el("loginBtn").disabled=true;el("loginMessage").textContent="Checking login...";
- const {data,error}=await db.auth.signInWithPassword({email,password});
- el("loginBtn").disabled=false;
- if(error){el("loginMessage").textContent="Login failed: "+error.message;return;}
- await loadShop(data.user);
+const db=window.supabase.createClient("https://hdoftqemjttaegkysjyq.supabase.co","sb_publishable_75Bn2frOUV-LeTqXvgUVtg__jIxuA72");
+const byId=id=>document.getElementById(id);
+function setPhone(id,number){const digits=String(number||"").replace(/[^0-9+]/g,"");const link=byId(id);link.href=digits?"tel:"+digits:"#";link.textContent=digits?"Call "+String(number):"Phone number not available";link.hidden=!digits;}
+async function loadPublicSettings(){
+ const {data,error}=await db.from("site_settings").select("business_name,tagline,about_text,address,phone_primary,phone_secondary,announcement").eq("id",1).maybeSingle();
+ if(error||!data)return;
+ const name=data.business_name||"PRAVEEN PHARMA";
+ byId("businessName").textContent=name;byId("footerName").textContent=name;
+ byId("tagline").textContent=data.tagline||"";byId("aboutText").textContent=data.about_text||"";
+ byId("addressHeader").textContent=data.address||"";byId("addressText").textContent=data.address||"";
+ setPhone("phonePrimary",data.phone_primary);setPhone("phoneSecondary",data.phone_secondary);
+ const announcement=String(data.announcement||"").trim();
+ byId("announcement").textContent=announcement;byId("announcementPanel").hidden=!announcement;
+ document.title=name+" | "+(data.tagline||"Wholesale Medicine Supply");
 }
-async function logout(){
- await db.auth.signOut();currentUser=null;medicines=[];cart=[];retailerPrices={};canOrder=false;
- el("shopSection").classList.add("hidden");el("cartPanel").classList.add("hidden");el("loginSection").classList.remove("hidden");
- renderCart();el("loginMessage").textContent="You have logged out.";await loadMedicines();
-}
-async function loadShop(user){
- currentUser=user;canOrder=false;retailerPrices={};
- el("loginSection").classList.add("hidden");el("shopSection").classList.remove("hidden");el("cartPanel").classList.add("hidden");
- el("welcome").textContent="Logged in: "+user.email;
- el("adminLink").classList.toggle("hidden",user.id!==ADMIN_ID);
- if(user.id!==ADMIN_ID){
-  const {data:profile,error:profileError}=await db.from("retailer_profiles").select("shop_name,owner_name,phone,approval_status").eq("user_id",user.id).maybeSingle();
-  if(profileError){el("status").textContent="Profile check failed: "+profileError.message;return;}
-  if(!profile){el("status").textContent="Retailer profile not found. Contact PRAVEEN PHARMA to register.";return;}
-  if(profile.approval_status!=="approved"){el("status").textContent="Your retailer account is "+profile.approval_status+". Public medicine details are visible; prices and ordering start after admin approval.";await loadMedicines();return;}
-  el("customerName").value=profile.shop_name||profile.owner_name||"";
-  el("phone").value=profile.phone||"";
-  const {data:prices,error:priceError}=await db.from("retailer_prices").select("medicine_id,price").eq("retailer_id",user.id);
-  if(priceError){el("status").textContent="Could not load retailer prices: "+priceError.message;return;}
-  retailerPrices=Object.fromEntries((prices||[]).map(p=>[p.medicine_id,Number(p.price)]));
-  canOrder=true;el("cartPanel").classList.remove("hidden");
- }else{retailerPrices={};}
- await loadMedicines();
-}
-async function loadMedicines(){
- el("status").textContent="Loading medicines...";
- const table=(currentUser&&(currentUser.id===ADMIN_ID||canOrder))?"medicines":"public_medicine_catalogue";
- const fields=table==="medicines"?"id,name,composition,pack_size,category,image_url,common_price,gst_rate":"id,name,composition,pack_size,category,image_url";
- const {data,error}=await db.from(table).select(fields).order("name");
- if(error){el("status").textContent="Could not load medicines: "+error.message;return;}
- medicines=data||[];el("status").textContent=medicines.length+" medicines loaded.";showProducts();
-}
-function priceFor(m){return currentUser?.id===ADMIN_ID?Number(m.common_price||0):(retailerPrices[m.id]??Number(m.common_price||0));}
-function showProducts(){
- const q=el("search").value.trim().toLowerCase();
- const items=medicines.filter(m=>(m.name||"").toLowerCase().includes(q)||(m.composition||"").toLowerCase().includes(q));
- el("products").innerHTML=items.map(m=>{
-  const showPrices=!!currentUser&&(currentUser.id===ADMIN_ID||canOrder);
-  const price=priceFor(m);
-  const photo=String(m.image_url||"").trim();
-  const safePhoto=(photo.startsWith("https://")||photo.startsWith("http://"))?safe(photo):"";
-  const photoHtml=safePhoto?'<a class="medicine-photo-link" href="'+safePhoto+'" target="_blank" rel="noopener" aria-label="Open '+safe(m.name)+' photo"><img class="medicine-photo" src="'+safePhoto+'" alt="'+safe(m.name)+' medicine photo" loading="lazy"></a>':'<div class="photo-missing">Medicine photo not added yet</div>';
-  const priceHtml=showPrices?'<p><b>'+money(price)+'</b></p>':'';
-  const cartButton=canOrder?'<button type="button" data-id="'+safe(m.id)+'">Add to Cart</button>':'';
-  return '<div class="card">'+photoHtml+'<h3>'+safe(m.name)+'</h3><p>'+safe(m.composition)+'</p><p>Pack: '+safe(m.pack_size)+'</p>'+priceHtml+cartButton+'</div>';
- }).join("")||"<p>No medicines found.</p>";
- el("products").querySelectorAll(".medicine-photo").forEach(img=>img.addEventListener("error",()=>{const box=document.createElement("div");box.className="photo-missing";box.textContent="Medicine photo unavailable";img.parentElement.replaceWith(box);},{once:true}));
- el("products").querySelectorAll("button[data-id]").forEach(b=>b.addEventListener("click",()=>addCart(b.dataset.id)));
-}
-function addCart(id){
- const m=medicines.find(x=>x.id===id);if(!m)return;
- const existing=cart.find(x=>x.id===id);
- if(existing)existing.quantity++;else cart.push({id:m.id,name:m.name,pack_size:m.pack_size,price:priceFor(m),gst_rate:Number(m.gst_rate||0),quantity:1});
- renderCart();
-}
-function changeQty(id,delta){
- const item=cart.find(x=>x.id===id);if(!item)return;
- item.quantity+=delta;if(item.quantity<=0)cart=cart.filter(x=>x.id!==id);renderCart();
-}
-function renderCart(){
- if(!el("cart"))return;
- el("cart").innerHTML=cart.length?cart.map(x=>'<div class="cartrow"><span>'+safe(x.name)+' ('+safe(x.pack_size)+') — '+money(x.price)+'</span><span><button type="button" data-minus="'+safe(x.id)+'">−</button> '+x.quantity+' <button type="button" data-plus="'+safe(x.id)+'">+</button></span></div>').join(""):"No items added.";
- el("cart").querySelectorAll("[data-minus]").forEach(b=>b.addEventListener("click",()=>changeQty(b.dataset.minus,-1)));
- el("cart").querySelectorAll("[data-plus]").forEach(b=>b.addEventListener("click",()=>changeQty(b.dataset.plus,1)));
- const subtotal=cart.reduce((s,x)=>s+x.price*x.quantity,0);
- const gst=cart.reduce((s,x)=>s+x.price*x.quantity*x.gst_rate/100,0);
- el("cartTotal").textContent="Subtotal: "+money(subtotal)+" | GST: "+money(gst)+" | Total: "+money(subtotal+gst);
-}
-async function placeOrder(){
- const msg=el("orderMessage");
- if(!currentUser){msg.textContent="Please log in.";return;}
- if(currentUser.id===ADMIN_ID){msg.textContent="Admin account cannot place retailer orders.";return;}
- if(!cart.length){msg.textContent="Please add medicines first.";return;}
- const customerName=el("customerName").value.trim(),phone=el("phone").value.trim(),deliveryMethod=el("deliveryMethod").value;
- if(!customerName||!phone){msg.textContent="Enter shop/contact name and phone number.";return;}
- if(!["home_delivery","shop_pickup"].includes(deliveryMethod)){msg.textContent="Select a delivery method.";return;}
- const subtotal=cart.reduce((s,x)=>s+x.price*x.quantity,0);
- const gstAmount=cart.reduce((s,x)=>s+x.price*x.quantity*x.gst_rate/100,0);
- const grandTotal=subtotal+gstAmount;
- el("placeOrderBtn").disabled=true;msg.textContent="Submitting order...";
- const {data:order,error:orderError}=await db.from("orders").insert({retailer_id:currentUser.id,customer_name:customerName,phone,delivery_method:deliveryMethod,delivery_charge:0,subtotal,gst_amount:gstAmount,grand_total:grandTotal,order_status:"pending"}).select("id").single();
- if(orderError){el("placeOrderBtn").disabled=false;msg.textContent="Order failed: "+orderError.message;return;}
- const rows=cart.map(x=>({order_id:order.id,medicine_id:x.id,medicine_name:x.name,pack_size:x.pack_size,quantity:x.quantity,unit_price:x.price,gst_rate:x.gst_rate}));
- const {error:itemError}=await db.from("order_items").insert(rows);
- el("placeOrderBtn").disabled=false;
- if(itemError){msg.textContent="Order "+order.id+" was created, but item saving failed. Contact admin with this order ID. Error: "+itemError.message;return;}
- msg.textContent="Order placed successfully. Order ID: "+order.id+" | Total: "+money(grandTotal);
- cart=[];renderCart();
-}
-el("loginBtn").addEventListener("click",login);
-el("logoutBtn").addEventListener("click",logout);
-el("search").addEventListener("input",showProducts);
-el("placeOrderBtn").addEventListener("click",placeOrder);
-db.auth.getSession().then(({data,error})=>{if(error){el("loginMessage").textContent=error.message;loadMedicines();return;}if(data.session)loadShop(data.session.user);else loadMedicines();});
-</script>
-</body>
-</html>
+loadPublicSettings();
+</script></body></html>
