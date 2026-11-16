@@ -6,7 +6,48 @@
 <title>PRAVEEN PHARMA | Admin</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-*{box-sizing:border-box}body{margin:0;background:#edf4f8;color:#183047;font-family:Arial,sans-serif}header{background:linear-gradient(120deg,#062b49,#07558c,#078b91);color:white;text-align:center;padding:24px 12px}main{max-width:1000px;margin:auto;padding:16px}.panel{background:white;border:1px solid #d7e6ef;border-radius:15px;padding:18px;margin:16px 0;box-shadow:0 6px 20px #16415f12}input{width:100%;padding:12px;border:1px solid #cbdce8;border-radius:8px;margin:6px 0;font:inherit}button{border:0;border-radius:8px;padding:11px 15px;margin:5px 3px;background:#087b67;color:#fff;font:inherit;cursor:pointer}.secondary{background:#07558c}.danger{background:#b42318}.muted{color:#667085;font-size:14px}.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.medicine{display:grid;grid-template-columns:100px 1fr;gap:14px;border-top:1px solid #e5edf2;padding:14px 0}.medicine img{width:100px;height:100px;object-fit:contain;background:#f2f7fa;border-radius:10px}.medicine small{color:#667085}@media(max-width:560px){.row{grid-template-columns:1fr}.medicine{grid-template-columns:78px 1fr}.medicine img{width:78px;height:78px}}
+*{box-sizing:border-box}
+:root{font-family:Arial,Helvetica,sans-serif;color:#24352d;background:#f5f8f5}
+body{margin:0;min-height:100vh;background:#f5f8f5;color:#24352d}
+header{background:#fff;color:#1f3b2d;text-align:left;padding:22px max(18px,calc((100% - 1180px)/2));border-bottom:1px solid #e0e9e1;box-shadow:0 2px 8px #183d2410}
+header h1{margin:0;font-size:24px;letter-spacing:.3px;color:#176b42}
+header p{margin:7px 0 0;color:#718076;font-size:14px}
+main{max-width:1180px;margin:0 auto;padding:22px 18px 40px}
+.panel{background:#fff;border:1px solid #e1e9e2;border-radius:12px;padding:20px;margin:0 0 18px;box-shadow:0 2px 8px #183d2408}
+h2{margin:0 0 14px;color:#245b3b;font-size:19px}
+h3{color:#315b40}
+p{line-height:1.5}
+.muted{color:#738078;font-size:13px}
+input,select,textarea{width:100%;padding:12px 13px;border:1px solid #d5e1d7;border-radius:8px;margin:6px 0;background:#fff;color:#24352d;font:inherit;min-height:44px}
+input:focus,select:focus,textarea:focus{outline:2px solid #21834a25;border-color:#25834d}
+button{border:0;border-radius:8px;padding:11px 16px;margin:5px 3px;background:#21834a;color:#fff;font:inherit;font-weight:600;cursor:pointer;min-height:40px}
+button:hover{background:#176b3a}
+button:disabled{opacity:.55;cursor:not-allowed}
+.secondary{background:#edf5ee;color:#23623c;border:1px solid #d3e5d6}
+.secondary:hover{background:#e2f0e5}
+.danger{background:#b42318}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+a{color:#237344}
+#siteLinks .row a{background:#f0f7f1!important;color:#245b3b!important;border:1px solid #d9e8dc;font-size:15px}
+#siteLinks .row a:hover{background:#e5f2e7!important}
+.medicine{display:grid;grid-template-columns:90px minmax(0,1fr);gap:14px;border-top:1px solid #edf1ed;padding:15px 0;align-items:center}
+.medicine img{width:90px;height:90px;object-fit:contain;background:#f7faf7;border:1px solid #edf1ed;border-radius:9px}
+.medicine small{display:inline-block;color:#738078;line-height:1.7;overflow-wrap:anywhere}
+#loginPanel{max-width:650px}
+#editor{border-top:3px solid #2b8a50}
+#catalogue{border-top:3px solid #2b8a50}
+#retailerRequests,#approvedRetailers,#ordersPanel{border-top:3px solid #d8e9dc}
+[hidden]{display:none!important}
+@media(max-width:640px){
+ header{padding:18px 15px}
+ header h1{font-size:21px}
+ main{padding:14px 10px 28px}
+ .panel{padding:15px;margin-bottom:13px;border-radius:10px}
+ .row{grid-template-columns:1fr;gap:4px}
+ .medicine{grid-template-columns:68px minmax(0,1fr);gap:10px}
+ .medicine img{width:68px;height:68px}
+ button{padding:10px 12px}
+}
 </style>
 </head>
 <body>
