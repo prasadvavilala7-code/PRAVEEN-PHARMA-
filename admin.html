@@ -79,7 +79,7 @@ a{color:#237344}
 <section class="panel" id="backupPanel" hidden><h2>Data Export & Health Check</h2><p class="muted">Export is a browser download of records accessible to this admin account. It is not a full database backup.</p><button id="exportBackup">Export available data (JSON)</button><button class="secondary" id="runHealth">Run connection checks</button><p id="healthStatus" class="muted" role="status"></p></section>
 <section class="panel" id="loginPanel">
 <h2>Admin access</h2><p id="loginStatus" class="muted">Checking your signed-in account…</p>
-<p>First sign in using the admin account on the main website, then open this page.</p>
+<p>Sign in here with the configured administrator account.</p><input id="adminEmail" type="email" autocomplete="username" placeholder="Admin email"><input id="adminPassword" type="password" autocomplete="current-password" placeholder="Admin password"><button id="adminLogin">Login to Admin</button><button id="adminLogout" class="secondary" hidden>Logout</button>
 </section>
 <section class="panel" id="editor" hidden>
 <h2 id="formTitle">Add New Medicine</h2>
@@ -141,7 +141,8 @@ async function loadOrders(){
  document.querySelectorAll("[data-order-status]").forEach(sel=>sel.onchange=()=>updateOrderStatus(sel.dataset.orderStatus,sel.value));
 }
 async function updateOrderStatus(id,status){const {error}=await db.from("orders").update({order_status:status}).eq("id",id);if(error){alert("Status update failed: "+error.message);await loadOrders();}}
-async function init(){const {data,error}=await db.auth.getSession();if(error){$("loginStatus").textContent=error.message;return;}currentUser=data.session?.user||null;if(!currentUser){$("loginStatus").textContent="Not signed in. Please log in on the main website first.";return;}if(currentUser.id!==ADMIN_ID){$("loginStatus").textContent="Access denied: this account is not the configured admin.";return;}$("loginStatus").textContent="Admin authenticated."; $("editor").hidden=false;$("catalogue").hidden=false;$("retailerRequests").hidden=false;$("approvedRetailers").hidden=false;$("ordersPanel").hidden=false;$("masterSettings").hidden=false;$("reportsPanel").hidden=false;$("backupPanel").hidden=false;await loadMedicines();await loadRetailers();await loadOrders();await loadSettings();await loadReports();}
+async function adminLogin(){const email=$("adminEmail").value.trim(),password=$("adminPassword").value;if(!email||!password){$("loginStatus").textContent="Enter admin email and password.";return;}$("adminLogin").disabled=true;const {data,error}=await db.auth.signInWithPassword({email,password});$("adminLogin").disabled=false;if(error){$("loginStatus").textContent="Login failed: "+error.message;return;}await init();}
+async function init(){const {data,error}=await db.auth.getSession();if(error){$("loginStatus").textContent=error.message;return;}currentUser=data.session?.user||null;if(!currentUser){$("loginStatus").textContent="Not signed in. Enter your admin credentials above.";return;}if(currentUser.id!==ADMIN_ID){$("loginStatus").textContent="Access denied: this account is not the configured admin.";return;}$("loginStatus").textContent="Admin authenticated.";$("adminLogin").hidden=true;$("adminLogout").hidden=false; $("editor").hidden=false;$("catalogue").hidden=false;$("retailerRequests").hidden=false;$("approvedRetailers").hidden=false;$("ordersPanel").hidden=false;$("masterSettings").hidden=false;$("reportsPanel").hidden=false;$("backupPanel").hidden=false;await loadMedicines();await loadRetailers();await loadOrders();await loadSettings();await loadReports();}
 
 async function loadSettings(){
  const status=$("settingsStatus");status.textContent="Loading settings…";
@@ -204,7 +205,7 @@ async function runHealth(){
 }
 \n$("saveSettings").addEventListener("click",saveSettings);$("reloadSettings").addEventListener("click",loadSettings);$("refreshReports").addEventListener("click",loadReports);$("exportBackup").addEventListener("click",exportBackup);$("runHealth").addEventListener("click",runHealth);\n$("searchPhoto").addEventListener("click",()=>{const q=$("name").value.trim();if(!q){$("saveStatus").textContent="Enter medicine name first.";return;}window.open("https://www.google.com/search?tbm=isch&q="+encodeURIComponent(q+" medicine box strip packaging"),"_blank","noopener");});
 $("photoFile").addEventListener("change",e=>{selectedFile=e.target.files?.[0]||null;if(!selectedFile){$("photoPreview").textContent="No new photo selected.";return;}if(!selectedFile.type.startsWith("image/")){selectedFile=null;$("photoPreview").textContent="Please choose an image file.";return;}if(selectedFile.size>5*1024*1024){selectedFile=null;e.target.value="";$("photoPreview").textContent="Image must be 5 MB or smaller.";return;}$("photoPreview").textContent="Selected: "+selectedFile.name;});
-$("saveMedicine").addEventListener("click",saveMedicine);$("clearForm").addEventListener("click",clearForm);$("filter").addEventListener("input",renderList);init();
+$("adminLogin").addEventListener("click",adminLogin);$("adminLogout").addEventListener("click",async()=>{await db.auth.signOut();location.reload();});$("saveMedicine").addEventListener("click",saveMedicine);$("clearForm").addEventListener("click",clearForm);$("filter").addEventListener("input",renderList);init();
 </script>
 </body>
 </html>
