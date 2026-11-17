@@ -72,14 +72,18 @@ const byId=id=>document.getElementById(id);
 function setPhone(id,number){const digits=String(number||"").replace(/[^0-9+]/g,"");const link=byId(id);link.href=digits?"tel:"+digits:"#";link.textContent=digits?"Call "+String(number):"Phone number not available";link.hidden=!digits;}
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 let publicMedicines=[];
+function medicineInfoHtml(m){
+ const rows=[["Formula",m.composition],["Uses",m.uses],["Benefits",m.benefits],["Side effects",m.side_effects],["Precautions",m.precautions]];
+ return '<section style="margin-top:10px;padding:10px;background:#f6f9fb;border-radius:9px;font-size:13px"><b>Medicine information</b>'+rows.map(([k,v])=>'<p><b>'+esc(k)+':</b> '+(v?esc(v):'Not verified / unavailable')+'</p>').join('')+'<small>Educational information only. Confirm with a qualified pharmacist/doctor. '+(m.info_status==="matched_official_label"?"Official label match.":"Not medically verified.")+'</small></section>';
+}
 function renderPublicMedicines(){
  const q=byId("medicineSearch").value.trim().toLowerCase(),company=byId("companySearch").value;
  const rows=publicMedicines.filter(m=>(!company||m.company_id===company)&&((m.name||"").toLowerCase().includes(q)||(m.composition||"").toLowerCase().includes(q)||(m.category||"").toLowerCase().includes(q)));
- byId("medicineProducts").innerHTML=rows.map(m=>'<article class="medicine-card">'+(m.image_url?'<img src="'+esc(m.image_url)+'" data-photo-url="'+esc(m.image_url)+'" tabindex="0" role="button" title="Tap to enlarge photo" alt="'+esc(m.name)+'" loading="lazy">':'<div class="medicine-photo" style="display:grid;place-items:center;color:#667788">Photo not available</div>')+'<h3>'+esc(m.name)+'</h3>'+(m.composition?'<p>'+esc(m.composition)+'</p>':'')+(m.pack_size?'<p><b>Pack:</b> '+esc(m.pack_size)+'</p>':'')+(m.category?'<p class="muted">'+esc(m.category)+'</p>':'')+'</article>').join("")||'<p class="muted">No medicines match your search.</p>';
+ byId("medicineProducts").innerHTML=rows.map(m=>'<article class="medicine-card">'+(m.image_url?'<img src="'+esc(m.image_url)+'" data-photo-url="'+esc(m.image_url)+'" tabindex="0" role="button" title="Tap to enlarge photo" alt="'+esc(m.name)+'" loading="lazy">':'<div class="medicine-photo" style="display:grid;place-items:center;color:#667788">Photo not available</div>')+'<h3>'+esc(m.name)+'</h3>'+(m.composition?'<p>'+esc(m.composition)+'</p>':'')+(m.pack_size?'<p><b>Pack:</b> '+esc(m.pack_size)+'</p>':'')+(m.category?'<p class="muted">'+esc(m.category)+'</p>':'')+medicineInfoHtml(m)+'</article>').join("")||'<p class="muted">No medicines match your search.</p>';
 }
 async function loadPublicMedicines(){
  byId("catalogueStatus").textContent="Loading medicines…";
- const {data,error}=await db.from("public_medicine_catalogue").select("id,name,composition,pack_size,category,image_url,company_id").order("name");
+ const {data,error}=await db.from("public_medicine_details").select("id,name,composition,pack_size,category,image_url,company_id,uses,benefits,side_effects,precautions,info_source_url,info_status,info_checked_at").order("name");
  if(error){byId("catalogueStatus").textContent="Medicines could not be loaded. Please try again later or contact PRAVEEN PHARMA.";return;}
  publicMedicines=data||[];
  const {data:companies,error:companyError}=await db.from("medicine_companies").select("id,name").eq("is_approved",true).order("name");
