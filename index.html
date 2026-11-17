@@ -8,7 +8,7 @@
 header{padding:42px 16px;text-align:center;color:#fff;background:linear-gradient(120deg,#062b49,#07558c,#078b91)}
 header h1{margin:0;font-size:clamp(28px,5vw,42px);letter-spacing:1px}header p{margin:8px 0 0}
 main{max-width:900px;margin:28px auto;padding:0 16px}.panel{background:#fff;border:1px solid #dce7ee;border-radius:16px;padding:24px;margin:18px 0;box-shadow:0 5px 18px #12334a10}
-h2{color:#07558c;margin-top:0}.muted{color:#667788}.contact{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+h2{color:#07558c;margin-top:0}.muted{color:#667788}.contact{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}.catalogue-tools{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0}.catalogue-tools input{flex:1;min-width:210px;padding:12px;border:1px solid #cbdce8;border-radius:9px;font:inherit}.products{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px}.medicine-card{border:1px solid #dce7ee;border-radius:12px;padding:13px;background:#fff;min-width:0}.medicine-card img,.medicine-photo{width:100%;height:160px;object-fit:contain;background:#f1f7fb;border-radius:9px}.medicine-card h3{color:#07558c;margin:10px 0 5px}.medicine-card p{margin:5px 0;overflow-wrap:anywhere}.catalogue-status{padding:10px;background:#eef6fa;border-radius:8px;color:#536b7c}
 .call{display:block;padding:16px;border-radius:10px;text-align:center;text-decoration:none;background:#087b67;color:#fff;font-weight:bold}
 footer{text-align:center;padding:22px;background:#062b49;color:#fff;margin-top:35px}
 #announcement{background:#fff7e8;border-left:5px solid #e0a044}a{overflow-wrap:anywhere}
@@ -18,7 +18,7 @@ footer{text-align:center;padding:22px;background:#062b49;color:#fff;margin-top:3
 <header><h1 id="businessName">PRAVEEN PHARMA</h1><p id="tagline">Wholesale Medicine Supply</p><p id="addressHeader">Opposite Union Bank, Sircilla, Telangana</p></header>
 <main>
 <section class="panel" id="announcementPanel" hidden><h2>Announcement</h2><p id="announcement"></p></section>
-<section class="panel"><h2>About Us</h2><p id="aboutText">Wholesale medicine supply in Sircilla.</p></section>
+<section class="panel" id="medicineCatalogue"><h2>Our Medicines</h2><p class="muted">Browse our medicine catalogue. For availability and retailer pricing, please contact PRAVEEN PHARMA.</p><div class="catalogue-tools"><input id="medicineSearch" type="search" placeholder="Search medicine name or composition" aria-label="Search medicines"></div><p id="catalogueStatus" class="catalogue-status" role="status">Loading medicines…</p><div id="medicineProducts" class="products"></div></section><section class="panel"><h2>About Us</h2><p id="aboutText">Wholesale medicine supply in Sircilla.</p></section>
 <section class="panel"><h2>Contact PRAVEEN PHARMA</h2><p class="muted" id="addressText">Opposite Union Bank, Sircilla, Telangana</p><div class="contact"><a class="call" id="phonePrimary" href="tel:+919550620353">Call 9550620353</a><a class="call" id="phoneSecondary" href="tel:+919398117337">Call 9398117337</a></div></section>
 </main><footer>© <span id="footerName">PRAVEEN PHARMA</span></footer>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -26,6 +26,22 @@ footer{text-align:center;padding:22px;background:#062b49;color:#fff;margin-top:3
 const db=window.supabase.createClient("https://hdoftqemjttaegkysjyq.supabase.co","sb_publishable_75Bn2frOUV-LeTqXvgUVtg__jIxuA72");
 const byId=id=>document.getElementById(id);
 function setPhone(id,number){const digits=String(number||"").replace(/[^0-9+]/g,"");const link=byId(id);link.href=digits?"tel:"+digits:"#";link.textContent=digits?"Call "+String(number):"Phone number not available";link.hidden=!digits;}
+const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+let publicMedicines=[];
+function renderPublicMedicines(){
+ const q=byId("medicineSearch").value.trim().toLowerCase();
+ const rows=publicMedicines.filter(m=>(m.name||"").toLowerCase().includes(q)||(m.composition||"").toLowerCase().includes(q)||(m.category||"").toLowerCase().includes(q));
+ byId("medicineProducts").innerHTML=rows.map(m=>'<article class="medicine-card">'+(m.image_url?'<img src="'+esc(m.image_url)+'" alt="'+esc(m.name)+'" loading="lazy">':'<div class="medicine-photo" style="display:grid;place-items:center;color:#667788">Photo not available</div>')+'<h3>'+esc(m.name)+'</h3>'+(m.composition?'<p>'+esc(m.composition)+'</p>':'')+(m.pack_size?'<p><b>Pack:</b> '+esc(m.pack_size)+'</p>':'')+(m.category?'<p class="muted">'+esc(m.category)+'</p>':'')+'</article>').join("")||'<p class="muted">No medicines match your search.</p>';
+}
+async function loadPublicMedicines(){
+ byId("catalogueStatus").textContent="Loading medicines…";
+ const {data,error}=await db.from("public_medicine_catalogue").select("id,name,composition,pack_size,category,image_url").order("name");
+ if(error){byId("catalogueStatus").textContent="Medicines could not be loaded. Please try again later or contact PRAVEEN PHARMA.";return;}
+ publicMedicines=data||[];
+ byId("catalogueStatus").textContent=publicMedicines.length?publicMedicines.length+" medicines available.":"Medicine catalogue is being updated.";
+ renderPublicMedicines();
+}
+byId("medicineSearch").addEventListener("input",renderPublicMedicines);
 async function loadPublicSettings(){
  const {data,error}=await db.from("site_settings").select("business_name,tagline,about_text,address,phone_primary,phone_secondary,announcement").eq("id",1).maybeSingle();
  if(error||!data)return;
@@ -39,4 +55,5 @@ async function loadPublicSettings(){
  document.title=name+" | "+(data.tagline||"Wholesale Medicine Supply");
 }
 loadPublicSettings();
+loadPublicMedicines();
 </script></body></html>
