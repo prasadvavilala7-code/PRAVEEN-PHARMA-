@@ -43,7 +43,7 @@ nav[aria-label="Main navigation"]{position:sticky;top:0;z-index:100;backdrop-fil
 <script>
 const SUPABASE_URL="https://hdoftqemjttaegkysjyq.supabase.co",SUPABASE_KEY="sb_publishable_75Bn2frOUV-LeTqXvgUVtg__jIxuA72",ADMIN_ID="9be3d5ee-e09a-4738-9b27-f2fae15e93c7";
 const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY),$=id=>document.getElementById(id);
-let user=null,profile=null,medicines=[],prices={},cart=[],approved=false,compareIds=[];
+let user=null,profile=null,medicines=[],prices={},cart=[],approved=false,compareIds=[],companyNames={};
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const money=v=>"₹"+Number(v||0).toFixed(2);
 function show(id,on=true){$(id).classList.toggle("hidden",!on)}
@@ -68,7 +68,7 @@ async function loadCatalogue(isApproved){
  medicines=data||[];
  const {data:companies,error:companyError}=await db.from("medicine_companies").select("id,name").eq("is_approved",true).order("name");
  if(companyError){$("status").textContent="Company list error: "+companyError.message;return;}
- $("companyFilter").innerHTML='<option value="">All published companies</option>'+(companies||[]).map(c=>'<option value="'+esc(c.id)+'">'+esc(c.name)+'</option>').join("");
+ companyNames=Object.fromEntries((companies||[]).map(c=>[c.id,c.name]));$("companyFilter").innerHTML='<option value="">All published companies</option>'+(companies||[]).map(c=>'<option value="'+esc(c.id)+'">'+esc(c.name)+'</option>').join("");
  applyCompanyFilter();
 }
 function applyCompanyFilter(){
@@ -95,7 +95,7 @@ function toggleCompare(id){
  if(compareIds.includes(id))compareIds=compareIds.filter(x=>x!==id);
  else if(compareIds.length>=3){$("status").textContent="Compare up to 3 medicines at a time.";return;}
  else compareIds.push(id);
- updateCompareBar();renderProducts();
+ updateCompareBar();applyCompanyFilter();
 }
 function updateCompareBar(){
  $("compareCount").textContent=compareIds.length+" medicine(s) selected";
@@ -105,7 +105,7 @@ function openCompare(){
  const rows=medicines.filter(m=>compareIds.includes(m.id));
  if(rows.length<2){$("status").textContent="Select at least 2 medicines to compare.";return;}
  const fields=[["Medicine","name"],["Composition","composition"],["Pack Size","pack_size"],["Company","company_name"],["Category","category"],["Retailer Price","price"]];
- $("compareContent").innerHTML='<table class="compare-table"><thead><tr><th>Details</th>'+rows.map(m=>'<th>'+esc(m.name)+'</th>').join("")+'</tr></thead><tbody>'+fields.map(([label,key])=>'<tr><th>'+label+'</th>'+rows.map(m=>'<td>'+esc(key==="price"?(approved?money(price(m)):"Available after approval"):(key==="company_name"?(m.company_name||m.company||"Not listed"):(m[key]||"Not provided")))+'</td>').join("")+'</tr>').join("")+'</tbody></table>';
+ $("compareContent").innerHTML='<table class="compare-table"><thead><tr><th>Details</th>'+rows.map(m=>'<th>'+esc(m.name)+'</th>').join("")+'</tr></thead><tbody>'+fields.map(([label,key])=>'<tr><th>'+label+'</th>'+rows.map(m=>'<td>'+esc(key==="price"?(approved?money(price(m)):"Available after approval"):(key==="company_name"?(companyNames[m.company_id]||"Not listed"):(m[key]||"Not provided")))+'</td>').join("")+'</tr>').join("")+'</tbody></table>';
  show("compareModal",true);
 }
 function closeCompare(){show("compareModal",false)}
