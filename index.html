@@ -23,7 +23,30 @@ header{position:relative;overflow:hidden;text-align:left!important;padding:clamp
 /* Storefront commerce-style navigation and hero */
 .store-hero{padding:clamp(42px,7vw,76px) max(20px,calc((100% - 1120px)/2))!important}
 .hero-inner{max-width:1120px;margin:0 auto}.hero-kicker{display:inline-flex;padding:7px 12px;border:1px solid #ffffff55;border-radius:999px;color:#dff8f3;font-size:10px;font-weight:800;letter-spacing:.15em}.store-hero h1{margin-top:18px}.hero-actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:25px}.hero-actions a{display:inline-flex;align-items:center;justify-content:center;gap:12px;padding:13px 18px;border-radius:11px;text-decoration:none;font-weight:750}.hero-primary{background:#fff;color:#123c55;box-shadow:0 8px 20px #001d2c35}.hero-secondary{border:1px solid #ffffff70;color:#fff;background:#ffffff12}.hero-points{display:flex;gap:18px;flex-wrap:wrap;margin-top:25px;color:#e0f2f1;font-size:12px;font-weight:600}.store-nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;gap:15px;max-width:none;padding:12px max(18px,calc((100% - 1120px)/2));background:#fff;border-bottom:1px solid #dce6ec;box-shadow:0 5px 18px #1231460c}.store-nav>div{display:flex;align-items:center;gap:clamp(10px,2vw,24px);flex-wrap:wrap}.store-nav a{color:#29485b;text-decoration:none;font-size:13px;font-weight:700}.store-nav .brand-mini{font-size:14px;letter-spacing:.04em;color:#102b43}.store-nav .brand-mini b{color:#087f78}.store-nav .nav-retailer{background:#087f78;color:white;padding:10px 14px;border-radius:9px}.catalogue-panel{scroll-margin-top:78px}.panel[id$="Panel"],#aboutPanel,#contactPanel{scroll-margin-top:78px}@media(max-width:560px){.store-nav{align-items:flex-start;flex-direction:column;padding:10px 14px}.store-nav>div{width:100%;justify-content:space-between;gap:8px}.store-nav a{font-size:12px}.hero-points{gap:8px 14px}.hero-actions a{flex:1}}
-</style></head>
+</style><style>
+/* App-like responsive experience */
+:root{--app-ink:#123047;--app-blue:#07558c;--app-teal:#087b67}
+body{padding-bottom:76px}
+.store-hero{padding:clamp(28px,6vw,62px) 18px!important;background:radial-gradient(circle at 85% 15%,#18a7a1 0,transparent 34%),linear-gradient(125deg,#062b49,#07558c 58%,#087b67)!important}
+.hero-inner{max-width:1180px;margin:auto;text-align:left}
+.hero-kicker{display:inline-block;padding:6px 11px;border:1px solid #ffffff55;border-radius:99px;font-size:11px;letter-spacing:1.3px}
+.hero-inner h1{margin-top:14px}
+.hero-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:22px}
+.hero-primary,.hero-secondary{display:inline-flex;align-items:center;gap:8px;padding:12px 17px;border-radius:12px;text-decoration:none;font-weight:700}
+.hero-primary{background:#fff;color:#07558c}.hero-secondary{border:1px solid #ffffff80;color:#fff}
+.store-nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px max(16px,calc((100% - 1180px)/2));background:#ffffffed;backdrop-filter:blur(14px);box-shadow:0 4px 18px #0b304015}
+.store-nav>div{display:flex;align-items:center;gap:clamp(10px,2vw,24px);flex-wrap:wrap}
+.store-nav a{font-weight:650;text-decoration:none;color:#24445a}
+.store-nav .nav-retailer{background:var(--app-blue);color:#fff;padding:9px 13px;border-radius:10px}
+main{max-width:1180px!important;padding:22px 18px!important}
+.panel{border-radius:18px!important;box-shadow:0 8px 28px #0b30400d!important}
+.medicine-card{border-radius:16px!important;transition:transform .18s ease,box-shadow .18s ease}
+.medicine-card:hover{transform:translateY(-3px);box-shadow:0 12px 26px #0b304018}
+.app-bottom-nav{display:none}
+@media(max-width:640px){body{padding-bottom:78px}.store-hero{text-align:left!important}.store-nav{padding:10px 14px}.store-nav>div a:not(.nav-retailer){display:none}.store-nav .brand-mini{font-size:14px}main{padding:12px!important}.panel{padding:16px!important}.app-bottom-nav{position:fixed;z-index:1000;bottom:0;left:0;right:0;display:grid;grid-template-columns:repeat(4,1fr);padding:8px 5px calc(8px + env(safe-area-inset-bottom));background:#ffffffed;backdrop-filter:blur(16px);border-top:1px solid #dce7ee;box-shadow:0 -5px 22px #12304712}.app-bottom-nav a{display:flex;flex-direction:column;align-items:center;gap:2px;color:#31536a;text-decoration:none;font-size:11px;font-weight:700;padding:5px 2px}.app-bottom-nav a span{font-size:19px}.hero-points{display:flex;flex-wrap:wrap;gap:8px}.hero-points span{font-size:12px}}
+
+</style>
+</head>
 <body>
 <header class="store-hero"><div class="hero-inner"><span class="hero-kicker">TRUSTED PHARMA WHOLESALE · SIRCILLA</span><h1 id="businessName">PRAVEEN PHARMA</h1><p id="tagline">Wholesale Medicine Supply</p><p id="addressHeader">Opposite Union Bank, Sircilla, Telangana</p><div class="hero-actions"><a href="#medicineCatalogue" class="hero-primary">Explore Medicines <span aria-hidden="true">→</span></a><a href="#contactPanel" class="hero-secondary">Contact Our Team</a></div><div class="hero-points"><span>✓ Company-wise catalogue</span><span>✓ Retailer ordering portal</span><span>✓ GST invoice support</span></div></div></header>
 <nav class="store-nav" aria-label="Main navigation"><a class="brand-mini" href="./index.html">PRAVEEN <b>RX STORE</b></a><div><a href="#medicineCatalogue">Medicines</a><a href="#aboutPanel">About</a><a href="#contactPanel">Contact</a><a class="nav-retailer" href="./retailer.html">Retailer Login ↗</a></div></nav>
@@ -31,7 +54,7 @@ header{position:relative;overflow:hidden;text-align:left!important;padding:clamp
 <section class="panel" id="announcementPanel" hidden><h2>Announcement</h2><p id="announcement"></p></section>
 <section class="panel catalogue-panel" id="medicineCatalogue"><h2>Our Medicines</h2><p class="muted">Browse our medicine catalogue. For availability and retailer pricing, please contact PRAVEEN PHARMA.</p><div class="catalogue-tools"><select id="companySearch" aria-label="Choose company"><option value="">All approved companies</option></select><input id="medicineSearch" type="search" placeholder="Search medicine name or composition" aria-label="Search medicines"></div><p id="catalogueStatus" class="catalogue-status" role="status">Loading medicines…</p><div id="medicineProducts" class="products"></div></section><section class="panel" id="aboutPanel"><h2>About Us</h2><p id="aboutText">Wholesale medicine supply in Sircilla.</p></section>
 <section class="panel" id="contactPanel"><h2>Contact PRAVEEN PHARMA</h2><p class="muted" id="addressText">Opposite Union Bank, Sircilla, Telangana</p><div class="contact"><a class="call" id="phonePrimary" href="tel:+919550620353">Call 9550620353</a><a class="call" id="phoneSecondary" href="tel:+919398117337">Call 9398117337</a></div></section>
-</main><footer>© <span id="footerName">PRAVEEN PHARMA</span></footer>
+</main><nav class="app-bottom-nav" aria-label="Quick app navigation"><a href="#medicineCatalogue"><span>▦</span>Medicines</a><a href="#aboutPanel"><span>ⓘ</span>About</a><a href="#contactPanel"><span>☎</span>Contact</a><a href="./retailer.html"><span>♙</span>Retailer</a></nav><footer>© <span id="footerName">PRAVEEN PHARMA</span></footer>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const db=window.supabase.createClient("https://hdoftqemjttaegkysjyq.supabase.co","sb_publishable_75Bn2frOUV-LeTqXvgUVtg__jIxuA72");
