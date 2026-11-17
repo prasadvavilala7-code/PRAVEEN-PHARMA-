@@ -127,7 +127,63 @@ main{max-width:1320px!important}
 .photo-viewer-close{position:fixed;top:14px;right:16px;z-index:2;width:46px;height:46px;border:0;border-radius:50%;background:#fff;color:#102b43;font-size:30px;line-height:1;cursor:pointer}
 .photo-viewer-status{position:absolute;left:50%;bottom:20px;transform:translateX(-50%);max-width:90vw;padding:8px 12px;border-radius:8px;background:#fff;color:#183047;font-size:13px}
 @media(max-width:600px){.photo-viewer{padding:10px}.photo-viewer .photo-viewer-image{max-width:96vw;max-height:84vh}.photo-viewer-close{top:8px;right:8px}}
-</style></head>
+</style><style>
+
+/* FINAL APPROVED ADMIN DASHBOARD THEME: clean navy blue + restrained gold */
+:root{--pp-ink:#142b49;--pp-muted:#68788b;--pp-navy:#082b55;--pp-navy-2:#0d3768;--pp-gold:#d9a83f;--pp-gold-soft:#fff6df;--pp-line:#e1e7ef;--pp-bg:#f6f8fb;--pp-shadow:0 3px 12px rgba(8,35,70,.055)}
+body{background:var(--pp-bg)!important;color:var(--pp-ink)!important}
+header{background:var(--pp-navy)!important;color:#fff!important;border-bottom:3px solid var(--pp-gold)!important;box-shadow:0 2px 9px rgba(8,35,70,.12)!important}
+header h1{color:#fff!important;font-size:23px!important;letter-spacing:.01em!important}
+header p{color:#dce5f1!important}
+main{max-width:1440px!important;padding:22px 22px 42px!important}
+.admin-shell{grid-template-columns:235px minmax(0,1fr)!important;gap:18px!important}
+.admin-nav{background:var(--pp-navy)!important;border:1px solid #173e6c!important;border-radius:12px!important;padding:14px!important;box-shadow:0 4px 14px rgba(8,35,70,.08)!important}
+.admin-nav h3{color:#f3d58d!important;font-size:12px!important;letter-spacing:.12em!important}
+.admin-nav button{background:transparent!important;color:#e5edf7!important;border:1px solid transparent!important;border-radius:8px!important;box-shadow:none!important;transform:none!important}
+.admin-nav button:hover{background:#123d70!important;color:#fff!important;border-color:#315783!important}
+.admin-nav button.active{background:var(--pp-gold)!important;color:#102b4d!important;border-color:#e7c46f!important;box-shadow:none!important;font-weight:750!important}
+.panel{background:#fff!important;border:1px solid var(--pp-line)!important;border-radius:12px!important;box-shadow:var(--pp-shadow)!important;padding:19px!important}
+#dashboardHome{background:#fff!important;border:1px solid var(--pp-line)!important;border-radius:12px!important;box-shadow:var(--pp-shadow)!important}
+#dashboardHome>h2{color:var(--pp-navy)!important;font-size:24px!important;letter-spacing:-.025em!important;margin-bottom:4px!important}
+#dashboardHome>h2:before{content:""!important}
+#dashboardHome>.muted{color:var(--pp-muted)!important;margin-bottom:17px!important}
+#dashboardHome .stats{grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:12px!important;margin:16px 0!important}
+#dashboardHome .stat{min-height:98px!important;padding:16px!important;border:1px solid var(--pp-line)!important;border-bottom:3px solid var(--pp-gold)!important;border-radius:10px!important;background:#fff!important;box-shadow:none!important}
+#dashboardHome .stat:after{display:none!important}
+#dashboardHome .stat:hover{transform:none!important;box-shadow:0 4px 12px rgba(8,35,70,.07)!important}
+#dashboardHome .stat strong{color:var(--pp-navy)!important;font-size:28px!important;font-weight:750!important}
+#dashboardHome .stat span{color:var(--pp-muted)!important;font-size:12px!important;text-transform:none!important;letter-spacing:0!important;font-weight:600!important}
+#dashboardHome>.panel{margin-top:14px!important;padding:17px!important;border:1px solid var(--pp-line)!important;border-radius:10px!important;background:#fff!important;box-shadow:none!important}
+#dashboardHome>.panel h3{color:var(--pp-navy)!important;font-size:16px!important;margin:0 0 10px!important}
+#dashboardHome>.panel button{min-height:42px!important;margin:4px 6px 4px 0!important;padding:10px 14px!important}
+button{background:var(--pp-navy)!important;color:#fff!important;border-radius:8px!important;box-shadow:none!important;transform:none!important}
+button:hover{background:var(--pp-navy-2)!important;filter:none!important;transform:none!important}
+button.secondary{background:var(--pp-gold-soft)!important;color:var(--pp-navy)!important;border:1px solid #ecd79f!important}
+button.secondary:hover{background:#f9eac2!important}
+button.danger{background:#b42318!important;color:#fff!important}
+input:focus,select:focus,textarea:focus{border-color:var(--pp-gold)!important;box-shadow:0 0 0 3px rgba(217,168,63,.16)!important}
+#siteLinks .row a{background:var(--pp-navy)!important;color:#fff!important;border-color:var(--pp-gold)!important}
+#editor,#catalogue,#retailerRequests,#approvedRetailers,#ordersPanel{border-top:3px solid var(--pp-gold)!important}
+#dashboardHome #dashboardStatus{padding:10px 12px;background:#f6f8fb;border:1px solid var(--pp-line);border-radius:8px;color:var(--pp-muted)!important}
+@media(max-width:760px){
+ main{padding:14px 11px 28px!important}
+ .admin-shell{display:block!important}
+ .admin-nav{margin-bottom:12px!important;padding:12px!important}
+ .admin-nav .nav-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:6px!important}
+ .admin-nav .nav-grid button{min-height:42px!important;font-size:12px!important}
+ #dashboardHome{padding:15px!important}
+ #dashboardHome .stats{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:9px!important}
+ #dashboardHome .stat{min-height:88px!important;padding:12px!important}
+ #dashboardHome .stat strong{font-size:24px!important}
+ #dashboardHome>.panel{padding:13px!important}
+ #dashboardHome>.panel button{width:100%;margin:4px 0!important;text-align:left}
+ .app-admin-bottom{background:#fff!important;border-top:1px solid var(--pp-line)!important}
+ .app-admin-bottom button{background:transparent!important;color:var(--pp-navy)!important}
+ .app-admin-bottom button:active{background:var(--pp-gold-soft)!important}
+}
+
+</style>
+</head>
 <body>
 <header><h1>PRAVEEN PHARMA</h1><p>Admin Dashboard · Medicine Catalogue</p></header>
 <main>
