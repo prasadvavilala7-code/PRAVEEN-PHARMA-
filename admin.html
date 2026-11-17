@@ -133,7 +133,7 @@ a{color:#237344}
 <p class="muted">These are central settings saved in Supabase. Website behaviour changes only where the respective website reads these settings; no retailer-only prices are published publicly.</p>
 <button id="saveSettings">Save & Publish Website Info</button><button class="secondary" id="reloadSettings">Reload</button>
 <p id="settingsStatus" class="muted" role="status"></p>
-<h3>Previous settings / Rollback</h3><div id="settingsHistory">Loading…</div>
+<h3>Deleted medicines</h3><p class="muted">Deleted medicines are kept inactive so old orders remain intact. Restore them here when needed.</p><div id="inactiveMedicines">Loading deleted medicines…</div><h3>Previous settings / Rollback</h3><div id="settingsHistory">Loading…</div>
 </section>
 <section class="panel" id="reportsPanel" hidden><h2>Business Reports</h2><div id="reportSummary">Loading reports…</div><button class="secondary" id="refreshReports">Refresh Reports</button></section>
 <section class="panel" id="activityPanel" hidden><h2>Admin Activity History</h2><p class="muted">Records important changes made from this Admin Dashboard.</p><div id="activityList">Loading…</div><button class="secondary" id="refreshActivity">Refresh History</button></section>
@@ -194,21 +194,26 @@ function editMedicine(id){const m=allMedicines.find(x=>x.id===id);if(!m)return;s
 function renderList(){
  const q=$("filter").value.trim().toLowerCase();
  const list=allMedicines.filter(m=>(m.name||"").toLowerCase().includes(q)||(m.composition||"").toLowerCase().includes(q));
- $("medicineList").innerHTML=list.map(m=>'<div class="medicine">'+(m.image_url?'<img src="'+esc(m.image_url)+'" alt="'+esc(m.name)+'">':'<div class="muted">No photo</div>')+'<div><b>'+esc(m.name)+'</b> '+(m.is_active===false?'<span class="muted">[Inactive]</span>':'<span class="muted">[Active]</span>')+'<br><small>'+esc(m.composition)+' · '+esc(m.pack_size)+'</small><br><small>Price: ₹'+esc(m.common_price)+' · GST: '+esc(m.gst_rate)+'%</small><br><button type="button" data-edit="'+esc(m.id)+'">Edit / Change photo</button>'+(m.is_active===false?'<button type="button" class="secondary" data-toggle-active="'+esc(m.id)+'" data-next-active="true">Restore</button>':'<button type="button" class="danger" data-toggle-active="'+esc(m.id)+'" data-next-active="false">Delete / Deactivate</button>')+'</div></div>').join("")||"No medicines found.";
+ $("medicineList").innerHTML=list.map(m=>'<div class="medicine">'+(m.image_url?'<img src="'+esc(m.image_url)+'" alt="'+esc(m.name)+'">':'<div class="muted">No photo</div>')+'<div><b>'+esc(m.name)+'</b> '+(m.is_active===false?'<span class="muted">[Inactive]</span>':'<span class="muted">[Active]</span>')+'<br><small>'+esc(m.composition)+' · '+esc(m.pack_size)+'</small><br><small>Price: ₹'+esc(m.common_price)+' · GST: '+esc(m.gst_rate)+'%</small><br><button type="button" data-edit="'+esc(m.id)+'">Edit / Change photo</button>'+ (m.is_active===false?'<span class="muted">[Deleted — restore from Settings]</span>':'<button type="button" class="danger" data-toggle-active="'+esc(m.id)+'" data-next-active="false">Delete medicine</button>')+'</div></div>').join("")||"No medicines found.";
  $("medicineList").querySelectorAll("[data-edit]").forEach(b=>b.addEventListener("click",()=>editMedicine(b.dataset.edit)));
  $("medicineList").querySelectorAll("[data-toggle-active]").forEach(b=>b.addEventListener("click",()=>setMedicineActive(b.dataset.toggleActive,b.dataset.nextActive==="true")));
 }
 async function setMedicineActive(id,active){
  const m=allMedicines.find(x=>x.id===id);if(!m)return;
- const verb=active?"restore":"deactivate";
- if(!confirm((active?"Restore ":"Delete / deactivate ")+m.name+"? "+(active?"It will become visible/available again.":"It will be hidden from active catalogues. Existing orders are preserved.")))return;
+ const verb=active?"restore":"delete";
+ if(!confirm((active?"Restore ":"Delete medicine ")+m.name+"? "+(active?"It will become active and visible again.":"It will be moved to Deleted medicines in Settings. Existing orders are preserved.")))return;
  const {error}=await db.from("medicines").update({is_active:active}).eq("id",id);
  if(error){alert("Medicine update failed: "+error.message);return;}
  await logActivity(active?"Restored medicine":"Deactivated medicine",{medicine_id:id,medicine_name:m.name});
  await loadMedicines();await loadActivity();
 }
 
-async function loadMedicines(){const {data,error}=await db.from("medicines").select("id,name,composition,pack_size,category,image_url,common_price,gst_rate,is_active").order("name");if(error){$("saveStatus").textContent="Catalogue error: "+error.message;return;}allMedicines=data||[];renderList();updateDashboardStats();}
+function renderInactiveMedicines(){
+ const inactive=allMedicines.filter(m=>m.is_active===false);
+ $("inactiveMedicines").innerHTML=inactive.map(m=>'<div class="medicine"><div>'+(m.image_url?'<img src="'+esc(m.image_url)+'" alt="'+esc(m.name)+'">':'')+'</div><div><b>'+esc(m.name)+'</b><br><small>'+esc(m.composition)+' · '+esc(m.pack_size)+'</small><br><button type="button" class="secondary" data-restore-medicine="'+esc(m.id)+'">Restore medicine</button></div></div>').join("")||"No deleted medicines.";
+ $("inactiveMedicines").querySelectorAll("[data-restore-medicine]").forEach(b=>b.onclick=()=>setMedicineActive(b.dataset.restoreMedicine,true));
+}
+async function loadMedicines(){const {data,error}=await db.from("medicines").select("id,name,composition,pack_size,category,image_url,common_price,gst_rate,is_active").order("name");if(error){$("saveStatus").textContent="Catalogue error: "+error.message;return;}allMedicines=data||[];renderList();renderInactiveMedicines();updateDashboardStats();}
 async function uploadPhoto(file,medicineId){const ext=(file.name.split(".").pop()||"jpg").toLowerCase().replace(/[^a-z0-9]/g,"")||"jpg";const path=medicineId+"/"+Date.now()+"."+ext;const {error}=await db.storage.from(BUCKET).upload(path,file,{upsert:false,contentType:file.type||"image/jpeg"});if(error)throw error;const {data}=db.storage.from(BUCKET).getPublicUrl(path);return data.publicUrl;}
 async function saveMedicine(){const name=$("name").value.trim();if(!name){$("saveStatus").textContent="Medicine name is required.";return;}const id=$("medicineId").value;const payload={name,composition:$("composition").value.trim(),pack_size:$("pack").value.trim(),category:$("category").value.trim(),common_price:Number($("price").value||0),gst_rate:Number($("gst").value||0),is_active:true};$("saveMedicine").disabled=true;$("saveStatus").textContent="Saving…";try{if(selectedFile){const photoId=id||crypto.randomUUID();payload.image_url=await uploadPhoto(selectedFile,photoId);}let result;if(id)result=await db.from("medicines").update(payload).eq("id",id);else result=await db.from("medicines").insert(payload);if(result.error)throw result.error;$("saveStatus").textContent="Medicine saved. Photo is publicly available to website visitors.";await logActivity(id?"Updated medicine":"Added medicine",{medicine_name:name});await loadActivity();clearForm();await loadMedicines();}catch(e){$("saveStatus").textContent="Save failed: "+(e.message||String(e))+". Check Storage bucket and policies."; }finally{$("saveMedicine").disabled=false;}}
 function profileCard(p,actions){return '<div class="medicine"><div>🏪</div><div><b>'+esc(p.shop_name)+'</b><br><small>Owner: '+esc(p.owner_name||"—")+' · Phone: '+esc(p.phone||"—")+' · GSTIN: '+esc(p.gstin||"—")+'</small><br><small>Status: '+esc(p.approval_status||"pending")+' · User ID: '+esc(p.user_id)+'</small><br>'+actions+'</div></div>';}
