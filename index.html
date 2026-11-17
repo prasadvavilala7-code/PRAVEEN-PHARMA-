@@ -23,7 +23,7 @@ header{position:relative;overflow:hidden;text-align:left!important;padding:clamp
 <header><h1 id="businessName">PRAVEEN PHARMA</h1><p id="tagline">Wholesale Medicine Supply</p><p id="addressHeader">Opposite Union Bank, Sircilla, Telangana</p></header>
 <main>
 <section class="panel" id="announcementPanel" hidden><h2>Announcement</h2><p id="announcement"></p></section>
-<section class="panel" id="medicineCatalogue"><h2>Our Medicines</h2><p class="muted">Browse our medicine catalogue. For availability and retailer pricing, please contact PRAVEEN PHARMA.</p><div class="catalogue-tools"><input id="medicineSearch" type="search" placeholder="Search medicine name or composition" aria-label="Search medicines"></div><p id="catalogueStatus" class="catalogue-status" role="status">Loading medicines…</p><div id="medicineProducts" class="products"></div></section><section class="panel"><h2>About Us</h2><p id="aboutText">Wholesale medicine supply in Sircilla.</p></section>
+<section class="panel" id="medicineCatalogue"><h2>Our Medicines</h2><p class="muted">Browse our medicine catalogue. For availability and retailer pricing, please contact PRAVEEN PHARMA.</p><div class="catalogue-tools"><select id="companySearch" aria-label="Choose company"><option value="">All approved companies</option></select><input id="medicineSearch" type="search" placeholder="Search medicine name or composition" aria-label="Search medicines"></div><p id="catalogueStatus" class="catalogue-status" role="status">Loading medicines…</p><div id="medicineProducts" class="products"></div></section><section class="panel"><h2>About Us</h2><p id="aboutText">Wholesale medicine supply in Sircilla.</p></section>
 <section class="panel"><h2>Contact PRAVEEN PHARMA</h2><p class="muted" id="addressText">Opposite Union Bank, Sircilla, Telangana</p><div class="contact"><a class="call" id="phonePrimary" href="tel:+919550620353">Call 9550620353</a><a class="call" id="phoneSecondary" href="tel:+919398117337">Call 9398117337</a></div></section>
 </main><footer>© <span id="footerName">PRAVEEN PHARMA</span></footer>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -34,19 +34,22 @@ function setPhone(id,number){const digits=String(number||"").replace(/[^0-9+]/g,
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 let publicMedicines=[];
 function renderPublicMedicines(){
- const q=byId("medicineSearch").value.trim().toLowerCase();
- const rows=publicMedicines.filter(m=>(m.name||"").toLowerCase().includes(q)||(m.composition||"").toLowerCase().includes(q)||(m.category||"").toLowerCase().includes(q));
+ const q=byId("medicineSearch").value.trim().toLowerCase(),company=byId("companySearch").value;
+ const rows=publicMedicines.filter(m=>(!company||m.company_id===company)&&((m.name||"").toLowerCase().includes(q)||(m.composition||"").toLowerCase().includes(q)||(m.category||"").toLowerCase().includes(q)));
  byId("medicineProducts").innerHTML=rows.map(m=>'<article class="medicine-card">'+(m.image_url?'<img src="'+esc(m.image_url)+'" alt="'+esc(m.name)+'" loading="lazy">':'<div class="medicine-photo" style="display:grid;place-items:center;color:#667788">Photo not available</div>')+'<h3>'+esc(m.name)+'</h3>'+(m.composition?'<p>'+esc(m.composition)+'</p>':'')+(m.pack_size?'<p><b>Pack:</b> '+esc(m.pack_size)+'</p>':'')+(m.category?'<p class="muted">'+esc(m.category)+'</p>':'')+'</article>').join("")||'<p class="muted">No medicines match your search.</p>';
 }
 async function loadPublicMedicines(){
  byId("catalogueStatus").textContent="Loading medicines…";
- const {data,error}=await db.from("public_medicine_catalogue").select("id,name,composition,pack_size,category,image_url").order("name");
+ const {data,error}=await db.from("public_medicine_catalogue").select("id,name,composition,pack_size,category,image_url,company_id").order("name");
  if(error){byId("catalogueStatus").textContent="Medicines could not be loaded. Please try again later or contact PRAVEEN PHARMA.";return;}
  publicMedicines=data||[];
+ const {data:companies,error:companyError}=await db.from("medicine_companies").select("id,name").eq("is_approved",true).order("name");
+ if(!companyError)byId("companySearch").innerHTML='<option value="">All approved companies</option>'+(companies||[]).map(c=>'<option value="'+esc(c.id)+'">'+esc(c.name)+'</option>').join("");
  byId("catalogueStatus").textContent=publicMedicines.length?publicMedicines.length+" medicines available.":"Medicine catalogue is being updated.";
  renderPublicMedicines();
 }
 byId("medicineSearch").addEventListener("input",renderPublicMedicines);
+byId("companySearch").addEventListener("change",renderPublicMedicines);
 async function loadPublicSettings(){
  const {data,error}=await db.from("site_settings").select("business_name,tagline,about_text,address,phone_primary,phone_secondary,announcement").eq("id",1).maybeSingle();
  if(error||!data)return;
