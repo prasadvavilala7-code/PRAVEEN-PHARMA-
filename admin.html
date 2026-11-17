@@ -48,12 +48,57 @@ a{color:#237344}
  .medicine img{width:68px;height:68px}
  button{padding:10px 12px}
 }
+
+/* Enterprise control-centre layout */
+.admin-shell{display:grid;grid-template-columns:230px minmax(0,1fr);gap:18px;align-items:start}
+.admin-nav{position:sticky;top:12px;background:#102b3f;color:#fff;border-radius:14px;padding:14px}
+.admin-nav h3{color:#fff;margin:4px 8px 12px;font-size:14px;letter-spacing:.5px}
+.admin-nav button{display:flex;align-items:center;gap:10px;width:100%;text-align:left;margin:3px 0;background:transparent;color:#d9e6ed;border:1px solid transparent}
+.admin-nav button:hover,.admin-nav button.active{background:#1d4057;color:#fff;border-color:#41647a}
+.admin-nav button.active{box-shadow:inset 3px 0 #6fe0b2}
+#dashboardHome .stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.stat{background:#fff;border:1px solid #e1e9e2;border-radius:12px;padding:16px}
+.stat strong{display:block;font-size:25px;color:#176b42;margin-bottom:5px}
+.stat span{font-size:12px;color:#738078}
+.content-area{min-width:0}
+.content-area>.panel{margin-bottom:14px}
+@media(max-width:760px){.admin-shell{grid-template-columns:1fr}.admin-nav{position:static}.admin-nav .nav-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}.admin-nav button{justify-content:center;text-align:center;font-size:12px;padding:9px 4px}.admin-nav h3{margin-bottom:8px}#dashboardHome .stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
 </style>
 </head>
 <body>
 <header><h1>PRAVEEN PHARMA</h1><p>Admin Dashboard · Medicine Catalogue</p></header>
 <main>
-<section class="panel" id="siteLinks">
+<div class="admin-shell" id="adminShell" hidden>
+<aside class="admin-nav">
+<h3>CONTROL CENTRE</h3>
+<div class="nav-grid">
+<button type="button" data-section="dashboardHome" class="active">▦ Dashboard</button>
+<button type="button" data-section="catalogue">▣ Medicines</button>
+<button type="button" data-section="catalogue">▤ Stock</button>
+<button type="button" data-section="retailerRequests">♙ Retailers</button>
+<button type="button" data-section="ordersPanel">▣ Orders</button>
+<button type="button" data-section="siteLinks">◎ Websites</button>
+<button type="button" data-section="reportsPanel">▥ Reports</button>
+<button type="button" data-section="activityPanel">◷ Activity</button>
+<button type="button" data-section="backupPanel">◇ Security & Backup</button>
+<button type="button" data-section="masterSettings">⚙ Settings</button>
+</div>
+<button type="button" id="navLogout" class="secondary">↪ Sign out</button>
+</aside>
+<div class="content-area">
+<section class="panel" id="dashboardHome">
+<h2>Enterprise Dashboard</h2><p class="muted">Central overview of PRAVEEN PHARMA operations.</p>
+<div class="stats">
+<div class="stat"><strong id="dashMedicineCount">—</strong><span>Total medicines</span></div>
+<div class="stat"><strong id="dashActiveCount">—</strong><span>Active medicines</span></div>
+<div class="stat"><strong id="dashRetailerCount">—</strong><span>Retailers</span></div>
+<div class="stat"><strong id="dashOrderCount">—</strong><span>Orders</span></div>
+</div>
+<div class="panel" style="margin-top:14px"><h3>Quick actions</h3><button type="button" data-go="editor">＋ Add medicine</button><button type="button" class="secondary" data-go="catalogue">Manage medicines</button><button type="button" class="secondary" data-go="ordersPanel">View orders</button><button type="button" class="secondary" data-go="retailerRequests">Retailer approvals</button></div>
+<div class="panel"><h3>System overview</h3><p class="muted">Use the left menu to open each management area here without leaving the Admin Dashboard.</p><p id="dashboardStatus" class="muted">Live figures load after admin sign-in.</p></div>
+</section>
+<section class="panel" id="siteLinks" hidden>
 <h2>Website Links</h2>
 <p class="muted">Choose the website you want to open.</p>
 <div class="row">
@@ -102,6 +147,8 @@ a{color:#237344}
 <h2>Existing medicines</h2><input id="filter" placeholder="Search catalogue">
 <div id="medicineList">Loading…</div>
 </section>
+</div>
+</div>
 </main>
 <script>
 const SUPABASE_URL="https://hdoftqemjttaegkysjyq.supabase.co";
@@ -112,10 +159,25 @@ const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 const $=id=>document.getElementById(id);
 let currentUser=null,allMedicines=[],selectedFile=null;
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+function showAdminSection(id){
+ const ids=["dashboardHome","siteLinks","retailerRequests","approvedRetailers","ordersPanel","masterSettings","reportsPanel","activityPanel","backupPanel","editor","catalogue"];
+ ids.forEach(x=>{const el=$(x);if(el)el.hidden=x!==id;});
+ document.querySelectorAll("[data-section]").forEach(b=>b.classList.toggle("active",b.dataset.section===id||(id==="approvedRetailers"&&b.dataset.section==="retailerRequests")));
+}
+function updateDashboardStats(){
+ $("dashMedicineCount").textContent=allMedicines.length;
+ $("dashActiveCount").textContent=allMedicines.filter(m=>m.is_active!==false).length;
+ $("dashRetailerCount").textContent=document.querySelectorAll("#approvedList .medicine").length+document.querySelectorAll("#pendingRetailers .medicine").length;
+ const orderCards=$("ordersList").querySelectorAll(".panel").length;
+ $("dashOrderCount").textContent=orderCards;
+ $("dashboardStatus").textContent="Live data loaded from the connected Supabase project.";
+}
+
 function clearForm(){["medicineId","name","composition","pack","category","price","gst"].forEach(id=>$(id).value="");$("photoFile").value="";$("photoPreview").textContent="No new photo selected.";selectedFile=null;$("formTitle").textContent="Add New Medicine";$("saveStatus").textContent="";}
 function editMedicine(id){const m=allMedicines.find(x=>x.id===id);if(!m)return;$("medicineId").value=m.id;$("name").value=m.name||"";$("composition").value=m.composition||"";$("pack").value=m.pack_size||"";$("category").value=m.category||"";$("price").value=m.common_price??"";$("gst").value=m.gst_rate??0;$("formTitle").textContent="Edit Medicine";$("photoPreview").textContent=m.image_url?"Current photo is saved. Choose a new file to replace it.":"No photo saved yet.";selectedFile=null;$("photoFile").value="";window.scrollTo({top:0,behavior:"smooth"});}
 function renderList(){const q=$("filter").value.trim().toLowerCase();const list=allMedicines.filter(m=>(m.name||"").toLowerCase().includes(q)||(m.composition||"").toLowerCase().includes(q));$("medicineList").innerHTML=list.map(m=>'<div class="medicine">'+(m.image_url?'<img src="'+esc(m.image_url)+'" alt="'+esc(m.name)+'">':'<div class="muted">No photo</div>')+'<div><b>'+esc(m.name)+'</b><br><small>'+esc(m.composition)+' · '+esc(m.pack_size)+'</small><br><small>Price: ₹'+esc(m.common_price)+' · GST: '+esc(m.gst_rate)+'%</small><br><button type="button" data-edit="'+esc(m.id)+'">Edit / Change photo</button></div></div>').join("")||"No medicines found.";$("medicineList").querySelectorAll("[data-edit]").forEach(b=>b.addEventListener("click",()=>editMedicine(b.dataset.edit)));}
-async function loadMedicines(){const {data,error}=await db.from("medicines").select("id,name,composition,pack_size,category,image_url,common_price,gst_rate,is_active").order("name");if(error){$("saveStatus").textContent="Catalogue error: "+error.message;return;}allMedicines=data||[];renderList();}
+async function loadMedicines(){const {data,error}=await db.from("medicines").select("id,name,composition,pack_size,category,image_url,common_price,gst_rate,is_active").order("name");if(error){$("saveStatus").textContent="Catalogue error: "+error.message;return;}allMedicines=data||[];renderList();updateDashboardStats();}
 async function uploadPhoto(file,medicineId){const ext=(file.name.split(".").pop()||"jpg").toLowerCase().replace(/[^a-z0-9]/g,"")||"jpg";const path=medicineId+"/"+Date.now()+"."+ext;const {error}=await db.storage.from(BUCKET).upload(path,file,{upsert:false,contentType:file.type||"image/jpeg"});if(error)throw error;const {data}=db.storage.from(BUCKET).getPublicUrl(path);return data.publicUrl;}
 async function saveMedicine(){const name=$("name").value.trim();if(!name){$("saveStatus").textContent="Medicine name is required.";return;}const id=$("medicineId").value;const payload={name,composition:$("composition").value.trim(),pack_size:$("pack").value.trim(),category:$("category").value.trim(),common_price:Number($("price").value||0),gst_rate:Number($("gst").value||0),is_active:true};$("saveMedicine").disabled=true;$("saveStatus").textContent="Saving…";try{if(selectedFile){const photoId=id||crypto.randomUUID();payload.image_url=await uploadPhoto(selectedFile,photoId);}let result;if(id)result=await db.from("medicines").update(payload).eq("id",id);else result=await db.from("medicines").insert(payload);if(result.error)throw result.error;$("saveStatus").textContent="Medicine saved. Photo is publicly available to website visitors.";await logActivity(id?"Updated medicine":"Added medicine",{medicine_name:name});await loadActivity();clearForm();await loadMedicines();}catch(e){$("saveStatus").textContent="Save failed: "+(e.message||String(e))+". Check Storage bucket and policies."; }finally{$("saveMedicine").disabled=false;}}
 function profileCard(p,actions){return '<div class="medicine"><div>🏪</div><div><b>'+esc(p.shop_name)+'</b><br><small>Owner: '+esc(p.owner_name||"—")+' · Phone: '+esc(p.phone||"—")+' · GSTIN: '+esc(p.gstin||"—")+'</small><br><small>Status: '+esc(p.approval_status||"pending")+' · User ID: '+esc(p.user_id)+'</small><br>'+actions+'</div></div>';}
@@ -128,7 +190,7 @@ async function loadRetailers(){
  document.querySelectorAll("[data-approve]").forEach(b=>b.onclick=()=>setRetailerStatus(b.dataset.approve,"approved"));
  document.querySelectorAll("[data-reject]").forEach(b=>b.onclick=()=>setRetailerStatus(b.dataset.reject,"rejected"));
 }
-async function setRetailerStatus(id,status){if(!confirm((status==="approved"?"Approve":"Reject/revoke")+" this retailer?"))return;const {error}=await db.from("retailer_profiles").update({approval_status:status}).eq("user_id",id);if(error){alert("Update failed: "+error.message);return;}await logActivity("Changed retailer approval",{retailer_user_id:id,status});await loadActivity();await loadRetailers();}
+async function setRetailerStatus(id,status){if(!confirm((status==="approved"?"Approve":"Reject/revoke")+" this retailer?"))return;const {error}=await db.from("retailer_profiles").update({approval_status:status}).eq("user_id",id);if(error){alert("Update failed: "+error.message);return;}await logActivity("Changed retailer approval",{retailer_user_id:id,status});await loadActivity();await loadRetailers();updateDashboardStats();}
 async function loadOrders(){
  const {data:orders,error}=await db.from("orders").select("id,retailer_id,customer_name,phone,delivery_method,delivery_charge,subtotal,gst_amount,grand_total,order_status,created_at").order("created_at",{ascending:false}).limit(100);
  if(error){$("ordersList").textContent="Could not load orders: "+error.message;return;}if(!orders?.length){$("ordersList").textContent="No retailer orders yet.";return;}
@@ -139,11 +201,11 @@ async function loadOrders(){
  const {data:items,error:ie}=await db.from("order_items").select("order_id,medicine_name,pack_size,quantity,unit_price,gst_rate").in("order_id",orderIds);
  if(ie){$("ordersList").textContent="Could not load order items: "+ie.message;return;}
  $("ordersList").innerHTML=orders.map(o=>{const p=pmap[o.retailer_id]||{},lines=(items||[]).filter(x=>x.order_id===o.id).map(x=>'<li>'+esc(x.medicine_name)+' ('+esc(x.pack_size)+') × '+esc(x.quantity)+' — ₹'+Number(x.unit_price||0).toFixed(2)+'</li>').join("");return '<div class="panel"><b>Order #'+esc(o.id)+'</b><p><b>Retailer:</b> '+esc(p.shop_name||"Unknown shop")+' · '+esc(p.owner_name||"")+'<br><b>Contact:</b> '+esc(o.phone||p.phone||"—")+'<br><b>Date:</b> '+(o.created_at?new Date(o.created_at).toLocaleString():"—")+'<br><b>Delivery:</b> '+esc(o.delivery_method)+' · Charge ₹'+Number(o.delivery_charge||0).toFixed(2)+'</p><ul>'+lines+'</ul><p>Subtotal: ₹'+Number(o.subtotal||0).toFixed(2)+' · GST: ₹'+Number(o.gst_amount||0).toFixed(2)+' · <b>Total: ₹'+Number(o.grand_total||0).toFixed(2)+'</b></p><label>Order status <select data-order-status="'+esc(o.id)+'"><option value="pending" '+(o.order_status==="pending"?"selected":"")+'>Pending</option><option value="processing" '+(o.order_status==="processing"?"selected":"")+'>Processing</option><option value="completed" '+(o.order_status==="completed"?"selected":"")+'>Completed</option><option value="cancelled" '+(o.order_status==="cancelled"?"selected":"")+'>Cancelled</option></select></label></div>';}).join("");
- document.querySelectorAll("[data-order-status]").forEach(sel=>sel.onchange=()=>updateOrderStatus(sel.dataset.orderStatus,sel.value));
+ document.querySelectorAll("[data-order-status]").forEach(sel=>sel.onchange=()=>updateOrderStatus(sel.dataset.orderStatus,sel.value));updateDashboardStats();
 }
 async function updateOrderStatus(id,status){const {error}=await db.from("orders").update({order_status:status}).eq("id",id);if(error){alert("Status update failed: "+error.message);await loadOrders();}else{await logActivity("Changed order status",{order_id:id,status});await loadActivity();}}
 async function adminLogin(){const email=$("adminEmail").value.trim(),password=$("adminPassword").value;if(!email||!password){$("loginStatus").textContent="Enter admin email and password.";return;}$("adminLogin").disabled=true;const {data,error}=await db.auth.signInWithPassword({email,password});$("adminLogin").disabled=false;if(error){$("loginStatus").textContent="Login failed: "+error.message;return;}await init();}
-async function init(){const {data,error}=await db.auth.getSession();if(error){$("loginStatus").textContent=error.message;return;}currentUser=data.session?.user||null;if(currentUser){$("adminLogout").hidden=false;}if(!currentUser){$("loginStatus").textContent="Not signed in. Enter your admin credentials above.";return;}if(currentUser.id!==ADMIN_ID){$("loginStatus").textContent="Access denied: this account is not the configured admin. Sign out and use the configured admin account.";$("adminLogin").hidden=false;return;}$("loginStatus").textContent="Admin authenticated.";$("adminLogin").hidden=true;$("adminLogout").hidden=false;$("activityPanel").hidden=false; $("editor").hidden=false;$("catalogue").hidden=false;$("retailerRequests").hidden=false;$("approvedRetailers").hidden=false;$("ordersPanel").hidden=false;$("masterSettings").hidden=false;$("reportsPanel").hidden=false;$("backupPanel").hidden=false;await loadMedicines();await loadRetailers();await loadOrders();await loadSettings();await loadReports();await loadActivity();
+async function init(){const {data,error}=await db.auth.getSession();if(error){$("loginStatus").textContent=error.message;return;}currentUser=data.session?.user||null;if(currentUser){$("adminLogout").hidden=false;}if(!currentUser){$("loginStatus").textContent="Not signed in. Enter your admin credentials above.";return;}if(currentUser.id!==ADMIN_ID){$("loginStatus").textContent="Access denied: this account is not the configured admin. Sign out and use the configured admin account.";$("adminLogin").hidden=false;return;}$("loginStatus").textContent="Admin authenticated.";$("loginPanel").hidden=true;$("adminShell").hidden=false;$("adminLogout").hidden=false;showAdminSection("dashboardHome");await loadMedicines();await loadRetailers();await loadOrders();await loadSettings();await loadReports();await loadActivity();updateDashboardStats();
 }
 
 async function loadSettings(){
@@ -208,6 +270,10 @@ async function runHealth(){
  $("healthStatus").textContent=results.join(" · ");
 }
 
+
+document.querySelectorAll("[data-section]").forEach(b=>b.addEventListener("click",()=>showAdminSection(b.dataset.section)));
+document.querySelectorAll("[data-go]").forEach(b=>b.addEventListener("click",()=>showAdminSection(b.dataset.go)));
+$("navLogout").addEventListener("click",async()=>{await db.auth.signOut();location.reload();});
 $("saveSettings").addEventListener("click",saveSettings);$("refreshActivity").addEventListener("click",loadActivity);$("reloadSettings").addEventListener("click",loadSettings);$("refreshReports").addEventListener("click",loadReports);$("exportBackup").addEventListener("click",exportBackup);$("runHealth").addEventListener("click",runHealth);
 $("searchPhoto").addEventListener("click",()=>{const q=$("name").value.trim();if(!q){$("saveStatus").textContent="Enter medicine name first.";return;}window.open("https://www.google.com/search?tbm=isch&q="+encodeURIComponent(q+" medicine box strip packaging"),"_blank","noopener");});
 $("photoFile").addEventListener("change",e=>{selectedFile=e.target.files?.[0]||null;if(!selectedFile){$("photoPreview").textContent="No new photo selected.";return;}if(!selectedFile.type.startsWith("image/")){selectedFile=null;$("photoPreview").textContent="Please choose an image file.";return;}if(selectedFile.size>5*1024*1024){selectedFile=null;e.target.value="";$("photoPreview").textContent="Image must be 5 MB or smaller.";return;}$("photoPreview").textContent="Selected: "+selectedFile.name;});
