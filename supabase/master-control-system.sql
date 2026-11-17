@@ -7,6 +7,7 @@ create table if not exists public.site_settings (
   phone_primary text not null default '9550620353',
   phone_secondary text not null default '9398117337',
   announcement text not null default '',
+  portal_settings jsonb not null default '{"public_price_mode":"hidden","public_catalogue_enabled":true,"retail_pricing_enabled":true,"wholesale_pricing_enabled":true,"delivery_enabled":true,"pickup_enabled":true,"delivery_charge":0,"gst_invoice_enabled":true,"medicine_categories":["Tablets","Capsules","Syrups & Suspensions","Injections","Drops","Ointments & Creams","Powders & Sachets","Nutritional Supplements","Other"]}'::jsonb,
   updated_at timestamptz not null default now(),
   updated_by uuid
 );
