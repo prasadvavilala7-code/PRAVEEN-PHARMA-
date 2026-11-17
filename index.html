@@ -47,7 +47,16 @@ main{max-width:1180px!important;padding:22px 18px!important}
 
 </style>
 <link rel="manifest" href="./app.webmanifest"><meta name="theme-color" content="#07558c"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-</head>
+<style>
+/* Shared medicine-photo viewer */
+.medicine-card img{cursor:zoom-in}
+.photo-viewer{position:fixed;inset:0;z-index:10050;display:flex;align-items:center;justify-content:center;padding:18px;background:rgba(5,18,29,.94)}
+.photo-viewer[hidden]{display:none!important}
+.photo-viewer .photo-viewer-image{display:block;max-width:min(94vw,1200px);max-height:88vh;width:auto;height:auto;object-fit:contain;background:#fff;border-radius:12px;box-shadow:0 18px 60px #0008}
+.photo-viewer-close{position:fixed;top:14px;right:16px;z-index:2;width:46px;height:46px;border:0;border-radius:50%;background:#fff;color:#102b43;font-size:30px;line-height:1;cursor:pointer}
+.photo-viewer-status{position:absolute;left:50%;bottom:20px;transform:translateX(-50%);max-width:90vw;padding:8px 12px;border-radius:8px;background:#fff;color:#183047;font-size:13px}
+@media(max-width:600px){.photo-viewer{padding:10px}.photo-viewer .photo-viewer-image{max-width:96vw;max-height:84vh}.photo-viewer-close{top:8px;right:8px}}
+</style></head>
 <body>
 <header class="store-hero"><div class="hero-inner"><span class="hero-kicker">TRUSTED PHARMA WHOLESALE · SIRCILLA</span><h1 id="businessName">PRAVEEN PHARMA</h1><p id="tagline">Wholesale Medicine Supply</p><p id="addressHeader">Opposite Union Bank, Sircilla, Telangana</p><div class="hero-actions"><a href="#medicineCatalogue" class="hero-primary">Explore Medicines <span aria-hidden="true">→</span></a><a href="#contactPanel" class="hero-secondary">Contact Our Team</a></div><div class="hero-points"><span>✓ Company-wise catalogue</span><span>✓ Retailer ordering portal</span><span>✓ GST invoice support</span></div></div></header>
 <nav class="store-nav" aria-label="Main navigation"><a class="brand-mini" href="./index.html">PRAVEEN <b>RX STORE</b></a><div><a href="#medicineCatalogue">Medicines</a><a href="#aboutPanel">About</a><a href="#contactPanel">Contact</a><a class="nav-retailer" href="./retailer.html">Retailer Login ↗</a></div></nav>
@@ -55,7 +64,7 @@ main{max-width:1180px!important;padding:22px 18px!important}
 <section class="panel" id="announcementPanel" hidden><h2>Announcement</h2><p id="announcement"></p></section>
 <section class="panel catalogue-panel" id="medicineCatalogue"><h2>Our Medicines</h2><p class="muted">Browse our medicine catalogue. For availability and retailer pricing, please contact PRAVEEN PHARMA.</p><div class="catalogue-tools"><select id="companySearch" aria-label="Choose company"><option value="">All approved companies</option></select><input id="medicineSearch" type="search" placeholder="Search medicine name or composition" aria-label="Search medicines"></div><p id="catalogueStatus" class="catalogue-status" role="status">Loading medicines…</p><div id="medicineProducts" class="products"></div></section><section class="panel" id="aboutPanel"><h2>About Us</h2><p id="aboutText">Wholesale medicine supply in Sircilla.</p></section>
 <section class="panel" id="contactPanel"><h2>Contact PRAVEEN PHARMA</h2><p class="muted" id="addressText">Opposite Union Bank, Sircilla, Telangana</p><div class="contact"><a class="call" id="phonePrimary" href="tel:+919550620353">Call 9550620353</a><a class="call" id="phoneSecondary" href="tel:+919398117337">Call 9398117337</a></div></section>
-</main><nav class="app-bottom-nav" aria-label="Quick app navigation"><a href="#medicineCatalogue"><span>▦</span>Medicines</a><a href="#aboutPanel"><span>ⓘ</span>About</a><a href="#contactPanel"><span>☎</span>Contact</a><a href="./retailer.html"><span>♙</span>Retailer</a></nav><footer>© <span id="footerName">PRAVEEN PHARMA</span></footer>
+</main><nav class="app-bottom-nav" aria-label="Quick app navigation"><a href="#medicineCatalogue"><span>▦</span>Medicines</a><a href="#aboutPanel"><span>ⓘ</span>About</a><a href="#contactPanel"><span>☎</span>Contact</a><a href="./retailer.html"><span>♙</span>Retailer</a></nav><div id="publicPhotoViewer" class="photo-viewer" role="dialog" aria-modal="true" aria-label="Medicine photo preview" hidden><button type="button" class="photo-viewer-close" id="publicPhotoClose" aria-label="Close photo">×</button><img id="publicPhotoLarge" class="photo-viewer-image" alt="Medicine photo enlarged"><div id="publicPhotoStatus" class="photo-viewer-status" hidden></div></div><footer>© <span id="footerName">PRAVEEN PHARMA</span></footer>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const db=window.supabase.createClient("https://hdoftqemjttaegkysjyq.supabase.co","sb_publishable_75Bn2frOUV-LeTqXvgUVtg__jIxuA72");
@@ -66,7 +75,7 @@ let publicMedicines=[];
 function renderPublicMedicines(){
  const q=byId("medicineSearch").value.trim().toLowerCase(),company=byId("companySearch").value;
  const rows=publicMedicines.filter(m=>(!company||m.company_id===company)&&((m.name||"").toLowerCase().includes(q)||(m.composition||"").toLowerCase().includes(q)||(m.category||"").toLowerCase().includes(q)));
- byId("medicineProducts").innerHTML=rows.map(m=>'<article class="medicine-card">'+(m.image_url?'<img src="'+esc(m.image_url)+'" alt="'+esc(m.name)+'" loading="lazy">':'<div class="medicine-photo" style="display:grid;place-items:center;color:#667788">Photo not available</div>')+'<h3>'+esc(m.name)+'</h3>'+(m.composition?'<p>'+esc(m.composition)+'</p>':'')+(m.pack_size?'<p><b>Pack:</b> '+esc(m.pack_size)+'</p>':'')+(m.category?'<p class="muted">'+esc(m.category)+'</p>':'')+'</article>').join("")||'<p class="muted">No medicines match your search.</p>';
+ byId("medicineProducts").innerHTML=rows.map(m=>'<article class="medicine-card">'+(m.image_url?'<img src="'+esc(m.image_url)+'" data-photo-url="'+esc(m.image_url)+'" tabindex="0" role="button" title="Tap to enlarge photo" alt="'+esc(m.name)+'" loading="lazy">':'<div class="medicine-photo" style="display:grid;place-items:center;color:#667788">Photo not available</div>')+'<h3>'+esc(m.name)+'</h3>'+(m.composition?'<p>'+esc(m.composition)+'</p>':'')+(m.pack_size?'<p><b>Pack:</b> '+esc(m.pack_size)+'</p>':'')+(m.category?'<p class="muted">'+esc(m.category)+'</p>':'')+'</article>').join("")||'<p class="muted">No medicines match your search.</p>';
 }
 async function loadPublicMedicines(){
  byId("catalogueStatus").textContent="Loading medicines…";
@@ -78,6 +87,20 @@ async function loadPublicMedicines(){
  byId("catalogueStatus").textContent=publicMedicines.length?publicMedicines.length+" medicines available.":"Medicine catalogue is being updated.";
  renderPublicMedicines();
 }
+function openPublicPhoto(url,name){
+ if(!url)return;
+ const viewer=byId("publicPhotoViewer"),img=byId("publicPhotoLarge"),status=byId("publicPhotoStatus");
+ status.hidden=true;status.textContent="";img.hidden=false;img.alt=(name||"Medicine")+" — enlarged photo";
+ img.onerror=()=>{img.hidden=true;status.hidden=false;status.textContent="Photo could not be loaded. Check whether the saved image URL is publicly accessible.";};
+ img.onload=()=>{img.hidden=false;status.hidden=true;};
+ img.src=url;viewer.hidden=false;document.body.style.overflow="hidden";byId("publicPhotoClose").focus();
+}
+function closePublicPhoto(){byId("publicPhotoViewer").hidden=true;byId("publicPhotoLarge").removeAttribute("src");byId("publicPhotoLarge").onerror=null;document.body.style.overflow="";}
+byId("medicineProducts").addEventListener("click",e=>{const img=e.target.closest("img");if(img&&img.dataset.photoUrl)openPublicPhoto(img.dataset.photoUrl,img.alt);});
+byId("medicineProducts").addEventListener("keydown",e=>{const img=e.target.closest("img");if(img&&img.dataset.photoUrl&&(e.key==="Enter"||e.key===" ")){e.preventDefault();openPublicPhoto(img.dataset.photoUrl,img.alt);}});
+byId("publicPhotoClose").addEventListener("click",closePublicPhoto);
+byId("publicPhotoViewer").addEventListener("click",e=>{if(e.target===byId("publicPhotoViewer"))closePublicPhoto();});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!byId("publicPhotoViewer").hidden)closePublicPhoto();});
 byId("medicineSearch").addEventListener("input",renderPublicMedicines);
 byId("companySearch").addEventListener("change",renderPublicMedicines);
 async function loadPublicSettings(){
