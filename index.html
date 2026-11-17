@@ -46,6 +46,7 @@ main{max-width:1180px!important;padding:22px 18px!important}
 @media(max-width:640px){body{padding-bottom:78px}.store-hero{text-align:left!important}.store-nav{padding:10px 14px}.store-nav>div a:not(.nav-retailer){display:none}.store-nav .brand-mini{font-size:14px}main{padding:12px!important}.panel{padding:16px!important}.app-bottom-nav{position:fixed;z-index:1000;bottom:0;left:0;right:0;display:grid;grid-template-columns:repeat(4,1fr);padding:8px 5px calc(8px + env(safe-area-inset-bottom));background:#ffffffed;backdrop-filter:blur(16px);border-top:1px solid #dce7ee;box-shadow:0 -5px 22px #12304712}.app-bottom-nav a{display:flex;flex-direction:column;align-items:center;gap:2px;color:#31536a;text-decoration:none;font-size:11px;font-weight:700;padding:5px 2px}.app-bottom-nav a span{font-size:19px}.hero-points{display:flex;flex-wrap:wrap;gap:8px}.hero-points span{font-size:12px}}
 
 </style>
+<link rel="manifest" href="./app.webmanifest"><meta name="theme-color" content="#07558c"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 </head>
 <body>
 <header class="store-hero"><div class="hero-inner"><span class="hero-kicker">TRUSTED PHARMA WHOLESALE · SIRCILLA</span><h1 id="businessName">PRAVEEN PHARMA</h1><p id="tagline">Wholesale Medicine Supply</p><p id="addressHeader">Opposite Union Bank, Sircilla, Telangana</p><div class="hero-actions"><a href="#medicineCatalogue" class="hero-primary">Explore Medicines <span aria-hidden="true">→</span></a><a href="#contactPanel" class="hero-secondary">Contact Our Team</a></div><div class="hero-points"><span>✓ Company-wise catalogue</span><span>✓ Retailer ordering portal</span><span>✓ GST invoice support</span></div></div></header>
@@ -93,4 +94,9 @@ async function loadPublicSettings(){
 }
 loadPublicSettings();
 loadPublicMedicines();
-</script></body></html>
+</script><script>
+if("serviceWorker" in navigator && location.protocol!=="file:"){
+ window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(err=>console.warn("App offline shell unavailable:",err)));
+}
+</script>
+</body></html>
