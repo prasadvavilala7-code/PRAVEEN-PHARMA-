@@ -1,0 +1,4 @@
+-- PRAVEEN PHARMA formula information fields; preserves all existing records and photos.
+ALTER TABLE public.medicines ADD COLUMN IF NOT EXISTS uses text, ADD COLUMN IF NOT EXISTS benefits text, ADD COLUMN IF NOT EXISTS side_effects text, ADD COLUMN IF NOT EXISTS precautions text, ADD COLUMN IF NOT EXISTS info_source_url text, ADD COLUMN IF NOT EXISTS info_status text NOT NULL DEFAULT 'not_checked', ADD COLUMN IF NOT EXISTS info_checked_at timestamptz;
+CREATE OR REPLACE VIEW public.public_medicine_details AS SELECT c.id,c.name,c.composition,c.pack_size,c.category,c.image_url,c.company_id,m.uses,m.benefits,m.side_effects,m.precautions,m.info_source_url,m.info_status,m.info_checked_at FROM public.public_medicine_catalogue c JOIN public.medicines m ON m.id=c.id;
+GRANT SELECT ON public.public_medicine_details TO anon, authenticated;
