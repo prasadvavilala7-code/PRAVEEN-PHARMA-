@@ -69,6 +69,10 @@ a{color:#237344}
 <body>
 <header><h1>PRAVEEN PHARMA</h1><p>Admin Dashboard · Medicine Catalogue</p></header>
 <main>
+<section class="panel" id="loginPanel">
+<h2>Admin access</h2><p id="loginStatus" class="muted">Checking your signed-in account…</p>
+<p>Sign in here with the configured administrator account.</p><input id="adminEmail" type="email" autocomplete="username" placeholder="Admin email"><input id="adminPassword" type="password" autocomplete="current-password" placeholder="Admin password"><button id="adminLogin">Login to Admin</button><button id="adminLogout" class="secondary" hidden>Logout</button>
+</section>
 <div class="admin-shell" id="adminShell" hidden>
 <aside class="admin-nav">
 <h3>CONTROL CENTRE</h3>
@@ -138,10 +142,7 @@ a{color:#237344}
 <section class="panel" id="reportsPanel" hidden><h2>Business Reports</h2><div id="reportSummary">Loading reports…</div><button class="secondary" id="refreshReports">Refresh Reports</button></section>
 <section class="panel" id="activityPanel" hidden><h2>Admin Activity History</h2><p class="muted">Records important changes made from this Admin Dashboard.</p><div id="activityList">Loading…</div><button class="secondary" id="refreshActivity">Refresh History</button></section>
 <section class="panel" id="backupPanel" hidden><h2>Data Export & Health Check</h2><p class="muted">Export is a browser download of records accessible to this admin account. It is not a full database backup.</p><button id="exportBackup">Export available data (JSON)</button><button class="secondary" id="runHealth">Run connection checks</button><p id="healthStatus" class="muted" role="status"></p></section>
-<section class="panel" id="loginPanel">
-<h2>Admin access</h2><p id="loginStatus" class="muted">Checking your signed-in account…</p>
-<p>Sign in here with the configured administrator account.</p><input id="adminEmail" type="email" autocomplete="username" placeholder="Admin email"><input id="adminPassword" type="password" autocomplete="current-password" placeholder="Admin password"><button id="adminLogin">Login to Admin</button><button id="adminLogout" class="secondary" hidden>Logout</button>
-</section>
+
 <section class="panel" id="editor" hidden>
 <h2 id="formTitle">Add New Medicine</h2>
 <input id="medicineId" type="hidden">
