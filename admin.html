@@ -182,6 +182,40 @@ input:focus,select:focus,textarea:focus{border-color:var(--pp-gold)!important;bo
  .app-admin-bottom button:active{background:var(--pp-gold-soft)!important}
 }
 
+
+/* Dashboard layout reinforcement: selectors match the live admin markup */
+#adminShell.admin-shell{display:grid!important;grid-template-columns:238px minmax(0,1fr)!important;align-items:start!important;gap:20px!important}
+#adminShell[hidden]{display:none!important}
+#dashboardHome{padding:25px!important;background:#fff!important;border:1px solid #e1e7ef!important;border-radius:14px!important;box-shadow:0 5px 20px rgba(8,35,70,.055)!important}
+.dash-topline{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;padding-bottom:20px;border-bottom:1px solid #e8edf3}
+.dash-eyebrow{display:block;color:#9b7628;font-size:10px;font-weight:800;letter-spacing:.14em;margin-bottom:7px}
+#dashboardHome .dash-topline h2{margin:0 0 6px!important;color:#082b55!important;font-size:26px!important;font-weight:780!important}
+#dashboardHome .dash-topline p{margin:0!important;color:#68788b!important;font-size:13px!important}
+.dash-date{padding:8px 11px;border:1px solid #ead8ad;border-radius:7px;background:#fffaf0;color:#785a19;font-size:10px;font-weight:800;letter-spacing:.08em;white-space:nowrap}
+.dash-section-label{margin:21px 0 11px;color:#68788b;font-size:10px;font-weight:800;letter-spacing:.13em}
+#dashboardHome .stats{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:13px!important;margin:0!important}
+#dashboardHome .stat{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:6px;min-height:118px!important;padding:16px!important;background:#fff!important;border:1px solid #e1e7ef!important;border-bottom:3px solid #d9a83f!important;border-radius:10px!important;box-shadow:none!important}
+#dashboardHome .dash-stat-icon{display:grid;place-items:center;width:29px;height:29px;border-radius:8px;background:#fff6df;color:#082b55;font-size:16px;font-weight:800}
+#dashboardHome .stat strong{color:#082b55!important;font-size:27px!important;line-height:1.15;font-weight:800!important}
+#dashboardHome .stat>span:last-child{color:#68788b!important;font-size:12px!important;font-weight:600!important}
+.dash-lower-grid{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(260px,.8fr);gap:14px;margin-top:16px}
+#dashboardHome .dash-inner-panel{margin:0!important;padding:17px!important;border:1px solid #e1e7ef!important;border-radius:10px!important;box-shadow:none!important;background:#fff!important}
+.dash-panel-heading{display:flex;align-items:center;justify-content:space-between;margin-bottom:13px}
+.dash-panel-heading h3{margin:0!important;color:#082b55!important;font-size:16px!important}
+.dash-gold-mark{width:34px;height:4px;border-radius:4px;background:#d9a83f}
+.dash-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+#dashboardHome .dash-actions button{display:flex;align-items:center;gap:9px;min-height:45px;margin:0!important;padding:10px 12px!important;text-align:left;font-size:12px;font-weight:700}
+#dashboardHome .dash-actions button span{font-size:16px;color:#e6c16e}
+#dashboardHome .dash-actions button.secondary{background:#fff!important;border:1px solid #e1e7ef!important;color:#082b55!important}
+#dashboardHome .dash-actions button.secondary:hover{background:#fff8e8!important;border-color:#d9a83f!important}
+.dash-status-panel{background:#fbfcfe!important}
+.dash-status-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#d9a83f;box-shadow:0 0 0 4px #fff4d9}
+.dash-status-copy{color:#68788b;font-size:13px;line-height:1.65;margin:4px 0 12px}
+#dashboardHome #dashboardStatus{padding:10px 11px;background:#f4f7fb;border:1px solid #e5ebf2;border-radius:8px;color:#68788b!important;font-size:12px}
+.dash-status-foot{display:flex;align-items:center;gap:9px;padding-top:12px;border-top:1px solid #e8edf3;color:#082b55;font-size:11px;font-weight:700}
+@media(max-width:850px){#adminShell.admin-shell{grid-template-columns:1fr!important}.dash-lower-grid{grid-template-columns:1fr}}
+@media(max-width:600px){#dashboardHome{padding:16px!important}.dash-topline h2{font-size:22px!important}.dash-date{display:none}#dashboardHome .stats{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:9px!important}#dashboardHome .stat{min-height:105px!important;padding:12px!important}.dash-lower-grid{grid-template-columns:1fr}.dash-actions{grid-template-columns:1fr}.dash-actions button{width:100%}}
+
 </style>
 </head>
 <body>
@@ -211,15 +245,18 @@ input:focus,select:focus,textarea:focus{border-color:var(--pp-gold)!important;bo
 <nav class="app-admin-bottom" aria-label="Admin quick navigation"><button type="button" data-section="dashboardHome">▦<br>Home</button><button type="button" data-section="catalogue">▣<br>Medicines</button><button type="button" data-section="ordersPanel">▤<br>Orders</button><button type="button" data-section="retailerRequests">♙<br>Retailers</button></nav>
 <div class="content-area">
 <section class="panel" id="dashboardHome">
-<h2>Enterprise Dashboard</h2><p class="muted">Central overview of PRAVEEN PHARMA operations.</p>
+<div class="dash-topline"><div><span class="dash-eyebrow">PRAVEEN PHARMA · ADMIN</span><h2>Dashboard Overview</h2><p class="muted">Your business at a glance. Manage medicines, retailers and orders from one place.</p></div><div class="dash-date">CONTROL CENTRE</div></div>
+<div class="dash-section-label">BUSINESS SUMMARY</div>
 <div class="stats">
-<div class="stat"><strong id="dashMedicineCount">—</strong><span>Total medicines</span></div>
-<div class="stat"><strong id="dashActiveCount">—</strong><span>Active medicines</span></div>
-<div class="stat"><strong id="dashRetailerCount">—</strong><span>Retailers</span></div>
-<div class="stat"><strong id="dashOrderCount">—</strong><span>Orders</span></div>
+<div class="stat"><span class="dash-stat-icon">▦</span><strong id="dashMedicineCount">—</strong><span>Total medicines</span></div>
+<div class="stat"><span class="dash-stat-icon">✓</span><strong id="dashActiveCount">—</strong><span>Active medicines</span></div>
+<div class="stat"><span class="dash-stat-icon">♙</span><strong id="dashRetailerCount">—</strong><span>Retailers</span></div>
+<div class="stat"><span class="dash-stat-icon">▤</span><strong id="dashOrderCount">—</strong><span>Orders</span></div>
 </div>
-<div class="panel" style="margin-top:14px"><h3>Quick actions</h3><button type="button" data-go="editor">＋ Add medicine</button><button type="button" class="secondary" data-go="catalogue">Manage medicines</button><button type="button" class="secondary" data-go="ordersPanel">View orders</button><button type="button" class="secondary" data-go="retailerRequests">Retailer approvals</button></div>
-<div class="panel"><h3>System overview</h3><p class="muted">Use the left menu to open each management area here without leaving the Admin Dashboard.</p><p id="dashboardStatus" class="muted">Live figures load after admin sign-in.</p></div>
+<div class="dash-lower-grid">
+<div class="panel dash-inner-panel"><div class="dash-panel-heading"><div><span class="dash-eyebrow">SHORTCUTS</span><h3>Quick actions</h3></div><span class="dash-gold-mark"></span></div><div class="dash-actions"><button type="button" data-go="editor"><span>＋</span> Add medicine</button><button type="button" class="secondary" data-go="catalogue"><span>▦</span> Manage medicines</button><button type="button" class="secondary" data-go="ordersPanel"><span>▤</span> View orders</button><button type="button" class="secondary" data-go="retailerRequests"><span>♙</span> Retailer approvals</button></div></div>
+<div class="panel dash-inner-panel dash-status-panel"><div class="dash-panel-heading"><div><span class="dash-eyebrow">SYSTEM</span><h3>Workspace status</h3></div><span class="dash-status-dot"></span></div><p class="dash-status-copy">Your admin workspace is ready. Select a section from the menu to manage your pharmacy operations.</p><p id="dashboardStatus" class="muted">Live figures load after admin sign-in.</p><div class="dash-status-foot"><span class="dash-status-dot"></span> Admin workspace</div></div>
+</div>
 </section>
 <section class="panel" id="siteLinks" hidden>
 <h2>Website Links</h2>
