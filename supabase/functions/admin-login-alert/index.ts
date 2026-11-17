@@ -23,7 +23,7 @@ Deno.serve(async (req) => {
     }
 
     const authHeader = req.headers.get("Authorization") || "";
-    const token = authHeader.replace(/^Bearer\\s+/i, "");
+    const token = authHeader.replace(/^Bearer\s+/i, "");
     if (!token) return new Response(JSON.stringify({ error: "Missing access token." }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
     const authClient = createClient(supabaseUrl, anonKey, { auth: { persistSession: false } });
@@ -59,7 +59,7 @@ Deno.serve(async (req) => {
       "Device / browser: " + (userAgent || "Not provided"),
       "",
       "If this was not you, secure the account and review Supabase Auth users/sessions.",
-    ].join("\\n");
+    ].join("\n");
 
     const mail = await fetch("https://api.resend.com/emails", {
       method: "POST",
