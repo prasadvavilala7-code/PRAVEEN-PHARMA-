@@ -26,6 +26,7 @@ nav[aria-label="Main navigation"]{position:sticky;top:0;z-index:100;backdrop-fil
 @media(max-width:640px){body{padding-bottom:84px}main{padding:10px!important}.panel{padding:14px!important;margin:10px 0!important}.row{grid-template-columns:1fr!important}.products{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:9px!important}.card{padding:10px!important;margin:0!important}.photo{height:130px!important}.app-retailer-bottom{position:fixed;z-index:1000;bottom:0;left:0;right:0;display:grid;grid-template-columns:repeat(5,1fr);padding:7px 3px calc(7px + env(safe-area-inset-bottom));background:#ffffffed;backdrop-filter:blur(16px);border-top:1px solid #dce7ee;box-shadow:0 -5px 22px #12304712}.app-retailer-bottom a{display:flex;flex-direction:column;align-items:center;gap:2px;text-decoration:none;color:#31536a;font-size:10px;font-weight:700;padding:5px 1px}.app-retailer-bottom a span{font-size:19px}}
 
 </style>
+<link rel="manifest" href="./app.webmanifest"><meta name="theme-color" content="#07558c"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 </head>
 <body>
 <header><h1>PRAVEEN PHARMA</h1><p>Retailer Ordering Portal</p><p>Opposite Union Bank, Sircilla, Telangana</p></header>
@@ -165,4 +166,9 @@ async function saveProfile(){const shop_name=$("profileShop").value.trim(),owner
 async function logout(){await db.auth.signOut();user=null;profile=null;cart=[];prices={};approved=false;["portal","cartPanel","historyPanel","profilePanel","registerPanel"].forEach(id=>show(id,false));show("authPanel",true);authMessage("Logged out.")}
 $("goCartBtn").onclick=goToCart;$("clearCart").onclick=clearCart;$("closePhoto").onclick=closePhoto;$("closeDetails").onclick=closeMedicineDetails;$("medicineDetails").addEventListener("click",e=>{if(e.target===$("medicineDetails"))closeMedicineDetails()});$("photoViewer").addEventListener("click",e=>{if(e.target===$("photoViewer"))closePhoto()});document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("photoViewer").classList.contains("hidden"))closePhoto();if(e.key==="Escape"&&!$("medicineDetails").classList.contains("hidden"))closeMedicineDetails()});$("loginBtn").onclick=login;$("registerBtn").onclick=register;$("showRegister").onclick=()=>{show("authPanel",false);show("registerPanel",true)};$("backLogin").onclick=()=>{show("registerPanel",false);show("authPanel",true)};$("logoutBtn").onclick=logout;$("saveProfile").onclick=saveProfile;$("placeOrder").onclick=placeOrder;$("search").oninput=applyCompanyFilter;$("companyFilter").onchange=applyCompanyFilter;
 db.auth.getSession().then(({data,error})=>{if(error){authMessage(error.message);return}if(data.session)start(data.session.user)});
-</script></body></html>
+</script><script>
+if("serviceWorker" in navigator && location.protocol!=="file:"){
+ window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(err=>console.warn("App offline shell unavailable:",err)));
+}
+</script>
+</body></html>
