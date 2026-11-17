@@ -85,6 +85,7 @@ main{max-width:1320px!important}
 @media(max-width:760px){body{padding-bottom:88px}.admin-shell{display:block!important}.admin-nav{position:static!important;margin-bottom:14px;padding:14px!important}.admin-nav h3{margin:0 0 8px}.admin-nav .nav-grid{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:7px!important}.admin-nav .nav-grid button{margin:0!important;min-height:44px;font-size:12px!important;padding:8px!important}.admin-nav>#navLogout{display:none}.content-area .panel{padding:15px!important}.stats{grid-template-columns:repeat(2,minmax(0,1fr))!important}.app-admin-bottom{position:fixed;z-index:1000;bottom:0;left:0;right:0;display:grid;grid-template-columns:repeat(4,1fr);gap:3px;padding:7px 5px calc(7px + env(safe-area-inset-bottom));background:#ffffffed;backdrop-filter:blur(16px);border-top:1px solid #dce7ee;box-shadow:0 -5px 22px #12304712}.app-admin-bottom button{margin:0!important;padding:7px 2px!important;min-height:48px!important;font-size:10px!important;background:transparent!important;color:#24465a!important}.app-admin-bottom button:active{background:#e9f3f7!important}}
 
 </style>
+<link rel="manifest" href="./app.webmanifest"><meta name="theme-color" content="#07558c"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 </head>
 <body>
 <header><h1>PRAVEEN PHARMA</h1><p>Admin Dashboard · Medicine Catalogue</p></header>
@@ -371,6 +372,11 @@ $("saveSettings").addEventListener("click",saveSettings);$("refreshActivity").ad
 $("searchPhoto").addEventListener("click",()=>{const q=$("name").value.trim();if(!q){$("saveStatus").textContent="Enter medicine name first.";return;}window.open("https://www.google.com/search?tbm=isch&q="+encodeURIComponent(q+" medicine box strip packaging"),"_blank","noopener");});
 $("photoFile").addEventListener("change",e=>{selectedFile=e.target.files?.[0]||null;if(!selectedFile){$("photoPreview").textContent="No new photo selected.";return;}if(!selectedFile.type.startsWith("image/")){selectedFile=null;$("photoPreview").textContent="Please choose an image file.";return;}if(selectedFile.size>5*1024*1024){selectedFile=null;e.target.value="";$("photoPreview").textContent="Image must be 5 MB or smaller.";return;}$("photoPreview").textContent="Selected: "+selectedFile.name;});
 $("adminLogin").addEventListener("click",adminLogin);$("adminLogout").addEventListener("click",async()=>{await db.auth.signOut();location.reload();});$("saveMedicine").addEventListener("click",saveMedicine);$("addCompany").addEventListener("click",addCompany);$("clearForm").addEventListener("click",clearForm);$("filter").addEventListener("input",renderList);init();
+</script>
+<script>
+if("serviceWorker" in navigator && location.protocol!=="file:"){
+ window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(err=>console.warn("App offline shell unavailable:",err)));
+}
 </script>
 </body>
 </html>
