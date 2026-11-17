@@ -81,9 +81,9 @@ function renderCart(){
  $("cart").querySelectorAll("[data-inc]").forEach(b=>b.onclick=()=>qty(b.dataset.inc,1));
  $("cart").querySelectorAll("[data-remove]").forEach(b=>b.onclick=()=>removeCartItem(b.dataset.remove));
  const t=cartTotals();
- $("cartTotal").innerHTML='<div style="display:flex;justify-content:space-between"><span>Items / units</span><b>'+t.count+'</b></div><div style="display:flex;justify-content:space-between"><span>Subtotal</span><b>'+money(t.subtotal)+'</b></div><div style="display:flex;justify-content:space-between"><span>GST</span><b>'+money(t.gst)+'</b></div><div style="display:flex;justify-content:space-between"><span>Delivery</span><b>'+money(0)+'</b></div><hr><div style="display:flex;justify-content:space-between;font-size:19px"><b>Grand Total</b><b>'+money(t.total)+'</b></div>';
- $("placeOrder").disabled=!cart.length;
- $("placeOrder").textContent=cart.length?"Review & Place Order":"Add medicines to continue";
+ $("cartTotal").innerHTML=approved?'<div style="display:flex;justify-content:space-between"><span>Items / units</span><b>'+t.count+'</b></div><div style="display:flex;justify-content:space-between"><span>Subtotal</span><b>'+money(t.subtotal)+'</b></div><div style="display:flex;justify-content:space-between"><span>GST</span><b>'+money(t.gst)+'</b></div><div style="display:flex;justify-content:space-between"><span>Delivery</span><b>'+money(0)+'</b></div><hr><div style="display:flex;justify-content:space-between;font-size:19px"><b>Grand Total</b><b>'+money(t.total)+'</b></div>':'<b>'+t.count+' medicine(s) selected.</b><p>Admin approval tarvatha retailer price, GST and order checkout enable avuthayi.</p><p>Delivery charge: ₹0.00</p>';
+ $("placeOrder").disabled=!approved||!cart.length;
+ $("placeOrder").textContent=!approved?"Admin approval required":cart.length?"Review & Place Order":"Add medicines to continue";
  updateCartQuickBar();
 }
 
