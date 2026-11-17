@@ -115,6 +115,16 @@ a{color:#237344}
 <section class="panel" id="ordersPanel" hidden><h2>Retailer Orders</h2><div id="ordersList">Loading…</div></section>
 <section class="panel" id="masterSettings" hidden>
 <h2>Master Website Settings</h2><p class="muted">Changes here update the public information website. Requires the master-control SQL migration to be run once in Supabase.</p>
+<div class="panel" id="adminAccessPanel" style="background:#f5faf6;border:1px solid #cfe3d3">
+<h3>Admin Access</h3>
+<p class="muted">Configured administrator accounts for this dashboard. Only the account listed here can currently sign in.</p>
+<div class="stats" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr))">
+<div class="stat"><strong id="adminAccessCount">1</strong><span>Configured admins</span></div>
+<div class="stat"><strong id="adminAccessActive">1</strong><span>Active admin</span></div>
+</div>
+<div id="adminAccessList" aria-live="polite">Loading admin account…</div>
+<p class="muted">Note: this dashboard currently uses one fixed Admin User ID. Adding/removing multiple admins and viewing their full login history requires a secure server-side admin management setup; it is not enabled yet.</p>
+</div>
 <div class="row"><input id="siteName" placeholder="Business name"><input id="siteTagline" placeholder="Tagline"></div>
 <input id="siteAddress" placeholder="Business address">
 <div class="row"><input id="sitePhone1" placeholder="Primary phone"><input id="sitePhone2" placeholder="Secondary phone"></div>
@@ -176,6 +186,15 @@ const $=id=>document.getElementById(id);
 let currentUser=null,allMedicines=[],selectedFile=null;
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 
+function renderAdminAccess(){
+ const box=$("adminAccessList");
+ if(!currentUser||currentUser.id!==ADMIN_ID){
+  $("adminAccessCount").textContent="—";$("adminAccessActive").textContent="—";
+  box.textContent="Admin account details unavailable.";return;
+ }
+ $("adminAccessCount").textContent="1";$("adminAccessActive").textContent="1";
+ box.innerHTML='<div class="medicine"><div><b>'+esc(currentUser.email||"Email not available")+'</b><br><small>User ID: '+esc(currentUser.id)+'</small></div><div><span class="badge" style="display:inline-block;padding:6px 10px;border-radius:20px;background:#e3f5e8;color:#176b42;font-weight:bold">Active · Configured Admin</span></div></div>';
+}
 function showAdminSection(id){
  const ids=["dashboardHome","siteLinks","retailerRequests","approvedRetailers","ordersPanel","masterSettings","reportsPanel","activityPanel","backupPanel","editor","catalogue"];
  ids.forEach(x=>{const el=$(x);if(el)el.hidden=x!==id;});
@@ -242,7 +261,7 @@ async function loadOrders(){
 }
 async function updateOrderStatus(id,status){const {error}=await db.from("orders").update({order_status:status}).eq("id",id);if(error){alert("Status update failed: "+error.message);await loadOrders();}else{await logActivity("Changed order status",{order_id:id,status});await loadActivity();}}
 async function adminLogin(){const email=$("adminEmail").value.trim(),password=$("adminPassword").value;if(!email||!password){$("loginStatus").textContent="Enter admin email and password.";return;}$("adminLogin").disabled=true;const {data,error}=await db.auth.signInWithPassword({email,password});$("adminLogin").disabled=false;if(error){$("loginStatus").textContent="Login failed: "+error.message;return;}await init();}
-async function init(){const {data,error}=await db.auth.getSession();if(error){$("loginStatus").textContent=error.message;return;}currentUser=data.session?.user||null;if(currentUser){$("adminLogout").hidden=false;}if(!currentUser){$("loginStatus").textContent="Not signed in. Enter your admin credentials above.";return;}if(currentUser.id!==ADMIN_ID){$("loginStatus").textContent="Access denied: this account is not the configured admin. Sign out and use the configured admin account.";$("adminLogin").hidden=false;return;}$("loginStatus").textContent="Admin authenticated.";$("loginPanel").hidden=true;$("adminShell").hidden=false;$("adminLogout").hidden=false;showAdminSection("dashboardHome");await loadMedicines();await loadRetailers();await loadOrders();await loadSettings();await loadReports();await loadActivity();updateDashboardStats();
+async function init(){const {data,error}=await db.auth.getSession();if(error){$("loginStatus").textContent=error.message;return;}currentUser=data.session?.user||null;if(currentUser){$("adminLogout").hidden=false;}if(!currentUser){$("loginStatus").textContent="Not signed in. Enter your admin credentials above.";return;}if(currentUser.id!==ADMIN_ID){$("loginStatus").textContent="Access denied: this account is not the configured admin. Sign out and use the configured admin account.";$("adminLogin").hidden=false;return;}$("loginStatus").textContent="Admin authenticated.";$("loginPanel").hidden=true;$("adminShell").hidden=false;$("adminLogout").hidden=false;renderAdminAccess();showAdminSection("dashboardHome");await loadMedicines();await loadRetailers();await loadOrders();await loadSettings();await loadReports();await loadActivity();updateDashboardStats();
 }
 
 async function loadSettings(){
