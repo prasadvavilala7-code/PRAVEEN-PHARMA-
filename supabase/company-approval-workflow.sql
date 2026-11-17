@@ -38,6 +38,8 @@ alter table public.medicines enable row level security;
 -- Only the configured Admin may create, edit, approve or remove companies.
 drop policy if exists "Public can read approved medicine companies" on public.medicine_companies;
 drop policy if exists "Configured admin can manage medicine companies" on public.medicine_companies;
+drop policy if exists "Read approved companies or admin list" on public.medicine_companies;
+drop policy if exists "Configured admin manages companies" on public.medicine_companies;
 create policy "Read approved companies or admin list"
   on public.medicine_companies for select to anon, authenticated
   using (is_approved = true or auth.uid() = '9be3d5ee-e09a-4738-9b27-f2fae15e93c7'::uuid);
