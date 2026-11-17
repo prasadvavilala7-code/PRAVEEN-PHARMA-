@@ -56,7 +56,7 @@ drop policy if exists "Public catalogue reads approved medicines" on public.medi
 
 -- Publicly approved rows may be read by visitors and signed-in users.
 create policy "Public catalogue reads approved medicines"
-  on public.medicines for select to anon, authenticated
+  on public.medicines for select to anon
   using (
     is_active = true
     and public_approved = true
