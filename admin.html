@@ -76,6 +76,32 @@ header{background:linear-gradient(110deg,#102b43,#174e68)!important;color:#fff!i
 .medicine img,#photoPreview img{transform:perspective(850px) rotateY(-11deg) rotateX(4deg) translateZ(8px)!important;transform-origin:center center;box-shadow:12px 16px 24px rgba(10,35,52,.28),inset 0 0 0 1px rgba(255,255,255,.8)!important;border:1px solid #cbd9e2!important;border-radius:12px!important;transition:transform .28s ease,box-shadow .28s ease;backface-visibility:hidden}
 .medicine img:hover,#photoPreview img:hover{transform:perspective(850px) rotateY(-4deg) rotateX(1deg) translateY(-3px) translateZ(14px)!important;box-shadow:16px 20px 30px rgba(10,35,52,.32)!important}
 
+
+/* PRAVEEN PHARMA Admin Dashboard refresh — dashboard presentation only */
+#dashboardHome{overflow:hidden;background:linear-gradient(145deg,#ffffff 0%,#f4f9fb 100%)!important;border:1px solid #dbe7ed!important;border-radius:22px!important;box-shadow:0 18px 44px rgba(16,43,67,.09)!important}
+#dashboardHome>h2{font-size:clamp(24px,3vw,32px)!important;letter-spacing:-.04em!important;margin-bottom:4px!important}
+#dashboardHome>h2:before{content:"PRAVEEN PHARMA  /  ";font-size:11px;letter-spacing:.14em;color:#087f78;vertical-align:middle;font-weight:800}
+#dashboardHome>.muted{font-size:14px!important;margin-bottom:22px!important}
+#dashboardHome .stats{grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:14px!important;margin:18px 0 20px}
+#dashboardHome .stat{position:relative;overflow:hidden;min-height:116px;padding:20px!important;border:1px solid #dce8ed!important;border-radius:17px!important;background:linear-gradient(150deg,#fff,#f6fafb)!important;box-shadow:0 8px 20px rgba(16,43,67,.055)!important;transition:transform .2s ease,box-shadow .2s ease}
+#dashboardHome .stat:after{content:"";position:absolute;width:90px;height:90px;border-radius:50%;right:-28px;top:-32px;background:rgba(8,127,120,.07)}
+#dashboardHome .stat:hover{transform:translateY(-3px);box-shadow:0 14px 26px rgba(16,43,67,.11)!important}
+#dashboardHome .stat strong{font-size:32px!important;line-height:1.2;color:#087f78!important;letter-spacing:-.04em}
+#dashboardHome .stat span{font-size:12px!important;font-weight:700;letter-spacing:.035em;color:#627789!important;text-transform:uppercase}
+#dashboardHome>.panel{margin-top:18px!important;padding:20px!important;border:1px solid #e0eaf0!important;border-radius:17px!important;background:#fff!important;box-shadow:0 7px 20px rgba(16,43,67,.045)!important}
+#dashboardHome>.panel h3{font-size:16px!important;color:#173d55!important;margin:0 0 14px!important}
+#dashboardHome>.panel button{min-height:46px!important;margin:5px 7px 5px 0!important;padding:12px 16px!important}
+#dashboardHome [data-go]{border-radius:12px!important}
+#dashboardHome #dashboardStatus{padding:12px 14px;background:#eff7f6;border:1px solid #d8ebe7;border-radius:11px;color:#315f60!important}
+@media(max-width:760px){
+ #dashboardHome{padding:17px!important;border-radius:17px!important}
+ #dashboardHome .stats{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important}
+ #dashboardHome .stat{min-height:102px;padding:15px!important}
+ #dashboardHome .stat strong{font-size:27px!important}
+ #dashboardHome>.panel{padding:15px!important}
+ #dashboardHome>.panel button{width:100%;margin:5px 0!important;text-align:left}
+}
+
 </style>
 <style>
 /* Responsive app shell */
