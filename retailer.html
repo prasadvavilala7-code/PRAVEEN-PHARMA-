@@ -68,7 +68,7 @@ await loadCatalogue(approved)}
 async function loadCatalogue(isApproved){
  $("status").textContent="Loading medicines…";
  const table=isApproved?"medicines":"public_medicine_catalogue";
- const fields=isApproved?"id,name,composition,pack_size,category,image_url,common_price,gst_rate,company_id,uses,benefits,side_effects,precautions,info_source_url,info_status,info_checked_at":"id,name,composition,pack_size,category,image_url,company_id,uses,benefits,side_effects,precautions,info_source_url,info_status,info_checked_at";
+ const fields=isApproved?"id,name,composition,pack_size,category,image_url,common_price,gst_rate,hsn_code,company_id,uses,benefits,side_effects,precautions,info_source_url,info_status,info_checked_at":"id,name,composition,pack_size,category,image_url,company_id,uses,benefits,side_effects,precautions,info_source_url,info_status,info_checked_at";
  let query=db.from(table).select(fields);
  if(isApproved)query=query.eq("is_active",true);
  const {data,error}=await query.order("name");
@@ -130,7 +130,7 @@ function goToCart(){
 function add(id){
 
  const m=medicines.find(x=>x.id===id);if(!m){$("status").textContent="Medicine not found. Refresh the catalogue and try again.";return}
- const x=cart.find(y=>y.id===id);if(x)x.quantity++;else cart.push({id,name:m.name,pack_size:m.pack_size,price:price(m),gst_rate:Number(m.gst_rate||0),quantity:1});
+ const x=cart.find(y=>y.id===id);if(x)x.quantity++;else cart.push({id,name:m.name,pack_size:m.pack_size,hsn_code:m.hsn_code||"",price:price(m),gst_rate:Number(m.gst_rate||0),quantity:1});
  renderCart();updateCartQuickBar();$("status").textContent=m.name+" added to your cart."; 
 }
 
@@ -188,7 +188,7 @@ async function placeOrder(){
   $("orderMessage").textContent="Submitting order…";
   const {data:o,error}=await db.from("orders").insert({retailer_id:user.id,customer_name,phone,city,delivery_method,delivery_charge:0,subtotal:t.subtotal,gst_amount:t.gst,grand_total:t.total,order_status:"pending"}).select("id").single();
   if(error)throw error;
-  const rows=cart.map(x=>({order_id:o.id,medicine_id:x.id,medicine_name:x.name,pack_size:x.pack_size,quantity:x.quantity,unit_price:x.price,gst_rate:x.gst_rate}));
+  const rows=cart.map(x=>({order_id:o.id,medicine_id:x.id,medicine_name:x.name,pack_size:x.pack_size,hsn_code:x.hsn_code||"",quantity:x.quantity,unit_price:x.price,gst_rate:x.gst_rate}));
   const items=await db.from("order_items").insert(rows);
   if(items.error){
    const cleanup=await db.from("orders").delete().eq("id",o.id).eq("retailer_id",user.id);
