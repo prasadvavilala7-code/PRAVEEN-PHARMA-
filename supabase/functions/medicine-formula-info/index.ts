@@ -105,7 +105,7 @@ Deno.serve(async (req) => {
     }
     if (body.action === "backfill") {
       const { data: medicines, error } = await supabase.from("medicines")
-        .select("id,composition,info_status").eq("is_active", true)
+        .select("id,composition,info_status")
         .order("name").limit(100);
       if (error) throw error;
       const results = [];
