@@ -133,3 +133,6 @@ revoke all on function public.issue_retailer_gst_invoice(text,jsonb) from public
 grant execute on function public.issue_retailer_gst_invoice(text,jsonb) to authenticated;
 
 commit;
+
+-- Refresh PostgREST's schema cache so the admin/retailer pages can see hsn_code immediately.
+notify pgrst, 'reload schema';
