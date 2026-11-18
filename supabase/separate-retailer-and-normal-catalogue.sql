@@ -4,13 +4,8 @@
 
 begin;
 
-drop policy if exists "Active medicines visible in retailer catalogue" on public.medicines;
-create policy "Active medicines visible in retailer catalogue"
-  on public.medicines for select to anon, authenticated
-  using (is_active = true);
-
 create or replace view public.public_medicine_details
-with (security_invoker = true)
+with (security_invoker = false)
 as
 select m.id, m.name, m.composition, m.pack_size, m.category, m.image_url,
        m.company_id, m.uses, m.benefits, m.side_effects, m.precautions,
