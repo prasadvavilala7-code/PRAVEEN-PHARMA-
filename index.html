@@ -112,7 +112,7 @@ byId("shareBrochureBtn").addEventListener("click",()=>{
 });
 async function loadPublicMedicines(){
  const status=byId("publicMedicineStatus"),list=byId("publicMedicineList");
- const fields="id,name,composition,pack_size,category,image_url,company_name,uses,benefits,side_effects,precautions,info_source_url,info_status,info_checked_at";
+ const fields="id,name,composition,pack_size,category,image_url,company_name,mechanism_of_action,uses,benefits,side_effects,precautions,info_source_url,info_status,info_checked_at";
  const {data,error}=await db.from("public_medicine_details").select(fields.replace("company_name,","")).order("name");
  if(error){status.textContent="Public catalogue is not available yet. "+error.message;return;}
  const medicines=data||[];
@@ -121,7 +121,7 @@ async function loadPublicMedicines(){
  function render(){
   const q=byId("publicMedicineSearch").value.trim().toLowerCase();
   const rows=medicines.filter(m=>(m.name||"").toLowerCase().includes(q)||(m.composition||"").toLowerCase().includes(q));
-  list.innerHTML=rows.map(m=>'<article class="medicine-card">'+(m.image_url?'<img src="'+escHtml(m.image_url)+'" alt="'+escHtml(m.name)+'" loading="lazy">':'')+'<h3>'+escHtml(m.name)+'</h3><p><b>Formula:</b> '+escHtml(m.composition||"Not provided")+'</p><p><b>Pack:</b> '+escHtml(m.pack_size||"Not provided")+'</p><details><summary style="cursor:pointer;font-weight:700;color:#145b83">Uses, benefits & safety information</summary>'+[['What it is / Formula',m.composition],['Uses',m.uses],['Benefits',m.benefits],['Side effects',m.side_effects],['Precautions',m.precautions]].map(([k,v])=>'<p><b>'+k+':</b> '+(v?escHtml(v):'Verified information not available')+'</p>').join('')+'<small>Educational information only; not a substitute for advice from a qualified doctor or pharmacist. '+(m.info_status==="matched_official_label"?'Official label ingredient match; check source and product applicability.':'Not medically verified.')+(m.info_source_url?' <a href="'+escHtml(m.info_source_url)+'" target="_blank" rel="noopener">Source</a>':'')+'</small></details></article>').join("")||"<p>No matching published medicines.</p>";
+  list.innerHTML=rows.map(m=>'<article class="medicine-card">'+(m.image_url?'<img src="'+escHtml(m.image_url)+'" alt="'+escHtml(m.name)+'" loading="lazy">':'')+'<h3>'+escHtml(m.name)+'</h3><p><b>Formula:</b> '+escHtml(m.composition||"Not provided")+'</p><p><b>Pack:</b> '+escHtml(m.pack_size||"Not provided")+'</p><details><summary style="cursor:pointer;font-weight:700;color:#145b83">Uses, benefits & safety information</summary>'+[['What it is / Formula',m.composition],['How it works',m.mechanism_of_action],['Uses',m.uses],['Benefits',m.benefits],['Side effects',m.side_effects],['Precautions',m.precautions]].map(([k,v])=>'<p><b>'+k+':</b> '+(v?escHtml(v):'Verified information not available')+'</p>').join('')+'<small>Educational information only; not a substitute for advice from a qualified doctor or pharmacist. '+(m.info_status==="matched_official_label"?'Official label ingredient match; check source and product applicability.':'Not medically verified.')+(m.info_source_url?' <a href="'+escHtml(m.info_source_url)+'" target="_blank" rel="noopener">Source</a>':'')+'</small></details></article>').join("")||"<p>No matching published medicines.</p>";
  }
  byId("publicMedicineSearch").addEventListener("input",render);render();
 }
