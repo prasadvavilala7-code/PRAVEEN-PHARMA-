@@ -118,6 +118,8 @@ Deno.serve(async (req) => {
     }
     return json({ error: "Unknown action" }, 400);
   } catch (error) {
-    return json({ error: String(error) }, 500);
+    console.error("medicine-formula-info error:", error);
+    const detail = error instanceof Error ? error.message : String(error);
+    return json({ error: detail }, 500);
   }
 });
