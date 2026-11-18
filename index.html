@@ -113,7 +113,7 @@ byId("shareBrochureBtn").addEventListener("click",()=>{
 async function loadPublicMedicines(){
  const status=byId("publicMedicineStatus"),list=byId("publicMedicineList");
  const fields="id,name,composition,pack_size,category,image_url,company_name,uses,benefits,side_effects,precautions,info_source_url,info_status,info_checked_at";
- const {data,error}=await db.from("public_medicine_catalogue").select(fields).order("name");
+ const {data,error}=await db.from("public_medicine_details").select(fields.replace("company_name,","")).order("name");
  if(error){status.textContent="Public catalogue is not available yet. "+error.message;return;}
  const medicines=data||[];
  status.textContent=medicines.length?medicines.length+" published medicines":"No medicines have been published yet.";
