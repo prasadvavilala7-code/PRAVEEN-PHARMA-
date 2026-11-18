@@ -66,20 +66,18 @@ approved=p.approval_status==="approved";$("approval").textContent="Account statu
 if(approved){const pr=await db.from("retailer_prices").select("medicine_id,price").eq("retailer_id",u.id);if(pr.error){$("status").textContent="Price loading failed: "+pr.error.message;return}prices=Object.fromEntries((pr.data||[]).map(x=>[x.medicine_id,Number(x.price)]));show("historyPanel",true);await loadHistory()}else{show("historyPanel",false)}show("cartQuickBar",true);show("cartPanel",true);
 await loadCatalogue(approved)}
 async function loadCatalogue(isApproved){
- $("status").textContent="Loading medicines…";
- const table=isApproved?"medicines":"public_medicine_details";
- const fields=isApproved?"id,name,composition,pack_size,category,image_url,common_price,gst_rate,hsn_code,company_id,mechanism_of_action,uses,benefits,side_effects,precautions,info_source_url,info_status,info_checked_at":"id,name,composition,pack_size,category,image_url,company_id,uses,benefits,side_effects,precautions,info_source_url,info_status,info_checked_at";
- let query=db.from(table).select(fields);
- if(isApproved)query=query.eq("is_active",true);
- let result=await query.order("name");
- if(isApproved&&result.error&&/hsn_code/i.test(result.error.message)){result=await db.from(table).select("id,name,composition,pack_size,category,image_url,common_price,gst_rate,company_id,uses,benefits,side_effects,precautions,info_source_url,info_status,info_checked_at").eq("is_active",true).order("name");if(result.data)result.data.forEach(m=>m.hsn_code="");}
- const {data,error}=result;
- if(error){$("status").textContent="Catalogue error: "+error.message;return}
- medicines=data||[];
- const {data:companies,error:companyError}=await db.from("medicine_companies").select("id,name").eq("is_approved",true).order("name");
- if(companyError){$("status").textContent="Company list error: "+companyError.message;return;}
- companyNames=Object.fromEntries((companies||[]).map(c=>[c.id,c.name]));$("companyFilter").innerHTML='<option value="">All published companies</option>'+(companies||[]).map(c=>'<option value="'+esc(c.id)+'">'+esc(c.name)+'</option>').join("");
- applyCompanyFilter();
+  $("status").textContent="Loading all active medicines…";
+  const table=isApproved?"medicines":"retailer_medicine_details";
+  const fields=isApproved?"id,name,composition,pack_size,category,image_url,common_price,gst_rate,hsn_code,company_id,mechanism_of_action,uses,benefits,side_effects,precautions,info_source_url,info_status,info_checked_at":"id,name,composition,pack_size,category,image_url,company_id,mechanism_of_action,uses,benefits,side_effects,precautions,info_source_url,info_status,info_checked_at";
+  let result=await db.from(table).select(fields).eq("is_active",true).order("name");
+  if(isApproved&&result.error&&/hsn_code/i.test(result.error.message)){result=await db.from(table).select("id,name,composition,pack_size,category,image_url,common_price,gst_rate,company_id,mechanism_of_action,uses,benefits,side_effects,precautions,info_source_url,info_status,info_checked_at").eq("is_active",true).order("name");if(result.data)result.data.forEach(m=>m.hsn_code="");}
+  const {data,error}=result;
+  if(error){$("status").textContent="Catalogue error: "+error.message+" · If retailer_medicine_details is missing, run the latest retailer catalogue SQL migration.";return}
+  medicines=data||[];
+  const {data:companies,error:companyError}=await db.from("medicine_companies").select("id,name").eq("is_approved",true).order("name");
+  if(companyError){companyNames={};$("companyFilter").innerHTML='<option value="">All medicines</option>';}
+  else{companyNames=Object.fromEntries((companies||[]).map(c=>[c.id,c.name]));$("companyFilter").innerHTML='<option value="">All medicines</option>'+(companies||[]).map(c=>'<option value="'+esc(c.id)+'">'+esc(c.name)+'</option>').join("");}
+  applyCompanyFilter();
 }
 function applyCompanyFilter(){
  const id=$("companyFilter").value;
