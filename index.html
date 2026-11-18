@@ -69,7 +69,17 @@ main{max-width:1180px!important;padding:22px 18px!important}
 <main>
 <section class="panel" id="announcementPanel" hidden><h2>Announcement</h2><p id="announcement"></p></section>
 <section class="panel" id="aboutPanel"><h2>About PRAVEEN PHARMA</h2><p id="aboutText">Wholesale medicine supply in Sircilla.</p></section>
-<section class="panel" id="contactPanel"><h2>Contact PRAVEEN PHARMA</h2><p class="muted" id="addressText">Opposite Union Bank, Sircilla, Telangana</p><div class="contact"><a class="call" id="phonePrimary" href="tel:+919550620353">Call 9550620353</a><a class="call" id="phoneSecondary" href="tel:+919398117337">Call 9398117337</a></div><p class="muted">For medicine catalogue, retailer pricing and orders, please use the Retailer Portal.</p><a class="call" href="./retailer.html">Open Retailer Portal</a></section>
+<section class="panel" id="contactPanel"><h2>Contact PRAVEEN PHARMA</h2><p class="muted" id="addressText">Opposite Union Bank, Sircilla, Telangana</p><div class="contact"><a class="call" id="phonePrimary" href="tel:+919550620353">Call 9550620353</a><a class="call" id="phoneSecondary" href="tel:+919398117337">Call 9398117337</a></div><p class="muted">For medicine catalogue, retailer pricing and orders, please use the Retailer Portal.</p>
+<div class="panel" style="margin-top:18px;background:#f7fbfd">
+<h3 style="margin-top:0;color:#102b43">Share PRAVEEN PHARMA Brochure on WhatsApp</h3>
+<p class="muted">Customer call lo brochure kavali ani confirm chesina tarvatha, customer WhatsApp number enter chesi share cheyyandi.</p>
+<label for="brochureCustomerPhone" style="display:block;font-weight:700;margin:10px 0 6px">Customer WhatsApp Number</label>
+<input id="brochureCustomerPhone" type="tel" inputmode="numeric" autocomplete="tel" placeholder="10-digit mobile number" maxlength="10" style="width:100%;padding:13px;border:1px solid #cbdce8;border-radius:10px;font:inherit">
+<label style="display:flex;gap:9px;align-items:flex-start;margin:12px 0;font-size:13px"><input id="brochureConsent" type="checkbox" style="margin-top:4px"> Customer has agreed to receive the PRAVEEN PHARMA website brochure on WhatsApp.</label>
+<button type="button" class="call" id="shareBrochureBtn" style="width:100%;border:0;cursor:pointer;font:inherit">Continue to WhatsApp</button>
+<p class="muted" id="brochureShareStatus" aria-live="polite" style="font-size:12px;margin-bottom:0">WhatsApp message will be prepared only after confirmation. You must press Send in WhatsApp.</p>
+</div>
+<a class="call" href="./retailer.html">Open Retailer Portal</a></section>
 </main><footer>© <span id="footerName">PRAVEEN PHARMA</span></footer>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
@@ -89,6 +99,16 @@ async function loadPublicSettings(){
  byId("announcement").textContent=announcement;byId("announcementPanel").hidden=!announcement;
  document.title=name+" | "+(data.tagline||"Wholesale Medicine Supply");
 }
+byId("shareBrochureBtn").addEventListener("click",()=>{
+ const phone=String(byId("brochureCustomerPhone").value||"").replace(/\\D/g,"");
+ const status=byId("brochureShareStatus");
+ if(!/^\\d{10}$/.test(phone)){status.textContent="Please enter a valid 10-digit customer mobile number.";return;}
+ if(!byId("brochureConsent").checked){status.textContent="Please confirm that the customer agreed to receive the brochure.";return;}
+ const message="As discussed, here is the PRAVEEN PHARMA website brochure: https://prasadvavilala7-code.github.io/PRAVEEN-PHARMA-/";
+ const wa="https://wa.me/91"+phone+"?text="+encodeURIComponent(message);
+ window.open(wa,"_blank","noopener");
+ status.textContent="WhatsApp opened with the brochure link. Review it and press Send in WhatsApp.";
+});
 loadPublicSettings();
 </script><script>
 if("serviceWorker" in navigator && location.protocol!=="file:"){
