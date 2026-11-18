@@ -16,9 +16,9 @@ create or replace view public.public_medicine_details
 with (security_invoker = true)
 as
 select m.id, m.name, m.composition, m.pack_size, m.category, m.image_url,
-       m.company_id, m.uses, m.benefits, m.mechanism_of_action,
-       m.side_effects, m.precautions, m.info_source_url, m.info_status,
-       m.info_checked_at
+       m.company_id, m.uses, m.benefits, m.side_effects, m.precautions,
+       m.info_source_url, m.info_status, m.info_checked_at,
+       m.mechanism_of_action
 from public.medicines m
 where m.is_active = true
   and m.public_approved = true
