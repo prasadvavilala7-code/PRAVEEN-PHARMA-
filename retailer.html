@@ -71,7 +71,9 @@ async function loadCatalogue(isApproved){
  const fields=isApproved?"id,name,composition,pack_size,category,image_url,common_price,gst_rate,hsn_code,company_id,uses,benefits,side_effects,precautions,info_source_url,info_status,info_checked_at":"id,name,composition,pack_size,category,image_url,company_id,uses,benefits,side_effects,precautions,info_source_url,info_status,info_checked_at";
  let query=db.from(table).select(fields);
  if(isApproved)query=query.eq("is_active",true);
- const {data,error}=await query.order("name");
+ let result=await query.order("name");
+ if(isApproved&&result.error&&/hsn_code/i.test(result.error.message)){result=await db.from(table).select("id,name,composition,pack_size,category,image_url,common_price,gst_rate,company_id,uses,benefits,side_effects,precautions,info_source_url,info_status,info_checked_at").eq("is_active",true).order("name");if(result.data)result.data.forEach(m=>m.hsn_code="");}
+ const {data,error}=result;
  if(error){$("status").textContent="Catalogue error: "+error.message;return}
  medicines=data||[];
  const {data:companies,error:companyError}=await db.from("medicine_companies").select("id,name").eq("is_approved",true).order("name");
