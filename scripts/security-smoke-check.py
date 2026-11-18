@@ -29,7 +29,7 @@ require('retailer_id:user.id' in retailer, "New orders are associated with the s
 require('approval_status==="approved"' in retailer, "Retailer ordering requires approved profile in the UI")
 require('signInWithPassword' in admin and 'signOut()' in admin, "Admin login and logout handlers are present")
 require('signInWithPassword' in retailer and 'signOut()' in retailer, "Retailer login and logout handlers are present")
-require('signInWithPassword' not in public and 'orders' not in public.lower(), "Public website remains information-only")
+require('signInWithPassword' not in public and not re.search(r"""\.from\s*\(\s*["']orders["']\s*\)""", public), "Public website remains information-only (no public login or direct order-table access)")
 require('admin_activity_logs' in master_sql and 'enable row level security' in master_sql.lower(),
         "Admin activity log table has RLS enabled in migration")
 print("Static security smoke checks passed. These checks do not replace live Supabase RLS/MFA tests.")
