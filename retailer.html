@@ -67,7 +67,7 @@ if(approved){const pr=await db.from("retailer_prices").select("medicine_id,price
 await loadCatalogue(approved)}
 async function loadCatalogue(isApproved){
  $("status").textContent="Loading medicines…";
- const table=isApproved?"medicines":"public_medicine_catalogue";
+ const table=isApproved?"medicines":"public_medicine_details";
  const fields=isApproved?"id,name,composition,pack_size,category,image_url,common_price,gst_rate,hsn_code,company_id,uses,benefits,side_effects,precautions,info_source_url,info_status,info_checked_at":"id,name,composition,pack_size,category,image_url,company_id,uses,benefits,side_effects,precautions,info_source_url,info_status,info_checked_at";
  let query=db.from(table).select(fields);
  if(isApproved)query=query.eq("is_active",true);
