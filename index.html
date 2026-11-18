@@ -69,6 +69,7 @@ main{max-width:1180px!important;padding:22px 18px!important}
 <main>
 <section class="panel" id="announcementPanel" hidden><h2>Announcement</h2><p id="announcement"></p></section>
 <section class="panel" id="aboutPanel"><h2>About PRAVEEN PHARMA</h2><p id="aboutText">Wholesale medicine supply in Sircilla.</p></section>
+<section class="panel" id="publicMedicinesPanel"><h2>Medicine Information Catalogue</h2><p class="muted">Search medicines by name or formula. Verified uses, benefits, side effects and precautions are shown when available.</p><input id="publicMedicineSearch" type="search" placeholder="Search medicine name or formula" style="width:100%;padding:13px;border:1px solid #cbdce8;border-radius:10px;font:inherit"><p id="publicMedicineStatus" class="muted" role="status">Loading published medicines…</p><div id="publicMedicineList" class="products"></div></section>
 <section class="panel" id="contactPanel"><h2>Contact PRAVEEN PHARMA</h2><p class="muted" id="addressText">Opposite Union Bank, Sircilla, Telangana</p><div class="contact"><a class="call" id="phonePrimary" href="tel:+919550620353">Call 9550620353</a><a class="call" id="phoneSecondary" href="tel:+919398117337">Call 9398117337</a></div><p class="muted">For medicine catalogue, retailer pricing and orders, please use the Retailer Portal.</p><p class="muted">Business email: <a href="mailto:praveenpharma.office@gmail.com">praveenpharma.office@gmail.com</a></p>
 <div class="panel" style="margin-top:18px;background:#f7fbfd">
 <h3 style="margin-top:0;color:#102b43">Share PRAVEEN PHARMA Brochure on WhatsApp</h3>
@@ -109,7 +110,22 @@ byId("shareBrochureBtn").addEventListener("click",()=>{
  window.open(wa,"_blank","noopener");
  status.textContent="WhatsApp opened with the brochure link. Review it and press Send in WhatsApp.";
 });
-loadPublicSettings();
+async function loadPublicMedicines(){
+ const status=byId("publicMedicineStatus"),list=byId("publicMedicineList");
+ const fields="id,name,composition,pack_size,category,image_url,company_name,uses,benefits,side_effects,precautions,info_source_url,info_status,info_checked_at";
+ const {data,error}=await db.from("public_medicine_catalogue").select(fields).order("name");
+ if(error){status.textContent="Public catalogue is not available yet. "+error.message;return;}
+ const medicines=data||[];
+ status.textContent=medicines.length?medicines.length+" published medicines":"No medicines have been published yet.";
+ const escHtml=esc;
+ function render(){
+  const q=byId("publicMedicineSearch").value.trim().toLowerCase();
+  const rows=medicines.filter(m=>(m.name||"").toLowerCase().includes(q)||(m.composition||"").toLowerCase().includes(q));
+  list.innerHTML=rows.map(m=>'<article class="medicine-card">'+(m.image_url?'<img src="'+escHtml(m.image_url)+'" alt="'+escHtml(m.name)+'" loading="lazy">':'')+'<h3>'+escHtml(m.name)+'</h3><p><b>Formula:</b> '+escHtml(m.composition||"Not provided")+'</p><p><b>Pack:</b> '+escHtml(m.pack_size||"Not provided")+'</p><details><summary style="cursor:pointer;font-weight:700;color:#145b83">Uses, benefits & safety information</summary>'+[['What it is / Formula',m.composition],['Uses',m.uses],['Benefits',m.benefits],['Side effects',m.side_effects],['Precautions',m.precautions]].map(([k,v])=>'<p><b>'+k+':</b> '+(v?escHtml(v):'Verified information not available')+'</p>').join('')+'<small>Educational information only; not a substitute for advice from a qualified doctor or pharmacist. '+(m.info_status==="matched_official_label"?'Official label ingredient match; check source and product applicability.':'Not medically verified.')+(m.info_source_url?' <a href="'+escHtml(m.info_source_url)+'" target="_blank" rel="noopener">Source</a>':'')+'</small></details></article>').join("")||"<p>No matching published medicines.</p>";
+ }
+ byId("publicMedicineSearch").addEventListener("input",render);render();
+}
+loadPublicSettings();loadPublicMedicines();
 </script><script>
 if("serviceWorker" in navigator && location.protocol!=="file:"){
  window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(err=>console.warn("App offline shell unavailable:",err)));
