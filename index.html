@@ -102,16 +102,16 @@ async function loadPublicSettings(){
  document.title=name+" | "+(data.tagline||"Wholesale Medicine Supply");
 }
 byId("shareBrochureBtn").addEventListener("click",()=>{
- const phone=String(byId("brochureCustomerPhone").value||"").replace(/\\D/g,"");
+ const phone=String(byId("brochureCustomerPhone").value||"").replace(/\D/g,"");
  const status=byId("brochureShareStatus");
- if(!/^\\d{10}$/.test(phone)){status.textContent="Please enter a valid 10-digit customer mobile number.";return;}
+ if(!/^\d{10}$/.test(phone)){status.textContent="Please enter a valid 10-digit customer mobile number.";return;}
  if(!byId("brochureConsent").checked){status.textContent="Please confirm that the customer agreed to receive the brochure.";return;}
  const message="As discussed, here is the PRAVEEN PHARMA website brochure: https://prasadvavilala7-code.github.io/PRAVEEN-PHARMA-/";
  const wa="https://wa.me/91"+phone+"?text="+encodeURIComponent(message);
  window.open(wa,"_blank","noopener");
  status.textContent="WhatsApp opened with the brochure link. Review it and press Send in WhatsApp.";
 });
-async function submitPublicRequest(event){event.preventDefault();const status=byId("publicRequestStatus"),btn=byId("publicRequestSubmit");const name=byId("publicRequestName").value.trim(),phone=byId("publicRequestPhone").value.replace(/\\D/g,""),requestText=byId("publicRequestText").value.trim();if(name.length<2||name.length>100||!/^\\d{10}$/.test(phone)||requestText.length<5||requestText.length>2000){status.textContent="Please check your name, 10-digit mobile number and request details.";return;}btn.disabled=true;status.textContent="Submitting your request…";const requestId=(crypto.randomUUID?crypto.randomUUID():String(Date.now())+"-"+Math.random().toString(16).slice(2));const {error}=await db.from("external_order_intake").insert({source_platform:"website",external_order_id:requestId,retailer_name:name,retailer_phone:phone,retailer_gstin:"",order_payload:{request_text:requestText,request_type:"public_medicine_request"},intake_status:"received"});btn.disabled=false;if(error){status.textContent="Request could not be submitted. Please call PRAVEEN PHARMA. "+error.message;return;}byId("publicRequestForm").reset();status.textContent="Your request has been received. PRAVEEN PHARMA will review it and contact you after approval.";}
+async function submitPublicRequest(event){event.preventDefault();const status=byId("publicRequestStatus"),btn=byId("publicRequestSubmit");const name=byId("publicRequestName").value.trim(),phone=byId("publicRequestPhone").value.replace(/\D/g,""),requestText=byId("publicRequestText").value.trim();if(name.length<2||name.length>100||!/^\d{10}$/.test(phone)||requestText.length<5||requestText.length>2000){status.textContent="Please check your name, 10-digit mobile number and request details.";return;}btn.disabled=true;status.textContent="Submitting your request…";const requestId=(crypto.randomUUID?crypto.randomUUID():String(Date.now())+"-"+Math.random().toString(16).slice(2));const {error}=await db.from("external_order_intake").insert({source_platform:"website",external_order_id:requestId,retailer_name:name,retailer_phone:phone,retailer_gstin:"",order_payload:{request_text:requestText,request_type:"public_medicine_request"},intake_status:"received"});btn.disabled=false;if(error){status.textContent="Request could not be submitted. Please call PRAVEEN PHARMA. "+error.message;return;}byId("publicRequestForm").reset();status.textContent="Your request has been received. PRAVEEN PHARMA will review it and contact you after approval.";}
 byId("publicRequestForm").addEventListener("submit",submitPublicRequest);
 async function loadPublicMedicines(){
  const status=byId("publicMedicineStatus"),list=byId("publicMedicineList");
