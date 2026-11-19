@@ -217,6 +217,17 @@ input:focus,select:focus,textarea:focus{border-color:var(--pp-gold)!important;bo
 @media(max-width:600px){#dashboardHome{padding:16px!important}.dash-topline h2{font-size:22px!important}.dash-date{display:none}#dashboardHome .stats{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:9px!important}#dashboardHome .stat{min-height:105px!important;padding:12px!important}.dash-lower-grid{grid-template-columns:1fr}.dash-actions{grid-template-columns:1fr}.dash-actions button{width:100%}}
 
 </style>
+<style>
+/* Shared ValueMedi-inspired PRAVEEN PHARMA admin visual system */
+:root{--pp-gold:#d5aa55;--pp-gold-soft:#fff7e7}
+.admin-nav button.active{box-shadow:inset 3px 0 var(--pp-gold)!important}
+.admin-nav button.active:before{color:var(--pp-gold)}
+#dashboardHome .stat strong{color:#145b83!important}
+#dashboardHome .dash-gold-mark{background:var(--pp-gold)!important}
+.admin-nav{background:linear-gradient(180deg,#102b43,#173f58)!important}
+.admin-nav button:hover,.admin-nav button.active{background:#214d66!important;border-color:#426a80!important}
+@media(max-width:760px){.admin-nav .nav-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+</style>
 </head>
 <body>
 <header><h1>PRAVEEN PHARMA</h1><p>Admin Dashboard · Medicine Catalogue</p></header>
