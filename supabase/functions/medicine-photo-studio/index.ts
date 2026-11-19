@@ -26,8 +26,10 @@ Deno.serve(async(req)=>{
   const service=createClient(Deno.env.get("SUPABASE_URL")!,serviceKey);
   const {data:admin}=await service.from("admin_users").select("role,is_active").eq("user_id",user.id).maybeSingle();
   if(!admin?.is_active||admin.role!=="owner")return reply({error:"Owner Admin access only"},403);
-  const {source_path,medicine_name,product_type="auto"}=await req.json();
-  if(typeof source_path!=="string"||!source_path.startsWith("studio-originals/"+user.id+"/")||typeof medicine_name!=="string"||!medicine_name.trim())return reply({error:"Invalid source path or medicine name"},400);
+  const {source_path,medicine_id,medicine_name,product_type="auto"}=await req.json();
+  if(typeof source_path!=="string"||!source_path.startsWith("studio-originals/"+user.id+"/")||typeof medicine_id!=="string"||typeof medicine_name!=="string"||!medicine_name.trim())return reply({error:"A saved medicine, valid source path and medicine name are required"},400);
+  const {data:medicine,error:medicineErr}=await service.from("medicines").select("id").eq("id",medicine_id).maybeSingle();
+  if(medicineErr||!medicine)return reply({error:"The selected medicine record could not be found"},404);
   const apiKey=Deno.env.get("OPENAI_API_KEY");if(!apiKey)return reply({error:"AI generation is not configured yet. Add OPENAI_API_KEY as a Supabase Edge Function secret and deploy this function."},503);
   const {data:source,error:downloadErr}=await service.storage.from("medicine-images").download(source_path);
   if(downloadErr||!source)return reply({error:"Could not read the uploaded reference image"},400);
@@ -44,8 +46,8 @@ Deno.serve(async(req)=>{
    const {data:{publicUrl}}=service.storage.from("medicine-images").getPublicUrl(path);
    saved.push({key:view.key,label:view.label,path,url:publicUrl});
   }
-  const {error:insertErr}=await service.from("medicine_photo_studio").insert({admin_user_id:user.id,medicine_name:medicine_name.trim(),product_type,source_path,images:saved,status:"draft"});
+  const {data:photoSet,error:insertErr}=await service.from("medicine_photo_studio").insert({admin_user_id:user.id,medicine_id,medicine_name:medicine_name.trim(),product_type,source_path,images:saved,status:"draft"}).select("id").single();
   if(insertErr)throw insertErr;
-  return reply({status:"draft",images:saved});
+  return reply({status:"draft",photo_set_id:photoSet.id,images:saved});
  }catch(e){return reply({error:e?.message||"Unexpected generation error"},500);}
 });
