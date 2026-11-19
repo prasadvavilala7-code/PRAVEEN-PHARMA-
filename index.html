@@ -127,7 +127,7 @@ async function submitPublicRequest(event){event.preventDefault();const status=by
 byId("publicRequestForm").addEventListener("submit",submitPublicRequest);
 async function loadPublicMedicines(){
  const status=byId("publicMedicineStatus"),list=byId("publicMedicineList");
- const fields="id,name,composition,pack_size,category,image_url,company_name,mechanism_of_action,uses,benefits,side_effects,precautions,info_source_url,info_status,info_checked_at";
+ const fields="id,name,composition,pack_size,category,image_url,company_id,company_name,mechanism_of_action,uses,benefits,side_effects,precautions,info_source_url,info_status,info_checked_at";
  const [{data,error},{data:companyRows,error:companyError}]=await Promise.all([db.from("public_medicine_details").select(fields.replace("company_name,","")).order("name"),db.from("medicine_companies").select("id,name").eq("is_approved",true)]);
  if(error){status.textContent="Public catalogue is not available yet. "+error.message;return;}
  if(companyError){status.textContent="Company details are temporarily unavailable.";return;}
