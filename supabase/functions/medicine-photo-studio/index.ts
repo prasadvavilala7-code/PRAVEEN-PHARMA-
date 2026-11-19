@@ -14,11 +14,16 @@ Deno.serve(async(req)=>{
  if(req.method!=="POST")return reply({error:"POST required"},405);
  try{
   const auth=req.headers.get("Authorization")||"";
-  const anon=Deno.env.get("SUPABASE_ANON_KEY")||"";
-  const userClient=createClient(Deno.env.get("SUPABASE_URL")!,anon,{global:{headers:{Authorization:auth}}});
+  const publishableKeys=JSON.parse(Deno.env.get("SUPABASE_PUBLISHABLE_KEYS")||"{}");
+  const publishableKey=publishableKeys.default||Deno.env.get("SUPABASE_ANON_KEY");
+  if(!publishableKey)return reply({error:"Supabase publishable key is not configured"},500);
+  const userClient=createClient(Deno.env.get("SUPABASE_URL")!,publishableKey,{global:{headers:{Authorization:auth}}});
   const {data:{user},error:userErr}=await userClient.auth.getUser();
   if(userErr||!user)return reply({error:"Admin sign-in required"},401);
-  const service=createClient(Deno.env.get("SUPABASE_URL")!,Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+  const secretKeys=JSON.parse(Deno.env.get("SUPABASE_SECRET_KEYS")||"{}");
+  const serviceKey=secretKeys.default||Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if(!serviceKey)return reply({error:"Supabase server secret key is not configured"},500);
+  const service=createClient(Deno.env.get("SUPABASE_URL")!,serviceKey);
   const {data:admin}=await service.from("admin_users").select("role,is_active").eq("user_id",user.id).maybeSingle();
   if(!admin?.is_active||admin.role!=="owner")return reply({error:"Owner Admin access only"},403);
   const {source_path,medicine_name,product_type="auto"}=await req.json();
