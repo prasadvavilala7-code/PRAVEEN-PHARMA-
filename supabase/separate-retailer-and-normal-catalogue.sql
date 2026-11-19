@@ -10,7 +10,7 @@ as
 select m.id, m.name, m.composition, m.pack_size, m.category, m.image_url,
        m.company_id, m.uses, m.benefits, m.side_effects, m.precautions,
        m.info_source_url, m.info_status, m.info_checked_at,
-       m.mechanism_of_action
+       m.mechanism_of_action, m.image_gallery
 from public.medicines m
 where m.is_active = true and m.public_approved = true;
 
