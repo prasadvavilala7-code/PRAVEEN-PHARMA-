@@ -5,7 +5,7 @@
 begin;
 
 create or replace view public.public_medicine_details
-with (security_invoker = false)
+with (security_invoker = true)
 as
 select m.id, m.name, m.composition, m.pack_size, m.category, m.image_url,
        m.company_id, m.uses, m.benefits, m.side_effects, m.precautions,
@@ -33,7 +33,7 @@ where m.is_active = true;
 
 grant select (id, name, composition, pack_size, category, image_url, is_active, company_id,
               uses, benefits, mechanism_of_action, side_effects, precautions,
-              info_source_url, info_status, info_checked_at)
+              info_source_url, info_status, info_checked_at, image_gallery)
   on table public.medicines to anon, authenticated;
 
 revoke all on public.retailer_medicine_details from anon, authenticated;
