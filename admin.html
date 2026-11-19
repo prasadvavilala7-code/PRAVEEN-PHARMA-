@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>PRAVEEN PHARMA | Admin</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" onerror="window.__supabaseSdkLoadFailed=true;window.addEventListener('DOMContentLoaded',function(){var e=document.getElementById('loginStatus');if(e)e.textContent='Admin connection library failed to load. Check internet or open the page in Chrome.';});"></script>
 <style>
 *{box-sizing:border-box}
 :root{font-family:Arial,Helvetica,sans-serif;color:#24352d;background:#f5f8f5}
@@ -343,8 +343,10 @@ const SUPABASE_URL="https://hdoftqemjttaegkysjyq.supabase.co";
 const SUPABASE_KEY="sb_publishable_75Bn2frOUV-LeTqXvgUVtg__jIxuA72";
 const ADMIN_ID="9be3d5ee-e09a-4738-9b27-f2fae15e93c7";
 const BUCKET="medicine-images";
-const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 const $=id=>document.getElementById(id);
+if(!window.supabase?.createClient){const status=$("loginStatus");if(status)status.textContent="Admin connection library did not load. Check internet and refresh this page.";throw new Error("Supabase SDK unavailable");}
+const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+$("adminLogin").addEventListener("click",adminLogin);
 let currentUser=null,currentAdminRole=null,allMedicines=[],selectedFile=null,poDraftLines=[];
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 
@@ -574,7 +576,7 @@ $("navLogout").addEventListener("click",async()=>{await db.auth.signOut();locati
 $("refreshWebsiteRequests").addEventListener("click",loadWebsiteRequests);$("saveLedgerEntry").addEventListener("click",saveLedgerEntry);$("saveSupplier").addEventListener("click",saveSupplier);$("addPoLine").addEventListener("click",addPoLine);$("createPurchaseOrder").addEventListener("click",createPurchaseOrder);$("saveSettings").addEventListener("click",saveSettings);$("refreshActivity").addEventListener("click",loadActivity);$("reloadSettings").addEventListener("click",loadSettings);$("refreshReports").addEventListener("click",loadReports);$("exportBackup").addEventListener("click",exportBackup);$("runHealth").addEventListener("click",runHealth);$("refreshLoginHistory").addEventListener("click",loadLoginHistory);
 $("searchPhoto").addEventListener("click",()=>{const q=$("name").value.trim();if(!q){$("saveStatus").textContent="Enter medicine name first.";return;}window.open("https://www.google.com/search?tbm=isch&q="+encodeURIComponent(q+" medicine box strip packaging"),"_blank","noopener");});
 $("photoFile").addEventListener("change",e=>{selectedFile=e.target.files?.[0]||null;if(!selectedFile){$("photoPreview").textContent="No new photo selected.";return;}if(!selectedFile.type.startsWith("image/")){selectedFile=null;$("photoPreview").textContent="Please choose an image file.";return;}if(selectedFile.size>5*1024*1024){selectedFile=null;e.target.value="";$("photoPreview").textContent="Image must be 5 MB or smaller.";return;}$("photoPreview").textContent="Selected: "+selectedFile.name;});
-$("adminLogin").addEventListener("click",adminLogin);$("adminForgotPassword").addEventListener("click",sendAdminPasswordReset);$("saveAdminPassword").addEventListener("click",saveNewAdminPassword);$("adminLogout").addEventListener("click",async()=>{await db.auth.signOut();location.reload();});$("saveMedicine").addEventListener("click",saveMedicine);$("addCompany").addEventListener("click",addCompany);$("clearForm").addEventListener("click",clearForm);$("filter").addEventListener("input",renderList);init();
+$("adminForgotPassword").addEventListener("click",sendAdminPasswordReset);$("saveAdminPassword").addEventListener("click",saveNewAdminPassword);$("adminLogout").addEventListener("click",async()=>{await db.auth.signOut();location.reload();});$("saveMedicine").addEventListener("click",saveMedicine);$("addCompany").addEventListener("click",addCompany);$("clearForm").addEventListener("click",clearForm);$("filter").addEventListener("input",renderList);init();
 db.auth.onAuthStateChange((event,session)=>{if(event==="PASSWORD_RECOVERY"){$("loginPanel").hidden=true;$("adminShell").hidden=true;$("adminResetPasswordPanel").hidden=false;$("adminResetMessage").textContent="Recovery link verified. Set your new Admin password.";}});
 </script>
 <script>
