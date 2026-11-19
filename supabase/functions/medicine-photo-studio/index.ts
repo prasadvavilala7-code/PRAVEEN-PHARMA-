@@ -35,7 +35,7 @@ Deno.serve(async(req)=>{
   const saved=[];
   for(const view of views){
    const prompt="Use the uploaded medicine packaging photo as the ONLY source of truth. Product name: "+medicine_name.trim()+". Product type: "+product_type+". "+view.prompt+" Preserve the exact original package design, brand spelling, logo, colours, graphics, composition, pack size and all printed text. Do not redesign, recolour, beautify, replace, add or guess any wording or numbers. If text is too small or blurry, do not fabricate it; leave it faithful to the source and flag for human inspection. No invented batch number, MRP, expiry, barcode or manufacturer. Clean white or very light blue studio background, realistic high-resolution product catalogue photography, soft natural shadow. This is a draft for human review; packaging text fidelity is more important than visual polish.";
-   const form=new FormData();form.append("model","gpt-image-1");form.append("prompt",prompt);form.append("size","1024x1024");form.append("image",new File([source], "reference."+ext,{type:mime}));
+   const form=new FormData();form.append("model","gpt-image-2.5-sunburst");form.append("prompt",prompt);form.append("size","1024x1024");form.append("image[]",new File([source], "reference."+ext,{type:mime}));
    const res=await fetch("https://api.openai.com/v1/images/edits",{method:"POST",headers:{Authorization:"Bearer "+apiKey},body:form});
    const data=await res.json();if(!res.ok)throw new Error(data.error?.message||"Image generation provider error");
    const b64=data.data?.[0]?.b64_json;if(!b64)throw new Error("Image provider returned no image data");
