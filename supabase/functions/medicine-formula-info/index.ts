@@ -74,7 +74,7 @@ async function verifyMedicine(m: any, force = false) {
   const { error } = await supabase.from("medicines").update({
     mechanism_of_action: mechanism || null,
     uses: uses || null,
-    benefits: null,
+    benefits: uses ? "Potential benefit based on official indication: " + uses : null,
     side_effects: sideEffects || null,
     precautions: precautions || null,
     info_source_url: endpoint,
@@ -83,7 +83,7 @@ async function verifyMedicine(m: any, force = false) {
   }).eq("id", m.id);
   if (error) throw error;
   return { id: m.id, status: "matched_official_label", fields: {
-    mechanism: Boolean(mechanism), uses: Boolean(uses), benefits: false,
+    mechanism: Boolean(mechanism), uses: Boolean(uses), benefits: Boolean(uses),
     side_effects: Boolean(sideEffects), precautions: Boolean(precautions),
   }};
 }
