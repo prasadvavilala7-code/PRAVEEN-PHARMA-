@@ -14,11 +14,12 @@ const ADMIN_ID = "9be3d5ee-e09a-4738-9b27-f2fae15e93c7";
 const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 
 function splitIngredients(formula: string): string[] {
-  return formula.split(/\s*(?:\+|;|,|\band\b)\s*/i)
+  return formula.split(/\s*(?:\+|;|,|&|\band\b)\s*/i)
     .map((part) => part
       .replace(/\b\d+(?:\.\d+)?\s*(?:mg|mcg|μg|g|kg|ml|mL|iu|units?|%|meq)\b/gi, "")
       .replace(/\b\d+\s*(?:million|billion)\s*(?:cfu|spores?|cells?)\b/gi, "")
       .replace(/\b(?:eq\.?\s*to|equivalent\s+to)\b.*$/i, "")
+      .replace(/\b(?:tablets?|capsules?|caplets?|injections?|syrup|suspension|oral\s+solution|cream|ointment)\b/gi, "")
       .replace(/\s+/g, " ").trim())
     .filter(Boolean);
 }
