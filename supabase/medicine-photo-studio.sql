@@ -1,4 +1,4 @@
--- AI Medicine Photo Studio: additive only; does not alter medicines or existing photos.
+-- Additive migration: does not alter existing medicine rows or photo URLs.
 create table if not exists public.medicine_photo_studio (
  id uuid primary key default gen_random_uuid(),
  admin_user_id uuid not null references auth.users(id) on delete cascade,
@@ -15,6 +15,7 @@ alter table public.medicine_photo_studio enable row level security;
 drop policy if exists "Owner admin manages medicine photo studio" on public.medicine_photo_studio;
 create policy "Owner admin manages medicine photo studio" on public.medicine_photo_studio
  for all to authenticated
- using (exists (select 1 from public.admin_users a where a.user_id=auth.uid() and a.role='owner' and a.is_active=true))
- with check (exists (select 1 from public.admin_users a where a.user_id=auth.uid() and a.role='owner' and a.is_active=true));
+ using (private.is_owner())
+ with check (private.is_owner());
+grant select, insert, update on public.medicine_photo_studio to authenticated;
 create index if not exists medicine_photo_studio_created_at_idx on public.medicine_photo_studio(created_at desc);
