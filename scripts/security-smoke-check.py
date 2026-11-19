@@ -19,7 +19,7 @@ require("sb_publishable_" in admin and "sb_publishable_" in retailer and "sb_pub
 for name, source in [("admin.html", admin), ("retailer.html", retailer), ("index.html", public)]:
     require("service_role" not in source.lower() and "sb_secret_" not in source.lower(),
             name + " contains no service-role/secret key")
-require('currentUser.id!==ADMIN_ID' in admin, "Admin dashboard checks the signed-in user ID before revealing controls")
+require('eq("user_id",currentUser.id).maybeSingle()' in admin and '!adminRow.is_active' in admin and 'currentAdminRole=adminRow.role' in admin, "Admin dashboard verifies the signed-in user against an active admin_users record before revealing controls")
 require('auth.uid()' in master_sql and 'Admin can manage site settings' in master_sql,
         "Master settings SQL includes database-side authenticated admin policy")
 require('auth.uid()' in storage_sql and 'PRAVEEN admin upload medicine photos' in storage_sql,
