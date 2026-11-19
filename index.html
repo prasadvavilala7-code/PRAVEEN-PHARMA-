@@ -29,7 +29,7 @@ header{position:relative;overflow:hidden;text-align:left!important;padding:clamp
 .medicine-card img,.medicine-card .medicine-photo{transform:perspective(850px) rotateY(-11deg) rotateX(4deg) translateZ(8px);transform-origin:center center;box-shadow:12px 16px 24px rgba(10,35,52,.28),inset 0 0 0 1px rgba(255,255,255,.8);border:1px solid #cbd9e2!important;border-radius:12px!important;transition:transform .28s ease,box-shadow .28s ease;backface-visibility:hidden}
 .medicine-card:hover img,.medicine-card:hover .medicine-photo{transform:perspective(850px) rotateY(-4deg) rotateX(1deg) translateY(-3px) translateZ(14px);box-shadow:16px 20px 30px rgba(10,35,52,.32)}
 
-</style><style>
+.medicine-gallery{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}.medicine-gallery img{width:64px;height:64px;object-fit:contain;background:#f6f8fb;border:1px solid #e1e7ef;border-radius:8px;padding:3px}</style><style>
 /* App-like responsive experience */
 :root{--app-ink:#123047;--app-blue:#07558c;--app-teal:#087b67}
 body{padding-bottom:76px}
@@ -127,7 +127,7 @@ async function submitPublicRequest(event){event.preventDefault();const status=by
 byId("publicRequestForm").addEventListener("submit",submitPublicRequest);
 async function loadPublicMedicines(){
  const status=byId("publicMedicineStatus"),list=byId("publicMedicineList");
- const fields="id,name,composition,pack_size,category,image_url,company_id,company_name,mechanism_of_action,uses,benefits,side_effects,precautions,info_source_url,info_status,info_checked_at";
+ const fields="id,name,composition,pack_size,category,image_url,image_gallery,company_id,company_name,mechanism_of_action,uses,benefits,side_effects,precautions,info_source_url,info_status,info_checked_at";
  const [{data,error},{data:companyRows,error:companyError}]=await Promise.all([db.from("public_medicine_details").select(fields.replace("company_name,","")).order("name"),db.from("medicine_companies").select("id,name").eq("is_approved",true)]);
  if(error){status.textContent="Public catalogue is not available yet. "+error.message;return;}
  if(companyError){status.textContent="Company details are temporarily unavailable.";return;}
@@ -138,7 +138,7 @@ async function loadPublicMedicines(){
  function render(){
   const q=byId("publicMedicineSearch").value.trim().toLowerCase();
   const rows=medicines.filter(m=>(m.name||"").toLowerCase().includes(q)||(m.composition||"").toLowerCase().includes(q));
-  list.innerHTML=rows.map(m=>'<article class="medicine-card">'+(m.image_url?'<img src="'+escHtml(m.image_url)+'" alt="'+escHtml(m.name)+'" loading="lazy">':'')+'<h3>'+escHtml(m.name)+'</h3><p><b>Formula:</b> '+escHtml(m.composition||"Not provided")+'</p><p><b>Pack:</b> '+escHtml(m.pack_size||"Not provided")+'</p>'+[['How it works',m.mechanism_of_action],['Uses',m.uses],['Benefits',m.benefits],['Side effects',m.side_effects],['Precautions',m.precautions]].map(([k,v])=>'<p><b>'+k+':</b> '+(v?escHtml(v):'Verified information not available')+'</p>').join('')+'<small>Educational information only; not a substitute for advice from a qualified doctor or pharmacist. '+(m.info_status==="matched_official_label"?'Official label ingredient match; check source and product applicability.':'Not medically verified.')+(m.info_source_url?' <a href="'+escHtml(m.info_source_url)+'" target="_blank" rel="noopener">Source</a>':'')+'</small></article>').join("")||"<p>No matching published medicines.</p>";
+  list.innerHTML=rows.map(m=>'<article class="medicine-card">'+(m.image_url?'<img src="'+escHtml(m.image_url)+'" alt="'+escHtml(m.name)+'" loading="lazy">':'')+(Array.isArray(m.image_gallery)&&m.image_gallery.length?'<div class="medicine-gallery">'+m.image_gallery.map((u,i)=>'<img src="'+escHtml(u)+'" alt="'+escHtml(m.name)+' photo '+(i+1)+'" loading="lazy">').join('')+'</div>':'')+'<h3>'+escHtml(m.name)+'</h3><p><b>Formula:</b> '+escHtml(m.composition||"Not provided")+'</p><p><b>Pack:</b> '+escHtml(m.pack_size||"Not provided")+'</p>'+[['How it works',m.mechanism_of_action],['Uses',m.uses],['Benefits',m.benefits],['Side effects',m.side_effects],['Precautions',m.precautions]].map(([k,v])=>'<p><b>'+k+':</b> '+(v?escHtml(v):'Verified information not available')+'</p>').join('')+'<small>Educational information only; not a substitute for advice from a qualified doctor or pharmacist. '+(m.info_status==="matched_official_label"?'Official label ingredient match; check source and product applicability.':'Not medically verified.')+(m.info_source_url?' <a href="'+escHtml(m.info_source_url)+'" target="_blank" rel="noopener">Source</a>':'')+'</small></article>').join("")||"<p>No matching published medicines.</p>";
  }
  byId("publicMedicineSearch").addEventListener("input",render);render();
 }
