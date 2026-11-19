@@ -1,28 +1,33 @@
-# AI Medicine Photo Studio — setup
+# AI Medicine Photo Studio — setup and deployment status
 
-This is an additive Admin-only tool. Existing medicine records and photo URLs are not overwritten.
+This is an additive, owner-Admin-only workflow. Existing medicine records and existing photo URLs are not overwritten.
 
-## 1. Apply the database migration
-Open the PRAVEEN PHARMA Supabase project → SQL Editor. Review and run `supabase/medicine-photo-studio.sql` once.
+## Current project setup
+- Supabase project: PRAVEEN PHARMA (`hdoftqemjttaegkysjyq`)
+- Database table `public.medicine_photo_studio`: applied.
+- Edge Function `medicine-photo-studio`: deployed and ACTIVE.
+- Storage bucket `medicine-images`: already exists and is public. Existing upload policy is restricted to the configured owner Admin.
+- Remaining prerequisite for image generation: set the `OPENAI_API_KEY` Edge Function secret.
 
-## 2. Deploy the Edge Function
-Deploy `supabase/functions/medicine-photo-studio/index.ts` as the function named `medicine-photo-studio`.
+## Add the OpenAI API key
+1. Open [Supabase Edge Function Secrets](https://supabase.com/dashboard/project/hdoftqemjttaegkysjyq/functions/secrets).
+2. Add a secret named `OPENAI_API_KEY` with the API key from your OpenAI API account.
+3. Save it. Supabase Edge Function secrets become available without redeploying.
+4. Never paste this secret into the website, GitHub, or a chat message.
 
-Set these Edge Function secrets in Supabase:
-- `OPENAI_API_KEY` — API key for image generation (billing/usage may apply).
-- `SUPABASE_URL`
-- `SUPABASE_ANON_KEY`
-- `SUPABASE_SERVICE_ROLE_KEY` — server-side secret only; never add this to website JavaScript.
+Supabase provides `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEYS`, and `SUPABASE_SECRET_KEYS` to hosted Edge Functions by default. The function uses the publishable key for user authentication and the server secret only inside the function.
 
-The function uses OpenAI image edits with the uploaded source image as the reference. It generates four separate draft views. Tiny package text can still be distorted by image generation; manual comparison and approval are mandatory.
+## Open the Admin tool
+After the website changes are merged/published, sign in using the existing owner Admin account and open AI Medicine Photo Studio from the Admin navigation. The standalone page is `photo-studio.html`.
 
-## 3. Open the Admin tool
-After deployment, sign in using the existing owner Admin account at:
-`https://prasadvavilala7-code.github.io/PRAVEEN-PHARMA-/photo-studio.html`
+## Workflow
+1. Upload one clear medicine packaging reference photo.
+2. Enter the exact medicine name printed on the pack.
+3. Choose a product type or leave auto-detect selected.
+4. Generate four separate draft views: combo, front close-up, back/details close-up, and box alone.
+5. Compare every image with the original pack and approve only if the visible details match.
 
-Upload a reference image, enter the exact medicine name, generate, inspect all four views and approve only if every visible detail matches. Approval records the review state; it does not automatically replace a live catalogue photo. Existing photos remain untouched.
+## Important accuracy and safety limits
+Image generation can distort small printed text, logos, batch numbers, MRP, expiry and barcodes. A prompt cannot guarantee exact packaging text. Never use generated artwork as the source of truth for medicine identity, composition, dosage, batch or expiry. Reject any image with altered or unreadable text. Approval records a review state only; it does not replace a live catalogue photo or automatically publish an image.
 
-## Important
-- Storage bucket `medicine-images` must already exist and allow the authenticated owner Admin to upload, as in the current Admin photo workflow.
-- If generated image files must be public on the catalogue, the existing bucket's public-read setting must be enabled. Do not make private medicine or customer data public.
-- The website UI is not a substitute for checking the physical pack. Never rely on generated images for medicine identity, dosage or regulatory labelling.
+The image-edit function uses `gpt-image-2.5-sunburst` with the uploaded photo as its reference. API usage may incur charges on the OpenAI API account.
