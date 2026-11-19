@@ -6,6 +6,9 @@
 
 begin;
 
+-- Retailer checkout stores the delivery city; keep existing orders unchanged.
+alter table public.orders add column if not exists city text not null default '';
+
 create table if not exists public.retailer_shortage_book (
   id uuid primary key default gen_random_uuid(),
   retailer_user_id uuid not null references auth.users(id) on delete cascade,
