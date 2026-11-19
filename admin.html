@@ -338,7 +338,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--pp-gold)!important;bo
 <button type="button" class="secondary" id="searchPhoto">Search medicine photos</button>
 <input id="photoFile" type="file" accept="image/*">
 <div id="photoPreview" class="muted">No original photo selected.</div>
-<div style="margin:12px 0;padding:14px;border:1px solid #e1e7ef;border-radius:10px;background:#f8fafc"><b>AI catalogue photos</b><p class="muted">If this is a new medicine, it will be saved first. Then four draft photos will be generated from the original photo. Nothing goes live until you approve.</p><div class="row"><select id="photoProductType"><option value="auto">Auto-detect product type</option><option>Box + Strips</option><option>Bottle</option><option>Syrup</option><option>Eye Drops</option><option>Tube</option><option>Injection</option></select><button type="button" id="generateMedicinePhotos">Generate 4 Photos</button></div><p id="medicinePhotoStatus" class="muted" role="status">Select an original photo to begin.</p><div id="medicinePhotoResults" class="preview"></div></div>
+<div style="margin:12px 0;padding:14px;border:1px solid #e1e7ef;border-radius:10px;background:#f8fafc"><b>Manual 4-view medicine gallery</b><p class="muted">AI credits are not required. Upload up to four real photos of this exact medicine pack (front, back, side and strip/bottle). Review them before saving. Do not use unrelated medicine photos or digitally alter label details.</p><div class="row"><label>View 1 — Front<input id="galleryPhoto1" type="file" accept="image/*"></label><label>View 2 — Back<input id="galleryPhoto2" type="file" accept="image/*"></label></div><div class="row"><label>View 3 — Side<input id="galleryPhoto3" type="file" accept="image/*"></label><label>View 4 — Strip / Bottle<input id="galleryPhoto4" type="file" accept="image/*"></label></div><div id="manualGalleryPreview" class="preview muted">No extra gallery photos selected.</div><button type="button" id="saveManualGallery">Save photos to medicine</button><p id="medicinePhotoStatus" class="muted" role="status">Choose one or more real product photos. This works without AI credits.</p></div>
 <button type="button" id="saveMedicine">Save Medicine</button>
 <button type="button" class="secondary" id="clearForm">Clear</button>
 <p id="saveStatus" class="muted" role="status"></p>
@@ -380,8 +380,8 @@ function updateDashboardStats(){
  $("dashboardStatus").textContent="Live data loaded from the connected Supabase project.";
 }
 
-function clearForm(){["medicineId","name","composition","pack","category","price","gst","hsnCode","medicineCompany"].forEach(id=>$(id).value="");$("photoFile").value="";$("photoPreview").textContent="No original photo selected.";selectedFile=null;$("medicinePhotoResults").innerHTML="";$("medicinePhotoStatus").textContent="Select an original photo to begin.";window.pendingMedicinePhotoSet=null;$("formTitle").textContent="Add New Medicine";$("saveStatus").textContent="";}
-function editMedicine(id){const m=allMedicines.find(x=>x.id===id);if(!m)return;showAdminSection("editor");$("medicineId").value=m.id;$("name").value=m.name||"";$("composition").value=m.composition||"";$("pack").value=m.pack_size||"";$("category").value=m.category||"";$("price").value=m.common_price??"";$("gst").value=m.gst_rate??0;$("hsnCode").value=m.hsn_code||"";$("medicineCompany").value=m.company_id||"";$("formTitle").textContent="Edit Medicine";$("photoPreview").textContent=m.image_url?"Current main photo is saved. Choose an original reference photo to generate a new set.":"No photo saved yet."; $("medicinePhotoResults").innerHTML="";$("medicinePhotoStatus").textContent="Choose a reference photo to generate four views for this medicine.";window.pendingMedicinePhotoSet=null;selectedFile=null;$("photoFile").value="";window.scrollTo({top:0,behavior:"smooth"});}
+function clearForm(){["medicineId","name","composition","pack","category","price","gst","hsnCode","medicineCompany"].forEach(id=>$(id).value="");$("photoFile").value="";$("photoPreview").textContent="No original photo selected.";selectedFile=null;["galleryPhoto1","galleryPhoto2","galleryPhoto3","galleryPhoto4"].forEach(id=>$(id).value="");$("manualGalleryPreview").textContent="No extra gallery photos selected.";$("medicinePhotoStatus").textContent="Choose one or more real product photos. This works without AI credits.";$("formTitle").textContent="Add New Medicine";$("saveStatus").textContent="";}
+function editMedicine(id){const m=allMedicines.find(x=>x.id===id);if(!m)return;showAdminSection("editor");$("medicineId").value=m.id;$("name").value=m.name||"";$("composition").value=m.composition||"";$("pack").value=m.pack_size||"";$("category").value=m.category||"";$("price").value=m.common_price??"";$("gst").value=m.gst_rate??0;$("hsnCode").value=m.hsn_code||"";$("medicineCompany").value=m.company_id||"";$("formTitle").textContent="Edit Medicine";$("photoPreview").textContent=m.image_url?"Current main photo is saved. Choose a new original photo if needed.":"No photo saved yet."; $("manualGalleryPreview").textContent="Choose up to four new real product photos."; $("medicinePhotoStatus").textContent="Upload one or more real product photos and save them to this medicine.";selectedFile=null;$("photoFile").value="";["galleryPhoto1","galleryPhoto2","galleryPhoto3","galleryPhoto4"].forEach(id=>$(id).value="");window.scrollTo({top:0,behavior:"smooth"});}
 function renderList(){
  const q=$("filter").value.trim().toLowerCase();
  const list=allMedicines.filter(m=>(m.name||"").toLowerCase().includes(q)||(m.composition||"").toLowerCase().includes(q));
@@ -440,6 +440,34 @@ async function saveMedicine(keepForm=false){
  }catch(e){$("saveStatus").textContent="Save failed: "+(e.message||String(e));return null;}
  finally{$("saveMedicine").disabled=false;}
 }
+async function saveManualPhotoGallery(){
+ const medicineId=await saveMedicine(true);if(!medicineId)return;
+ const fields=["galleryPhoto1","galleryPhoto2","galleryPhoto3","galleryPhoto4"];
+ const files=fields.map(id=>$(id).files?.[0]||null);
+ if(!files.some(Boolean)){$("medicinePhotoStatus").textContent="Select at least one gallery photo first.";return;}
+ for(const file of files.filter(Boolean)){if(!file.type.startsWith("image/")||file.size>5*1024*1024){$("medicinePhotoStatus").textContent="Each gallery image must be an image file of 5 MB or smaller.";return;}}
+ const btn=$("saveManualGallery");btn.disabled=true;
+ try{
+  $("medicinePhotoStatus").textContent="Uploading selected product photos securely…";
+  const urls=[];
+  for(const file of files.filter(Boolean)){
+   const ext=(file.name.split(".").pop()||"jpg").toLowerCase().replace(/[^a-z0-9]/g,"")||"jpg";
+   const path=medicineId+"/gallery-"+crypto.randomUUID()+"."+ext;
+   const {error}=await db.storage.from(BUCKET).upload(path,file,{upsert:false,contentType:file.type||"image/jpeg"});
+   if(error)throw error;
+   const {data}=db.storage.from(BUCKET).getPublicUrl(path);urls.push(data.publicUrl);
+  }
+  const {error}=await db.from("medicines").update({image_url:urls[0],image_gallery:urls}).eq("id",medicineId);
+  if(error)throw error;
+  $("medicinePhotoStatus").textContent=urls.length+" real product photo(s) uploaded and linked to this medicine. Main image set to the first uploaded view.";
+  await loadMedicines();await logActivity("Saved manual medicine photo gallery",{medicine_id:medicineId,photo_count:urls.length});
+ }catch(e){$("medicinePhotoStatus").textContent="Photo upload failed: "+(e.message||String(e));}
+ finally{btn.disabled=false;}
+}
+["galleryPhoto1","galleryPhoto2","galleryPhoto3","galleryPhoto4"].forEach(id=>$(id).addEventListener("change",()=>{
+ const files=["galleryPhoto1","galleryPhoto2","galleryPhoto3","galleryPhoto4"].map(x=>$(x).files?.[0]).filter(Boolean);
+ $("manualGalleryPreview").innerHTML=files.length?files.map((f,i)=>'<div style="display:inline-block;margin:6px;text-align:center"><img src="'+URL.createObjectURL(f)+'" alt="Selected product view '+(i+1)+'" style="width:90px;height:90px;object-fit:contain;border:1px solid #dce6ec;border-radius:8px"><br><small>'+esc(f.name)+'</small></div>').join(""):"No extra gallery photos selected.";
+}));
 async function generateMedicinePhotos(){
  const file=selectedFile;if(!file){$("medicinePhotoStatus").textContent="First choose the original medicine photo above.";return;}
  $("generateMedicinePhotos").disabled=true;
@@ -639,7 +667,7 @@ $("navLogout").addEventListener("click",async()=>{await db.auth.signOut();locati
 $("refreshWebsiteRequests").addEventListener("click",loadWebsiteRequests);$("saveLedgerEntry").addEventListener("click",saveLedgerEntry);$("saveSupplier").addEventListener("click",saveSupplier);$("addPoLine").addEventListener("click",addPoLine);$("createPurchaseOrder").addEventListener("click",createPurchaseOrder);$("saveSettings").addEventListener("click",saveSettings);$("refreshActivity").addEventListener("click",loadActivity);$("reloadSettings").addEventListener("click",loadSettings);$("refreshReports").addEventListener("click",loadReports);$("exportBackup").addEventListener("click",exportBackup);$("runHealth").addEventListener("click",runHealth);$("refreshLoginHistory").addEventListener("click",loadLoginHistory);
 $("searchPhoto").addEventListener("click",()=>{const q=$("name").value.trim();if(!q){$("saveStatus").textContent="Enter medicine name first.";return;}window.open("https://www.google.com/search?tbm=isch&q="+encodeURIComponent(q+" medicine box strip packaging"),"_blank","noopener");});
 $("photoFile").addEventListener("change",e=>{selectedFile=e.target.files?.[0]||null;if(!selectedFile){$("photoPreview").textContent="No new photo selected.";return;}if(!selectedFile.type.startsWith("image/")){selectedFile=null;$("photoPreview").textContent="Please choose an image file.";return;}if(selectedFile.size>5*1024*1024){selectedFile=null;e.target.value="";$("photoPreview").textContent="Image must be 5 MB or smaller.";return;}$("photoPreview").textContent="Selected: "+selectedFile.name;});
-$("adminForgotPassword").addEventListener("click",sendAdminPasswordReset);$("saveAdminPassword").addEventListener("click",saveNewAdminPassword);$("adminLogout").addEventListener("click",async()=>{await db.auth.signOut();location.reload();});$("saveMedicine").addEventListener("click",()=>saveMedicine(false));$("generateMedicinePhotos").addEventListener("click",generateMedicinePhotos);$("addCompany").addEventListener("click",addCompany);$("clearForm").addEventListener("click",clearForm);$("filter").addEventListener("input",renderList);init();
+$("adminForgotPassword").addEventListener("click",sendAdminPasswordReset);$("saveAdminPassword").addEventListener("click",saveNewAdminPassword);$("adminLogout").addEventListener("click",async()=>{await db.auth.signOut();location.reload();});$("saveMedicine").addEventListener("click",()=>saveMedicine(false));$("saveManualGallery").addEventListener("click",saveManualPhotoGallery);$("addCompany").addEventListener("click",addCompany);$("clearForm").addEventListener("click",clearForm);$("filter").addEventListener("input",renderList);init();
 db.auth.onAuthStateChange((event,session)=>{if(event==="PASSWORD_RECOVERY"){$("loginPanel").hidden=true;$("adminShell").hidden=true;$("adminResetPasswordPanel").hidden=false;$("adminResetMessage").textContent="Recovery link verified. Set your new Admin password.";}});
 </script>
 <script>
