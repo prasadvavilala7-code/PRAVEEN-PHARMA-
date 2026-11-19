@@ -441,11 +441,11 @@ async function saveMedicine(keepForm=false){
  finally{$("saveMedicine").disabled=false;}
 }
 async function saveManualPhotoGallery(){
- const medicineId=await saveMedicine(true);if(!medicineId)return;
  const fields=["galleryPhoto1","galleryPhoto2","galleryPhoto3","galleryPhoto4"];
  const files=fields.map(id=>$(id).files?.[0]||null);
  if(!files.some(Boolean)){$("medicinePhotoStatus").textContent="Select at least one gallery photo first.";return;}
  for(const file of files.filter(Boolean)){if(!file.type.startsWith("image/")||file.size>5*1024*1024){$("medicinePhotoStatus").textContent="Each gallery image must be an image file of 5 MB or smaller.";return;}}
+ const medicineId=await saveMedicine(true);if(!medicineId)return;
  const btn=$("saveManualGallery");btn.disabled=true;
  try{
   $("medicinePhotoStatus").textContent="Uploading selected product photos securely…";
