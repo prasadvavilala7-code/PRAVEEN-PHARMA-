@@ -24,8 +24,9 @@ Deno.serve(async(req)=>{
   const serviceKey=secretKeys.default||Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
   if(!serviceKey)return reply({error:"Supabase server secret key is not configured"},500);
   const service=createClient(Deno.env.get("SUPABASE_URL")!,serviceKey);
-  const {data:admin}=await service.from("admin_users").select("role,is_active").eq("user_id",user.id).maybeSingle();
-  if(!admin?.is_active||admin.role!=="owner")return reply({error:"Owner Admin access only"},403);
+  const {data:admin,error:adminErr}=await userClient.from("admin_users").select("role,is_active").eq("user_id",user.id).maybeSingle();
+  if(adminErr)return reply({error:"Could not verify Admin owner access: "+adminErr.message},500);
+  if(!admin?.is_active||admin.role!=="owner")return reply({error:"Owner Admin access only (account role or active status mismatch)"},403);
   const {source_path,medicine_id,medicine_name,product_type="auto"}=await req.json();
   if(typeof source_path!=="string"||!source_path.startsWith("studio-originals/"+user.id+"/")||typeof medicine_id!=="string"||typeof medicine_name!=="string"||!medicine_name.trim())return reply({error:"A saved medicine, valid source path and medicine name are required"},400);
   const {data:medicine,error:medicineErr}=await service.from("medicines").select("id").eq("id",medicine_id).maybeSingle();
