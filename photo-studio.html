@@ -22,7 +22,22 @@ const db=window.supabase.createClient(URL,KEY),$=id=>document.getElementById(id)
 let session=null,file=null;
 const views=[["combo","Combo view — box and strip/bottle"],["front","Front close-up"],["back","Back/details close-up"],["box","Box alone"]];
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-async function enter(s){session=s;const {data,error}=await db.from("admin_users").select("role,is_active").eq("user_id",s.user.id).maybeSingle();if(error||!data?.is_active||data.role!=="owner"){ $("loginStatus").textContent="Access denied. Owner Admin account only.";await db.auth.signOut();return;}$("loginPanel").classList.add("hidden");$("workspace").classList.remove("hidden");$("studioStatus").textContent="Admin authenticated. Select a medicine reference photo.";$("generate").disabled=!file;await loadSets();}
+let enteringUserId=null;
+async function enter(s){
+ if(!s?.user?.id)return;
+ if(enteringUserId===s.user.id)return;
+ enteringUserId=s.user.id;session=s;
+ $("loginStatus").textContent="Admin session found. Verifying owner access…";
+ try{
+  const {data,error}=await db.from("admin_users").select("role,is_active").eq("user_id",s.user.id).maybeSingle();
+  if(error){$("loginStatus").textContent="Admin session found, but owner verification failed: "+error.message;return;}
+  if(!data?.is_active||data.role!=="owner"){$("loginStatus").textContent="Access denied. This account is not an active owner Admin.";return;}
+  $("loginPanel").classList.add("hidden");$("workspace").classList.remove("hidden");
+  $("studioStatus").textContent="Admin authenticated. Select a medicine reference photo.";
+  $("generate").disabled=!file;await loadSets();
+ }catch(e){$("loginStatus").textContent="Studio connection error: "+(e?.message||String(e));}
+ finally{enteringUserId=null;}
+}
 // Studio reuses the existing Admin Dashboard Supabase session; it never asks for a second password.
 $("source").onchange=e=>{file=e.target.files?.[0]||null;if(!file)return;if(!/^image\/(jpeg|png|webp)$/.test(file.type)||file.size>10*1024*1024){file=null;e.target.value="";$("sourcePreview").textContent="Choose JPG, PNG or WebP up to 10 MB.";return;}const u=window.URL.createObjectURL(file);$("sourcePreview").innerHTML='<img alt="Original medicine reference" src="'+u+'" style="display:block;max-width:100%;max-height:220px;object-fit:contain;margin-top:8px">Original preserved: '+esc(file.name);$("generate").disabled=false;};
 function renderImages(items){$("results").innerHTML=items.map(x=>'<div class="tile"><strong>'+esc(x.label)+'</strong><img alt="'+esc(x.label)+'" src="'+esc(x.url)+'"><a href="'+esc(x.url)+'" target="_blank" rel="noopener">Open full image</a></div>').join("");}
@@ -35,6 +50,13 @@ renderImages(payload.images||[]);$("studioStatus").textContent="Generated as DRA
 }catch(e){$("studioStatus").textContent="Could not complete: "+(e.message||String(e))+". Original upload is kept; no existing catalogue photo was changed.";}finally{btn.disabled=false;}};
 async function loadSets(){const box=$("savedSets");box.textContent="Loading…";const {data,error}=await db.from("medicine_photo_studio").select("id,medicine_name,product_type,status,images,created_at").order("created_at",{ascending:false}).limit(30);if(error){box.textContent="Studio table not ready. Apply supabase/medicine-photo-studio.sql first. "+error.message;return;}if(!data?.length){box.textContent="No generated photo sets yet.";return;}box.innerHTML=data.map(x=>'<article class="tile" style="margin:12px 0"><b>'+esc(x.medicine_name)+'</b> · '+esc(x.product_type)+'<br><small>'+esc(new Date(x.created_at).toLocaleString())+' · '+esc(x.status.toUpperCase())+'</small><div class="preview">'+(x.images||[]).map(im=>'<div><img style="width:100%;height:140px;object-fit:contain;background:#f7f9fc" src="'+esc(im.url)+'" alt="'+esc(im.label)+'"><small>'+esc(im.label)+'</small></div>').join("")+'</div>'+(x.status!=="approved"?'<button class="gold" data-approve="'+esc(x.id)+'">Approve this set</button>': '<span>Approved</span>')+'</article>').join("");box.querySelectorAll("[data-approve]").forEach(b=>b.onclick=async()=>{if(!confirm("I checked all four images against the original packaging. Approve this set?"))return;const {error}=await db.from("medicine_photo_studio").update({status:"approved",approved_at:new Date().toISOString(),approved_by:session.user.id}).eq("id",b.dataset.approve);if(error)alert(error.message);else await loadSets();});}
 $("refresh").onclick=loadSets;
-db.auth.getSession().then(({data,error})=>{if(error){$("loginStatus").textContent="Could not check Admin session: "+error.message;return;}if(data.session){enter(data.session);}else{$("loginStatus").textContent="Admin login required. Redirecting to the Admin Dashboard…";location.replace("./admin.html");}});
-db.auth.onAuthStateChange((event,s)=>{if(event==="SIGNED_OUT"){location.replace("./admin.html");}else if(event==="SIGNED_IN"&&s){enter(s);}});
+db.auth.getSession().then(({data,error})=>{
+ if(error){$("loginStatus").textContent="Could not check Admin session: "+error.message;return;}
+ if(data.session){enter(data.session);}
+ else{$("loginStatus").textContent="No Admin session found in this browser. Opening Admin Dashboard…";location.replace("./admin.html");}
+}).catch(e=>{$("loginStatus").textContent="Could not connect to Supabase Auth: "+(e?.message||String(e))+". Refresh the page and try again.";});
+db.auth.onAuthStateChange((event,s)=>{
+ if(event==="SIGNED_OUT"){location.replace("./admin.html");}
+ else if(event==="SIGNED_IN"&&s){setTimeout(()=>enter(s),0);}
+});
 </script></body></html>
