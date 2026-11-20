@@ -338,7 +338,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--pp-gold)!important;bo
 <button type="button" class="secondary" id="searchPhoto">Search medicine photos</button>
 <input id="photoFile" type="file" accept="image/*" multiple><p class="muted">Select multiple photos together (up to 8 images, 10 MB each). All selected photos will be linked to this medicine. The 4-view Studio uses the first selected photo.</p>
 <div id="photoPreview" class="muted">No original photo selected.</div>
-<div style="margin:12px 0;padding:14px;border:1px solid #d5e6f0;border-radius:12px;background:#f0f8fc"><b>Smart AI Catalogue Photo Studio</b><p class="muted">Upload one normal product photo. AI analyses the actual packaging (box, bottle, tube, injection, soap, sachet, strip or other), then chooses a suitable catalogue composition instead of forcing one fixed template. Demo style: clean light-blue studio background (#A8D0E8), realistic lighting and soft shadow. Original upload remains unchanged. Generated images stay as drafts until you approve them.</p><label for="photoProductType">Packaging type (optional — AI detects automatically)</label><select id="photoProductType"><option value="auto">Auto-detect packaging</option><option value="tablet_box_strip">Tablet box + strip</option><option value="syrup_bottle_box">Syrup bottle + box</option><option value="cream_tube_box">Cream tube + box</option><option value="injection_vial_box">Injection vial + box</option><option value="soap_box">Soap + box</option><option value="powder_sachet_box">Powder sachet + box</option><option value="other">Other / mixed packaging</option></select><button type="button" id="generateMedicinePhotos">Generate Smart Catalogue Previews</button><div id="medicinePhotoResults" class="preview"></div><button type="button" id="approveMedicinePhotoSet" hidden>Approve & Save to Medicine</button><p id="medicinePhotoStatus" class="muted" role="status">Choose the original photo, generate previews, inspect packaging and text, then approve to link the chosen gallery.</p></div>
+<div style="margin:12px 0;padding:14px;border:1px solid #d5e6f0;border-radius:12px;background:#f0f8fc"><b>Free Catalogue Photo Studio</b><p class="muted">Upload the available product views (box front/back, strip front/back, bottle, tube or other). This free on-device composer arranges only the photos you provide on a clean light-blue background. It does not invent missing back views or alter printed packaging text. Original uploads remain unchanged and the catalogue preview is saved only after Admin approval.</p><label for="photoProductType">Packaging type (optional reference)</label><select id="photoProductType"><option value="auto">Auto-detect packaging</option><option value="tablet_box_strip">Tablet box + strip</option><option value="syrup_bottle_box">Syrup bottle + box</option><option value="cream_tube_box">Cream tube + box</option><option value="injection_vial_box">Injection vial + box</option><option value="soap_box">Soap + box</option><option value="powder_sachet_box">Powder sachet + box</option><option value="other">Other / mixed packaging</option></select><button type="button" id="generateMedicinePhotos">Create Free Catalogue Preview</button><div id="medicinePhotoResults" class="preview"></div><button type="button" id="approveMedicinePhotoSet" hidden>Approve & Save to Medicine</button><p id="medicinePhotoStatus" class="muted" role="status">Choose the available product photos, create a free layout, review it, then approve. No OpenAI API key or paid image credits are used.</p></div>
 <button type="button" id="saveMedicine">Save Medicine</button>
 <button type="button" class="secondary" id="clearForm">Clear</button>
 <p id="saveStatus" class="muted" role="status"></p>
@@ -462,63 +462,51 @@ async function makeCatalogueVariant(img,mode){
  return await new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(new Error("Could not render image")), "image/jpeg",0.94));
 }
 async function generateLocalMedicinePhotos(){
- const file=selectedFile;if(!file){$("medicinePhotoStatus").textContent="First choose the original medicine photo above.";return;}
+ const files=Array.from(selectedFiles||[]).slice(0,8);
+ if(!files.length){$("medicinePhotoStatus").textContent="First choose the product photos. Add front and back photos for each package view you want shown.";return;}
  const btn=$("generateMedicinePhotos");btn.disabled=true;$("approveMedicinePhotoSet").hidden=true;
  try{
-  const img=new Image(),objectUrl=URL.createObjectURL(file);
-  await new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=()=>reject(new Error("Original image could not be opened."));img.src=objectUrl;});
-  $("medicinePhotoStatus").textContent="Creating four catalogue views on this device…";
-  const modes=[["Front view","front"],["3D-style angled view","angled"],["Close-up view","close"],["Square catalogue view","catalogue"]];
-  const blobs=[];for(const [label,mode] of modes)blobs.push({label,blob:await makeCatalogueVariant(img,mode)});
-  URL.revokeObjectURL(objectUrl);
-  window.pendingLocalMedicinePhotos=blobs;
-  $("medicinePhotoResults").innerHTML=blobs.map((x,i)=>'<div class="tile"><b>'+esc(x.label)+'</b><img src="'+URL.createObjectURL(x.blob)+'" alt="'+esc(x.label)+'"></div>').join("");
+  $("medicinePhotoStatus").textContent="Building your catalogue layout on this device — no AI credits or API key…";
+  const loaded=[];
+  for(const file of files){const url=URL.createObjectURL(file);const img=new Image();await new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=()=>reject(new Error("Could not open "+file.name));img.src=url;});loaded.push({img,url,name:file.name});}
+  const canvas=document.createElement("canvas"),ctx=canvas.getContext("2d");canvas.width=1200;canvas.height=1500;
+  const bg=ctx.createLinearGradient(0,0,1200,1500);bg.addColorStop(0,"#b9def1");bg.addColorStop(1,"#91c5e3");ctx.fillStyle=bg;ctx.fillRect(0,0,1200,1500);
+  ctx.fillStyle="#173c58";ctx.textAlign="center";ctx.font="700 42px Arial";ctx.fillText(($("name").value.trim()||"MEDICINE CATALOGUE").slice(0,42),600,72);
+  const count=loaded.length,cols=count===1?1:2,rows=Math.ceil(count/cols),gap=26,top=110,bottom=35,cellW=(1200-gap*(cols+1))/cols,cellH=(1500-top-bottom-gap*(rows-1))/rows;
+  loaded.forEach((item,i)=>{const col=i%cols,row=Math.floor(i/cols),x=gap+col*(cellW+gap),y=top+row*(cellH+gap);
+   ctx.save();ctx.shadowColor="rgba(20,55,80,.18)";ctx.shadowBlur=18;ctx.shadowOffsetY=8;ctx.fillStyle="#fff";ctx.fillRect(x,y,cellW,cellH);ctx.restore();
+   ctx.fillStyle="#173c58";ctx.font="600 22px Arial";ctx.textAlign="left";ctx.fillText("ORIGINAL VIEW "+(i+1),x+20,y+34);
+   const pad=24,head=52,availW=cellW-pad*2,availH=cellH-head-pad*2,scale=Math.min(availW/item.img.naturalWidth,availH/item.img.naturalHeight),w=item.img.naturalWidth*scale,h=item.img.naturalHeight*scale;
+   ctx.fillStyle="#f8fbfd";ctx.fillRect(x+pad,y+head,cellW-pad*2,cellH-head-pad);
+   ctx.drawImage(item.img,x+pad+(availW-w)/2,y+head+(availH-h)/2,w,h);
+  });
+  loaded.forEach(x=>URL.revokeObjectURL(x.url));
+  const blob=await new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(new Error("Could not create catalogue image")),"image/jpeg",.94));
+  window.pendingLocalMedicinePhotos=[{label:"Light-blue catalogue layout",blob}];
+  const previewUrl=URL.createObjectURL(blob);
+  $("medicinePhotoResults").innerHTML='<div class="tile"><b>Free catalogue preview · Original views arranged as supplied</b><img src="'+previewUrl+'" alt="Free catalogue layout preview"></div>';
   $("approveMedicinePhotoSet").hidden=false;
-  $("medicinePhotoStatus").textContent="4 previews ready. Review them, then approve to save. These are presentation variants of the original, not fabricated back/side photographs.";
- }catch(e){$("medicinePhotoStatus").textContent="Could not create catalogue views: "+(e.message||String(e));}
+  $("medicinePhotoStatus").textContent=files.length+" supplied photo(s) arranged. No missing back views or package details have been invented. Approve to save the catalogue image while keeping the original uploads.";
+ }catch(e){$("medicinePhotoStatus").textContent="Could not create the free catalogue layout: "+(e.message||String(e));}
  finally{btn.disabled=false;}
 }
 async function approveLocalMedicinePhotos(){
  const photos=window.pendingLocalMedicinePhotos;if(!photos?.length)return;
  const btn=$("approveMedicinePhotoSet");btn.disabled=true;
  try{
-  const medicineId=await saveMedicine(true);if(!medicineId)throw new Error("Save the medicine details first; correct any message above.");
-  $("medicinePhotoStatus").textContent="Uploading four catalogue views…";
+  const medicineId=await saveMedicine(true);if(!medicineId)throw new Error("Medicine details could not be saved; check the message above.");
+  const {data:current,error:readError}=await db.from("medicines").select("image_url,image_gallery").eq("id",medicineId).single();if(readError)throw readError;
   const urls=[];
-  for(let i=0;i<photos.length;i++){
-   const path=medicineId+"/catalogue-"+Date.now()+"-"+i+".jpg";
-   const {error}=await db.storage.from(BUCKET).upload(path,photos[i].blob,{upsert:false,contentType:"image/jpeg"});if(error)throw error;
-   urls.push(db.storage.from(BUCKET).getPublicUrl(path).data.publicUrl);
-  }
-  const {error}=await db.from("medicines").update({image_url:urls[0],image_gallery:urls}).eq("id",medicineId);if(error)throw error;
-  $("medicinePhotoStatus").textContent="Approved. Four catalogue images saved and linked to this medicine.";
-  window.pendingLocalMedicinePhotos=null;$("approveMedicinePhotoSet").hidden=true;$("medicinePhotoResults").innerHTML="";
-  await loadMedicines();await logActivity("Saved local four-view medicine gallery",{medicine_id:medicineId,photo_count:4});
- }catch(e){$("medicinePhotoStatus").textContent="Gallery save failed: "+(e.message||String(e));}
+  for(let i=0;i<photos.length;i++){const path=medicineId+"/free-catalogue-"+Date.now()+"-"+i+".jpg";const {error}=await db.storage.from(BUCKET).upload(path,photos[i].blob,{upsert:false,contentType:"image/jpeg"});if(error)throw error;urls.push(db.storage.from(BUCKET).getPublicUrl(path).data.publicUrl);}
+  const originals=[current.image_url,...(Array.isArray(current.image_gallery)?current.image_gallery:[])].filter(Boolean);
+  const gallery=[...new Set([...urls,...originals])];
+  const {error}=await db.from("medicines").update({image_url:urls[0],image_gallery:gallery}).eq("id",medicineId);if(error)throw error;
+  $("medicinePhotoStatus").textContent="Saved. Free catalogue layout is now the main photo; all original uploaded photos remain in the gallery.";
+  window.pendingLocalMedicinePhotos=null;$("approveMedicinePhotoSet").hidden=true;$("medicinePhotoResults").innerHTML="";await loadMedicines();await logActivity("Saved free catalogue layout",{medicine_id:medicineId,source_photo_count:selectedFiles.length});
+ }catch(e){$("medicinePhotoStatus").textContent="Could not save catalogue layout: "+(e.message||String(e));}
  finally{btn.disabled=false;}
 }
-async function generateMedicinePhotos(){
- const file=selectedFile;if(!file){$("medicinePhotoStatus").textContent="First choose the original medicine photo above.";return;}
- $("generateMedicinePhotos").disabled=true;
- try{
-  const medicineId=await saveMedicine(true);if(!medicineId)throw new Error("Medicine could not be saved. Check the message above.");
-  const {data:{session},error:se}=await db.auth.getSession();if(se||!session)throw new Error("Admin session unavailable. Sign in again.");
-  $("medicinePhotoStatus").textContent="Uploading original reference securely…";
-  const sourcePath="studio-originals/"+currentUser.id+"/"+crypto.randomUUID()+"-"+file.name.replace(/[^a-zA-Z0-9._-]/g,"_");
-  const up=await db.storage.from(BUCKET).upload(sourcePath,file,{upsert:false,contentType:file.type||"image/jpeg"});if(up.error)throw up.error;
-  $("medicinePhotoStatus").textContent="Analysing the packaging and generating adaptive catalogue options. This can take a few minutes…";$("medicinePhotoResults").innerHTML="";
-  const response=await fetch(SUPABASE_URL+"/functions/v1/medicine-photo-studio",{method:"POST",headers:{Authorization:"Bearer "+session.access_token,apikey:SUPABASE_KEY,"Content-Type":"application/json"},body:JSON.stringify({source_path:sourcePath,medicine_id:medicineId,medicine_name:$("name").value.trim(),product_type:$("photoProductType").value})});
-  const data=await response.json();if(!response.ok)throw new Error(data.error||"Image generation request failed.");
-  const sourceUrl=db.storage.from(BUCKET).getPublicUrl(sourcePath).data.publicUrl;
-  window.pendingMedicinePhotoSet={id:data.photo_set_id,medicineId,sourceUrl,images:data.images||[]};
-  $("medicinePhotoResults").innerHTML='<div class="tile"><b>Original uploaded reference — unchanged</b><img src="'+esc(sourceUrl)+'" alt="Original medicine packaging reference"><a href="'+esc(sourceUrl)+'" target="_blank" rel="noopener">Open original photo</a></div>'+(data.images||[]).map(x=>'<div class="tile"><b>'+esc(x.label)+'</b><img src="'+esc(x.url)+'" alt="'+esc(x.label)+'"><a href="'+esc(x.url)+'" target="_blank" rel="noopener">Open full image</a></div>').join("");
-  $("medicinePhotoResults").insertAdjacentHTML("beforeend",'<div style="grid-column:1/-1;display:flex;gap:10px;flex-wrap:wrap"><button type="button" id="approveGeneratedMedicinePhotoSet">Approve previews & Link to Medicine</button><button type="button" class="secondary" id="rejectGeneratedMedicinePhotoSet">Reject drafts</button><p class="muted">Compare each generated image with the original reference. Reject any changed brand text, formula, pack size, colours or packaging shape. The original image will remain in the catalogue gallery.</p></div>');
-  $("approveGeneratedMedicinePhotoSet").onclick=approveMedicinePhotoSet;
-  $("rejectGeneratedMedicinePhotoSet").onclick=rejectMedicinePhotoSet;
-  $("medicinePhotoStatus").textContent=(data.images||[]).length+" draft catalogue photos generated. Compare them with the original before approval.";
- }catch(e){$("medicinePhotoStatus").textContent="Photo generation failed: "+(e.message||String(e));}
- finally{$("generateMedicinePhotos").disabled=false;}
-}
+async function generateMedicinePhotos(){return generateLocalMedicinePhotos();}
 async function approveMedicinePhotoSet(){
  const set=window.pendingMedicinePhotoSet;if(!set?.images?.length)return;
  if(!confirm("I compared every generated photo with the original package. Approve these catalogue photos? The original photo will be retained in the gallery."))return;
