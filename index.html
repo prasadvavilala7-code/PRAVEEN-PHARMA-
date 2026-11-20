@@ -132,11 +132,11 @@ byId("publicRequestForm").addEventListener("submit",submitPublicRequest);
 async function loadPublicMedicines(){
  const status=byId("publicMedicineStatus"),list=byId("publicMedicineList");
  const fields="id,name,composition,pack_size,category,image_url,image_gallery,company_id,company_name,mechanism_of_action,uses,benefits,side_effects,precautions,info_source_url,info_status,info_checked_at";
- const [{data,error},{data:companyRows,error:companyError}]=await Promise.all([db.from("public_medicine_details").select(fields.replace("company_name,","")).order("name"),db.from("medicine_companies").select("id,name").eq("is_approved",true)]);
+ const {data,error}=await db.from("public_medicine_details").select(fields.replace("company_name,","")).order("name");
  if(error){status.textContent="Public catalogue is not available yet. "+error.message;return;}
- if(companyError){status.textContent="Company details are temporarily unavailable.";return;}
- const companyNames=new Map((companyRows||[]).map(c=>[c.id,c.name]));
- const medicines=(data||[]).filter(m=>companyNames.has(m.company_id));
+ // Public visibility is controlled by medicines.is_active and medicines.public_approved.
+ // A medicine does not need a separately approved company record to appear in the public catalogue.
+ const medicines=data||[];
  status.textContent=medicines.length?medicines.length+" published medicines":"No medicines have been published yet.";
  const escHtml=esc;
  function render(){
