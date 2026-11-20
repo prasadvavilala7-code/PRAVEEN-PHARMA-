@@ -511,7 +511,7 @@ async function generateMedicinePhotos(){
   const data=await response.json();if(!response.ok)throw new Error(data.error||"Image generation request failed.");
   window.pendingMedicinePhotoSet={id:data.photo_set_id,medicineId,images:data.images||[]};
   $("medicinePhotoResults").innerHTML=(data.images||[]).map(x=>'<div class="tile"><b>'+esc(x.label)+'</b><img src="'+esc(x.url)+'" alt="'+esc(x.label)+'"><a href="'+esc(x.url)+'" target="_blank" rel="noopener">Open full image</a></div>').join("");
-  $("medicinePhotoResults").insertAdjacentHTML("beforeend",'<div style="grid-column:1/-1"><button type="button" id="approveMedicinePhotoSet">Approve all 4 & Link to Medicine</button><p class="muted">Check every detail against the physical pack. Approval links all four photos to this medicine.</p></div>');
+  $("medicinePhotoResults").insertAdjacentHTML("beforeend",'<div style="grid-column:1/-1"><button type="button" id="approveGeneratedMedicinePhotoSet">Approve all 4 & Link to Medicine</button><p class="muted">Check every detail against the physical pack. Approval links all four photos to this medicine.</p></div>');
   $("approveMedicinePhotoSet").onclick=approveMedicinePhotoSet;
   $("medicinePhotoStatus").textContent="4 draft photos generated. Check spelling, formula, pack size, batch, MRP and expiry before approval.";
  }catch(e){$("medicinePhotoStatus").textContent="Photo generation failed: "+(e.message||String(e));}
@@ -520,7 +520,7 @@ async function generateMedicinePhotos(){
 async function approveMedicinePhotoSet(){
  const set=window.pendingMedicinePhotoSet;if(!set?.images?.length)return;
  if(!confirm("I checked all four photos against the original pack. Approve and link them to this medicine?"))return;
- const btn=$("approveMedicinePhotoSet");btn.disabled=true;
+ const btn=$("approveGeneratedMedicinePhotoSet");btn.disabled=true;
  try{
   const urls=set.images.map(x=>x.url);
   const {error:me}=await db.from("medicines").update({image_url:urls[0],image_gallery:urls}).eq("id",set.medicineId);if(me)throw me;
