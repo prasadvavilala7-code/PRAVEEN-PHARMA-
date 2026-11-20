@@ -30,3 +30,10 @@ The Admin order hub now has a **Generate GST Invoice** action. Before issuing a 
 4. In Admin → Central Order Hub, choose **Generate GST Invoice**. The invoice is stored as a frozen order snapshot and can be printed or saved as PDF.
 
 The browser UI falls back to the old catalogue/order-item shape while the HSN migration is pending, so existing catalogue browsing and order placement remain available. Invoice issuance stays unavailable until the SQL migration and valid seller GSTIN/medicine HSN data are configured. Confirm GST classification, place of supply and invoice compliance with your GST accountant before issuing invoices.
+
+
+## Retailer experience improvements
+
+The retailer portal includes order history with progress indicators, repeat-order cart rebuilding using current retailer prices, and retailer-only invoice viewing/printing to PDF.
+
+Persistent retailer favourites and saved draft carts are supported by the additive migration in `supabase/retailer-favourites-saved-carts.sql`. This migration has been applied to the PRAVEEN PHARMA Supabase project. Both tables have RLS enabled, explicit authenticated-only grants, and owner/approved-retailer policies. Favourites and saved carts are scoped to the signed-in retailer; saved carts restore using current catalogue prices and skip unavailable medicines.
