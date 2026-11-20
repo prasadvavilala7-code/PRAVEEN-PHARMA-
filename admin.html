@@ -509,25 +509,39 @@ async function generateMedicinePhotos(){
   $("medicinePhotoStatus").textContent="Analysing the packaging and generating adaptive catalogue options. This can take a few minutes…";$("medicinePhotoResults").innerHTML="";
   const response=await fetch(SUPABASE_URL+"/functions/v1/medicine-photo-studio",{method:"POST",headers:{Authorization:"Bearer "+session.access_token,apikey:SUPABASE_KEY,"Content-Type":"application/json"},body:JSON.stringify({source_path:sourcePath,medicine_id:medicineId,medicine_name:$("name").value.trim(),product_type:$("photoProductType").value})});
   const data=await response.json();if(!response.ok)throw new Error(data.error||"Image generation request failed.");
-  window.pendingMedicinePhotoSet={id:data.photo_set_id,medicineId,images:data.images||[]};
-  $("medicinePhotoResults").innerHTML=(data.images||[]).map(x=>'<div class="tile"><b>'+esc(x.label)+'</b><img src="'+esc(x.url)+'" alt="'+esc(x.label)+'"><a href="'+esc(x.url)+'" target="_blank" rel="noopener">Open full image</a></div>').join("");
-  $("medicinePhotoResults").insertAdjacentHTML("beforeend",'<div style="grid-column:1/-1"><button type="button" id="approveGeneratedMedicinePhotoSet">Approve all 4 & Link to Medicine</button><p class="muted">Check every detail against the physical pack. Approval links all four photos to this medicine.</p></div>');
+  const sourceUrl=db.storage.from(BUCKET).getPublicUrl(sourcePath).data.publicUrl;
+  window.pendingMedicinePhotoSet={id:data.photo_set_id,medicineId,sourceUrl,images:data.images||[]};
+  $("medicinePhotoResults").innerHTML='<div class="tile"><b>Original uploaded reference — unchanged</b><img src="'+esc(sourceUrl)+'" alt="Original medicine packaging reference"><a href="'+esc(sourceUrl)+'" target="_blank" rel="noopener">Open original photo</a></div>'+(data.images||[]).map(x=>'<div class="tile"><b>'+esc(x.label)+'</b><img src="'+esc(x.url)+'" alt="'+esc(x.label)+'"><a href="'+esc(x.url)+'" target="_blank" rel="noopener">Open full image</a></div>').join("");
+  $("medicinePhotoResults").insertAdjacentHTML("beforeend",'<div style="grid-column:1/-1;display:flex;gap:10px;flex-wrap:wrap"><button type="button" id="approveGeneratedMedicinePhotoSet">Approve previews & Link to Medicine</button><button type="button" class="secondary" id="rejectGeneratedMedicinePhotoSet">Reject drafts</button><p class="muted">Compare each generated image with the original reference. Reject any changed brand text, formula, pack size, colours or packaging shape. The original image will remain in the catalogue gallery.</p></div>');
   $("approveGeneratedMedicinePhotoSet").onclick=approveMedicinePhotoSet;
-  $("medicinePhotoStatus").textContent="4 draft photos generated. Check spelling, formula, pack size, batch, MRP and expiry before approval.";
+  $("rejectGeneratedMedicinePhotoSet").onclick=rejectMedicinePhotoSet;
+  $("medicinePhotoStatus").textContent=(data.images||[]).length+" draft catalogue photos generated. Compare them with the original before approval.";
  }catch(e){$("medicinePhotoStatus").textContent="Photo generation failed: "+(e.message||String(e));}
  finally{$("generateMedicinePhotos").disabled=false;}
 }
 async function approveMedicinePhotoSet(){
  const set=window.pendingMedicinePhotoSet;if(!set?.images?.length)return;
- if(!confirm("I checked all four photos against the original pack. Approve and link them to this medicine?"))return;
+ if(!confirm("I compared every generated photo with the original package. Approve these catalogue photos? The original photo will be retained in the gallery."))return;
  const btn=$("approveGeneratedMedicinePhotoSet");btn.disabled=true;
  try{
   const urls=set.images.map(x=>x.url);
-  const {error:me}=await db.from("medicines").update({image_url:urls[0],image_gallery:urls}).eq("id",set.medicineId);if(me)throw me;
+  const {data:current,error:readError}=await db.from("medicines").select("image_url,image_gallery").eq("id",set.medicineId).single();if(readError)throw readError;
+  const originalUrls=[current.image_url,set.sourceUrl,...(Array.isArray(current.image_gallery)?current.image_gallery:[])].filter(Boolean);
+  const gallery=[...new Set([...urls,...originalUrls])];
+  const {error:me}=await db.from("medicines").update({image_url:urls[0],image_gallery:gallery}).eq("id",set.medicineId);if(me)throw me;
   const {error:pe}=await db.from("medicine_photo_studio").update({status:"approved",approved_at:new Date().toISOString(),approved_by:currentUser.id}).eq("id",set.id).eq("medicine_id",set.medicineId);if(pe)throw pe;
-  $("medicinePhotoStatus").textContent="Approved. All 4 photos are linked to this medicine; first view is the main photo.";
+  $("medicinePhotoStatus").textContent="Approved. Generated catalogue photos are linked; the original uploaded photo is preserved in the gallery.";
   window.pendingMedicinePhotoSet=null;await loadMedicines();
  }catch(e){$("medicinePhotoStatus").textContent="Could not approve/link photos: "+(e.message||String(e));btn.disabled=false;}
+}
+async function rejectMedicinePhotoSet(){
+ const set=window.pendingMedicinePhotoSet;if(!set?.id)return;
+ if(!confirm("Reject these generated drafts? The original uploaded medicine photo will remain unchanged."))return;
+ const btn=$("rejectGeneratedMedicinePhotoSet");btn.disabled=true;
+ try{
+  const {error}=await db.from("medicine_photo_studio").update({status:"rejected"}).eq("id",set.id).eq("medicine_id",set.medicineId);if(error)throw error;
+  window.pendingMedicinePhotoSet=null;$("medicinePhotoResults").innerHTML="";$("medicinePhotoStatus").textContent="Drafts rejected. Original medicine photo and catalogue listing were not changed.";
+ }catch(e){$("medicinePhotoStatus").textContent="Could not reject drafts: "+(e.message||String(e));btn.disabled=false;}
 }
 function profileCard(p,actions){return '<div class="medicine"><div>🏪</div><div><b>'+esc(p.shop_name)+'</b><br><small>Owner: '+esc(p.owner_name||"—")+' · Phone: '+esc(p.phone||"—")+' · GSTIN: '+esc(p.gstin||"—")+'</small><br><small>Status: '+esc(p.approval_status||"pending")+' · User ID: '+esc(p.user_id)+'</small><br>'+actions+'</div></div>';}
 
@@ -695,7 +709,7 @@ document.querySelectorAll("[data-go]").forEach(b=>b.addEventListener("click",()=
 $("navLogout").addEventListener("click",async()=>{await db.auth.signOut();location.reload();});
 $("refreshWebsiteRequests").addEventListener("click",loadWebsiteRequests);$("saveLedgerEntry").addEventListener("click",saveLedgerEntry);$("saveSupplier").addEventListener("click",saveSupplier);$("addPoLine").addEventListener("click",addPoLine);$("createPurchaseOrder").addEventListener("click",createPurchaseOrder);$("saveSettings").addEventListener("click",saveSettings);$("refreshActivity").addEventListener("click",loadActivity);$("reloadSettings").addEventListener("click",loadSettings);$("refreshReports").addEventListener("click",loadReports);$("exportBackup").addEventListener("click",exportBackup);$("runHealth").addEventListener("click",runHealth);$("refreshLoginHistory").addEventListener("click",loadLoginHistory);
 $("searchPhoto").addEventListener("click",()=>{const q=$("name").value.trim();if(!q){$("saveStatus").textContent="Enter medicine name first.";return;}window.open("https://www.google.com/search?tbm=isch&q="+encodeURIComponent(q+" medicine box strip packaging"),"_blank","noopener");});
-$("photoFile").addEventListener("change",e=>{selectedFiles=Array.from(e.target.files||[]);selectedFile=selectedFiles[0]||null;if(!selectedFiles.length){$("photoPreview").textContent="No new photos selected.";return;}const invalid=selectedFiles.find(f=>!f.type.startsWith("image/")||f.size>10*1024*1024);if(invalid){selectedFiles=[];selectedFile=null;e.target.value="";$("photoPreview").textContent=!invalid.type.startsWith("image/")?"Please choose image files only.":invalid.name+" is larger than 10 MB.";return;}if(selectedFiles.length>8){selectedFiles=[];selectedFile=null;e.target.value="";$("photoPreview").textContent="Select up to 8 photos at a time.";return;}$("photoPreview").textContent=selectedFiles.length+" photo(s) selected: "+selectedFiles.map(f=>f.name).join(", ");});
+$("photoFile").addEventListener("change",e=>{selectedFiles=Array.from(e.target.files||[]);selectedFile=selectedFiles[0]||null;if(window.photoPreviewUrls){window.photoPreviewUrls.forEach(u=>URL.revokeObjectURL(u));}window.photoPreviewUrls=[];if(!selectedFiles.length){$("photoPreview").textContent="No new photos selected.";return;}const invalid=selectedFiles.find(f=>!f.type.startsWith("image/")||f.size>10*1024*1024);if(invalid){selectedFiles=[];selectedFile=null;e.target.value="";$("photoPreview").textContent=!invalid.type.startsWith("image/")?"Please choose image files only.":invalid.name+" is larger than 10 MB.";return;}if(selectedFiles.length>8){selectedFiles=[];selectedFile=null;e.target.value="";$("photoPreview").textContent="Select up to 8 photos at a time.";return;}window.photoPreviewUrls=selectedFiles.map(f=>URL.createObjectURL(f));$("photoPreview").innerHTML='<div class="preview">'+selectedFiles.map((f,i)=>'<div class="tile"><b>Original '+(i+1)+': '+esc(f.name)+'</b><img src="'+window.photoPreviewUrls[i]+'" alt="Original uploaded medicine photo '+(i+1)+'"></div>').join("")+'</div>';});
 $("adminForgotPassword").addEventListener("click",sendAdminPasswordReset);$("saveAdminPassword").addEventListener("click",saveNewAdminPassword);$("adminLogout").addEventListener("click",async()=>{await db.auth.signOut();location.reload();});$("saveMedicine").addEventListener("click",()=>saveMedicine(false));$("generateMedicinePhotos").addEventListener("click",generateMedicinePhotos);$("approveMedicinePhotoSet").addEventListener("click",approveLocalMedicinePhotos);$("addCompany").addEventListener("click",addCompany);$("clearForm").addEventListener("click",clearForm);$("filter").addEventListener("input",renderList);init();
 db.auth.onAuthStateChange((event,session)=>{if(event==="PASSWORD_RECOVERY"){$("loginPanel").hidden=true;$("adminShell").hidden=true;$("adminResetPasswordPanel").hidden=false;$("adminResetMessage").textContent="Recovery link verified. Set your new Admin password.";}});
 </script>
