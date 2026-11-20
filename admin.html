@@ -512,7 +512,7 @@ async function generateMedicinePhotos(){
   window.pendingMedicinePhotoSet={id:data.photo_set_id,medicineId,images:data.images||[]};
   $("medicinePhotoResults").innerHTML=(data.images||[]).map(x=>'<div class="tile"><b>'+esc(x.label)+'</b><img src="'+esc(x.url)+'" alt="'+esc(x.label)+'"><a href="'+esc(x.url)+'" target="_blank" rel="noopener">Open full image</a></div>').join("");
   $("medicinePhotoResults").insertAdjacentHTML("beforeend",'<div style="grid-column:1/-1"><button type="button" id="approveGeneratedMedicinePhotoSet">Approve all 4 & Link to Medicine</button><p class="muted">Check every detail against the physical pack. Approval links all four photos to this medicine.</p></div>');
-  $("approveMedicinePhotoSet").onclick=approveMedicinePhotoSet;
+  $("approveGeneratedMedicinePhotoSet").onclick=approveMedicinePhotoSet;
   $("medicinePhotoStatus").textContent="4 draft photos generated. Check spelling, formula, pack size, batch, MRP and expiry before approval.";
  }catch(e){$("medicinePhotoStatus").textContent="Photo generation failed: "+(e.message||String(e));}
  finally{$("generateMedicinePhotos").disabled=false;}
