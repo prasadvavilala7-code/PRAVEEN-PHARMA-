@@ -18,7 +18,7 @@ This is an additive, owner-Admin-only workflow. Existing medicine records and ex
 Supabase provides `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEYS`, and `SUPABASE_SECRET_KEYS` to hosted Edge Functions by default. The function uses the publishable key for user authentication and the server secret only inside the function.
 
 ## Open the Admin tool
-After the website changes are merged/published, sign in using the existing owner Admin account and open AI Medicine Photo Studio from the Admin navigation. The standalone page is `photo-studio.html`.
+After the website changes are published, sign in to `admin.html` with the existing owner Admin account. Open the medicine editor, upload the original product photo, then use **Smart AI Catalogue Photo Studio** in the Medicine photo section. There is no separate `photo-studio.html` page.
 
 ## Workflow
 1. Upload one clear medicine packaging reference photo.
@@ -28,6 +28,6 @@ After the website changes are merged/published, sign in using the existing owner
 5. Compare every image with the original pack and approve only if the visible details match.
 
 ## Important accuracy and safety limits
-Image generation can distort small printed text, logos, batch numbers, MRP, expiry and barcodes. A prompt cannot guarantee exact packaging text. Never use generated artwork as the source of truth for medicine identity, composition, dosage, batch or expiry. Reject any image with altered or unreadable text. Approval records a review state only; it does not replace a live catalogue photo or automatically publish an image.
+Image generation can distort small printed text, logos, batch numbers, MRP, expiry and barcodes. A prompt cannot guarantee exact packaging text. Never use generated artwork as the source of truth for medicine identity, composition, dosage, batch or expiry. Reject any image with altered or unreadable text. Approval links the generated catalogue views to the medicine while retaining the original upload in its gallery. Public visibility still follows the medicine's separate Admin publication/approval controls; photo approval alone does not publish a medicine.
 
 The image-edit function uses `gpt-image-2.5-sunburst` with the uploaded photo as its reference. API usage may incur charges on the OpenAI API account.
