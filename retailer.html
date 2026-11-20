@@ -174,8 +174,8 @@ function openMedicineDetails(id){const m=medicines.find(x=>x.id===id);if(!m)retu
 async function loadFavorites(){if(!approved||!user)return;const {data,error}=await db.from("retailer_favorites").select("medicine_id").eq("retailer_user_id",user.id);if(error){$("status").textContent="Favourites unavailable: "+error.message;return}favorites=new Set((data||[]).map(x=>x.medicine_id));renderProducts()}
 async function toggleFavorite(id){if(!approved||!user)return;const exists=favorites.has(id),r=exists?await db.from("retailer_favorites").delete().eq("retailer_user_id",user.id).eq("medicine_id",id):await db.from("retailer_favorites").insert({retailer_user_id:user.id,medicine_id:id});if(r.error){$("status").textContent="Favourite update failed: "+r.error.message;return}if(exists)favorites.delete(id);else favorites.add(id);renderProducts();$("status").textContent=exists?"Removed from favourites.":"Added to My Favourites."}
 async function loadSavedCarts(){if(!approved||!user)return;const {data,error}=await db.from("retailer_saved_carts").select("id,cart_name,cart_items,updated_at").eq("retailer_user_id",user.id).order("updated_at",{ascending:false}).limit(30);if(error){$("savedCartList").textContent="Saved carts unavailable: "+error.message;return}savedCarts=data||[];$("savedCartList").innerHTML=savedCarts.map(x=>'<div class="saved-cart-row"><span><b>'+esc(x.cart_name)+'</b><br><small>'+esc(new Date(x.updated_at).toLocaleString())+' · '+(Array.isArray(x.cart_items)?x.cart_items.length:0)+' item(s)</small></span><span><button type="button" class="secondary" data-load-saved-cart="'+esc(x.id)+'">Load</button> <button type="button" class="danger" data-delete-saved-cart="'+esc(x.id)+'">Delete</button></span></div>').join("")||"No saved carts yet."; $("savedCartList").querySelectorAll("[data-load-saved-cart]").forEach(b=>b.onclick=()=>restoreSavedCart(b.dataset.loadSavedCart));$("savedCartList").querySelectorAll("[data-delete-saved-cart]").forEach(b=>b.onclick=()=>deleteSavedCart(b.dataset.deleteSavedCart))}
-async function saveCurrentCart(){if(!approved||!user||!cart.length){$("savedCartMessage").textContent="Add medicines to the cart before saving.";return}const cart_name=$("savedCartName").value.trim()||"Saved cart",cart_items=cart.map(x=>({medicine_id:x.id,medicine_name:x.name,pack_size:x.pack_size,quantity:x.quantity}));const {error}=await db.from("retailer_saved_carts").insert({retailer_user_id:user.id,cart_name,cart_items});$("savedCartMessage").textContent=error?"Save failed: "+error.message:"Cart saved to your retailer account.";if(!error){$("savedCartName").value="";await loadSavedCarts()}}
-async function restoreSavedCart(id){const saved=savedCarts.find(x=>x.id===id);if(!saved)return;let restored=0,missing=[];for(const row of (Array.isArray(saved.cart_items)?saved.cart_items:[])){const m=medicines.find(x=>String(x.id)===String(row.medicine_id))||medicines.find(x=>(x.name||"").toLowerCase()===(row.medicine_name||"").toLowerCase());if(!m){missing.push(row.medicine_name||"Unknown medicine");continue}const qty=Math.max(1,Number(row.quantity)||1),existing=cart.find(x=>x.id===m.id);if(existing)existing.quantity+=qty;else cart.push({id:m.id,name:m.name,pack_size:m.pack_size,hsn_code:m.hsn_code||"",price:price(m),gst_rate:Number(m.gst_rate||0),quantity:qty});restored++}renderCart();updateCartQuickBar();$("savedCartMessage").textContent=restored+" item(s) loaded with current retailer prices."+(missing.length?" Not found: "+missing.join(", "):"")}
+async function saveCurrentCart(){if(!approved||!user||!cart.length){$("savedCartMessage").textContent="Add medicines to the cart before saving.";return}const cart_name=$("savedCartName").value.trim()||"Saved cart",cart_items=cart.map(x=>({medicine_id:x.id,medicine_name:x.name,pack_size:x.pack_size,quantity:x.quantity,strip_quantity:x.strip_quantity||0}));const {error}=await db.from("retailer_saved_carts").insert({retailer_user_id:user.id,cart_name,cart_items});$("savedCartMessage").textContent=error?"Save failed: "+error.message:"Cart saved to your retailer account.";if(!error){$("savedCartName").value="";await loadSavedCarts()}}
+async function restoreSavedCart(id){const saved=savedCarts.find(x=>x.id===id);if(!saved)return;let restored=0,missing=[];for(const row of (Array.isArray(saved.cart_items)?saved.cart_items:[])){const m=medicines.find(x=>String(x.id)===String(row.medicine_id))||medicines.find(x=>(x.name||"").toLowerCase()===(row.medicine_name||"").toLowerCase());if(!m){missing.push(row.medicine_name||"Unknown medicine");continue}const qty=Math.max(1,Number(row.quantity)||1),existing=cart.find(x=>x.id===m.id);if(existing){existing.quantity+=qty;existing.strip_quantity=(Number(existing.strip_quantity)||0)+Math.max(0,Number(row.strip_quantity)||0);}else cart.push({id:m.id,name:m.name,pack_size:m.pack_size,hsn_code:m.hsn_code||"",price:price(m),gst_rate:Number(m.gst_rate||0),quantity:qty,strip_quantity:Math.max(0,Number(row.strip_quantity)||0)});restored++}renderCart();updateCartQuickBar();$("savedCartMessage").textContent=restored+" item(s) loaded with current retailer prices."+(missing.length?" Not found: "+missing.join(", "):"")}
 async function deleteSavedCart(id){if(!confirm("Delete this saved cart?"))return;const {error}=await db.from("retailer_saved_carts").delete().eq("id",id).eq("retailer_user_id",user.id);$("savedCartMessage").textContent=error?"Delete failed: "+error.message:"Saved cart deleted.";if(!error)await loadSavedCarts()}
 function toggleCompare(id){
  if(compareIds.includes(id))compareIds=compareIds.filter(x=>x!==id);
@@ -197,8 +197,8 @@ function openCompare(){
 function closeCompare(){show("compareModal",false)}
 function updateCartQuickBar(){
  
- const count=cart.reduce((n,x)=>n+x.quantity,0),total=cart.reduce((n,x)=>n+x.price*x.quantity,0);
- $("cartQuickSummary").textContent="🛒 "+count+" medicine(s) in cart · "+(approved?"Total: "+money(total):"Price after Admin approval");
+ const count=cart.reduce((n,x)=>n+x.quantity,0),strips=cart.reduce((n,x)=>n+Math.max(0,Number(x.strip_quantity)||0),0),total=cart.reduce((n,x)=>n+x.price*x.quantity,0);
+ $("cartQuickSummary").textContent="🛒 "+count+" box(es) · "+strips+" strip(s) · "+(approved?"Total: "+money(total):"Price after Admin approval");
  show("cartQuickBar",true);
 }
 function goToCart(){
@@ -208,15 +208,16 @@ function goToCart(){
 function add(id){
 
  const m=medicines.find(x=>x.id===id);if(!m){$("status").textContent="Medicine not found. Refresh the catalogue and try again.";return}
- const x=cart.find(y=>y.id===id);if(x)x.quantity++;else cart.push({id,name:m.name,pack_size:m.pack_size,hsn_code:m.hsn_code||"",price:price(m),gst_rate:Number(m.gst_rate||0),quantity:1});
+ const x=cart.find(y=>y.id===id);if(x)x.quantity++;else cart.push({id,name:m.name,pack_size:m.pack_size,hsn_code:m.hsn_code||"",price:price(m),gst_rate:Number(m.gst_rate||0),quantity:1,strip_quantity:0});
  renderCart();updateCartQuickBar();$("status").textContent=m.name+" added to your cart."; 
 }
 
 function cartTotals(){
  const subtotal=cart.reduce((s,x)=>s+x.price*x.quantity,0);
  const gst=cart.reduce((s,x)=>s+x.price*x.quantity*x.gst_rate/100,0);
- return {subtotal,gst,total:subtotal+gst,count:cart.reduce((n,x)=>n+x.quantity,0)};
+ return {subtotal,gst,total:subtotal+gst,count:cart.reduce((n,x)=>n+x.quantity,0),stripCount:cart.reduce((n,x)=>n+Math.max(0,Number(x.strip_quantity)||0),0)};
 }
+function setStripQuantity(id,value){const x=cart.find(y=>y.id===id);if(!x)return;x.strip_quantity=Math.max(0,Math.floor(Number(value)||0));renderCart();updateCartQuickBar();}
 function qty(id,d){
  const x=cart.find(y=>y.id===id);if(!x)return;
  x.quantity+=d;if(x.quantity<1)cart=cart.filter(y=>y.id!==id);
@@ -232,13 +233,14 @@ function renderCart(){
  if(!$("cart"))return;
  $("cart").innerHTML=cart.length?cart.map(x=>{
   const line=x.price*x.quantity,gst=line*x.gst_rate/100;
-  return '<div class="cartrow" style="align-items:center"><div style="flex:1;min-width:180px"><b>'+esc(x.name)+'</b><br><small>'+esc(x.pack_size)+' · '+(approved?money(x.price)+' each':'Price after approval')+'</small>'+(approved?'<br><b>Line total: '+money(line+gst)+'</b><small> (incl. GST '+money(gst)+')</small>':'')+'</div><div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap"><button type="button" aria-label="Decrease quantity" data-dec="'+esc(x.id)+'">−</button><b style="min-width:24px;text-align:center">'+x.quantity+'</b><button type="button" aria-label="Increase quantity" data-inc="'+esc(x.id)+'">+</button><button type="button" class="danger" data-remove="'+esc(x.id)+'">Remove</button></div></div>';
+  return '<div class="cartrow" style="align-items:center"><div style="flex:1;min-width:180px"><b>'+esc(x.name)+'</b><br><small>'+esc(x.pack_size)+' · '+(approved?money(x.price)+' each':'Price after approval')+'</small>'+(approved?'<br><b>Line total: '+money(line+gst)+'</b><small> (incl. GST '+money(gst)+')</small>':'')+'</div><div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap"><span style="display:flex;align-items:center;gap:4px"><small>Boxes</small><button type="button" aria-label="Decrease boxes" data-dec="'+esc(x.id)+'">−</button><b style="min-width:24px;text-align:center">'+x.quantity+'</b><button type="button" aria-label="Increase boxes" data-inc="'+esc(x.id)+'">+</button></span><label style="display:flex;align-items:center;gap:5px"><small>Strips</small><input type="number" min="0" step="1" inputmode="numeric" aria-label="Strip count" data-strips="'+esc(x.id)+'" value="'+Math.max(0,Number(x.strip_quantity)||0)+'" style="width:76px;padding:7px;border:1px solid #ccd6df;border-radius:8px"></label><button type="button" class="danger" data-remove="'+esc(x.id)+'">Remove</button></div></div>';
  }).join(""):"<p>Your cart is empty. Add medicines from the catalogue to continue.</p>";
  $("cart").querySelectorAll("[data-dec]").forEach(b=>b.onclick=()=>qty(b.dataset.dec,-1));
  $("cart").querySelectorAll("[data-inc]").forEach(b=>b.onclick=()=>qty(b.dataset.inc,1));
  $("cart").querySelectorAll("[data-remove]").forEach(b=>b.onclick=()=>removeCartItem(b.dataset.remove));
+ $("cart").querySelectorAll("[data-strips]").forEach(input=>input.onchange=()=>setStripQuantity(input.dataset.strips,input.value));
  const t=cartTotals();
- $("cartTotal").innerHTML=approved?'<div style="display:flex;justify-content:space-between"><span>Items / units</span><b>'+t.count+'</b></div><div style="display:flex;justify-content:space-between"><span>Subtotal</span><b>'+money(t.subtotal)+'</b></div><div style="display:flex;justify-content:space-between"><span>GST</span><b>'+money(t.gst)+'</b></div><div style="display:flex;justify-content:space-between"><span>Delivery</span><b>'+money(0)+'</b></div><hr><div style="display:flex;justify-content:space-between;font-size:19px"><b>Grand Total</b><b>'+money(t.total)+'</b></div>':'<b>'+t.count+' medicine(s) selected.</b><p>Admin approval tarvatha retailer price, GST and order checkout enable avuthayi.</p><p>Delivery charge: ₹0.00</p>';
+ $("cartTotal").innerHTML=approved?'<div style="display:flex;justify-content:space-between"><span>Boxes</span><b>'+t.count+'</b></div><div style="display:flex;justify-content:space-between"><span>Strips (count only)</span><b>'+t.stripCount+'</b></div><div style="display:flex;justify-content:space-between"><span>Subtotal</span><b>'+money(t.subtotal)+'</b></div><div style="display:flex;justify-content:space-between"><span>GST</span><b>'+money(t.gst)+'</b></div><div style="display:flex;justify-content:space-between"><span>Delivery</span><b>'+money(0)+'</b></div><hr><div style="display:flex;justify-content:space-between;font-size:19px"><b>Grand Total</b><b>'+money(t.total)+'</b></div>':'<b>'+t.count+' box(es) selected · '+t.stripCount+' strip(s).</b><p>Admin approval tarvatha retailer price, GST and order checkout enable avuthayi.</p><p>Delivery charge: ₹0.00</p>';
  $("placeOrder").disabled=!approved||!cart.length;
  $("placeOrder").textContent=!approved?"Admin approval required":cart.length?"Review & Place Order":"Add medicines to continue";
  updateCartQuickBar();
@@ -253,7 +255,7 @@ async function placeOrder(){
  if(!/^[0-9+()\-\s]{10,16}$/.test(phone)){ $("orderMessage").textContent="Enter a valid phone number.";return}
  const t=cartTotals();
  const method=delivery_method==="shop_pickup"?"Shop pickup":"Home delivery";
- if(!confirm("Confirm your order?\\n\\nShop: "+customer_name+"\\nPhone: "+phone+"\\nCity: "+city+"\\nItems: "+t.count+"\\nSubtotal: "+money(t.subtotal)+"\\nGST: "+money(t.gst)+"\\nDelivery: ₹0.00\\nGrand Total: "+money(t.total)+"\\nMethod: "+method))return;
+ if(!confirm("Confirm your order?\\n\\nShop: "+customer_name+"\\nPhone: "+phone+"\\nCity: "+city+"\\nBoxes: "+t.count+"\\nStrips (count only): "+t.stripCount+"\\nSubtotal: "+money(t.subtotal)+"\\nGST: "+money(t.gst)+"\\nDelivery: ₹0.00\\nGrand Total: "+money(t.total)+"\\nMethod: "+method))return;
  placingOrder=true;$("placeOrder").disabled=true;$("orderMessage").textContent="Checking retailer approval…";
  try{
   const check=await db.from("retailer_profiles").select("approval_status").eq("user_id",user.id).maybeSingle();
@@ -266,7 +268,7 @@ async function placeOrder(){
   $("orderMessage").textContent="Submitting order…";
   const {data:o,error}=await db.from("orders").insert({retailer_id:user.id,customer_name,phone,city,delivery_method,delivery_charge:0,subtotal:t.subtotal,gst_amount:t.gst,grand_total:t.total,order_status:"pending"}).select("id").single();
   if(error)throw error;
-  const rows=cart.map(x=>({order_id:o.id,medicine_id:x.id,medicine_name:x.name,pack_size:x.pack_size,hsn_code:x.hsn_code||"",quantity:x.quantity,unit_price:x.price,gst_rate:x.gst_rate}));
+  const rows=cart.map(x=>({order_id:o.id,medicine_id:x.id,medicine_name:x.name,pack_size:x.pack_size,hsn_code:x.hsn_code||"",quantity:x.quantity,strip_quantity:Math.max(0,Number(x.strip_quantity)||0),unit_price:x.price,gst_rate:x.gst_rate}));
   let items=await db.from("order_items").insert(rows);
   if(items.error&&/hsn_code/i.test(items.error.message)){items=await db.from("order_items").insert(rows.map(({hsn_code,...rest})=>rest));}
   if(items.error){
@@ -285,29 +287,29 @@ async function loadHistory(){
  if(error){$("history").textContent="Order history error: "+error.message;return}
  if(!orders?.length){$("history").textContent="No previous orders.";return}
  const ids=orders.map(o=>o.id);
- const {data:items,error:itemError}=await db.from("order_items").select("order_id,medicine_id,medicine_name,pack_size,quantity").in("order_id",ids);
+ const {data:items,error:itemError}=await db.from("order_items").select("order_id,medicine_id,medicine_name,pack_size,quantity,strip_quantity").in("order_id",ids);
  if(itemError){$("history").textContent="Order items could not be loaded: "+itemError.message;return}
  const grouped=(items||[]).reduce((a,x)=>{(a[String(x.order_id)]??=[]).push(x);return a},{});
  const steps=["pending","processing","completed"];
  $("history").innerHTML=orders.map(o=>{
   const status=String(o.order_status||"pending").toLowerCase(),cancelled=status==="cancelled",quote=status==="awaiting_quote",stage=cancelled?-1:quote?0:Math.max(0,steps.indexOf(status));
   const progress=cancelled?'<span class="status-pill" style="background:#fff0f0;color:#a32929">Cancelled</span>':quote?'<span class="status-pill">Awaiting quote</span>':'<div class="order-progress" aria-label="Order progress"><span class="'+(stage>=0?"done":"")+'">Placed</span><i></i><span class="'+(stage>=1?"done":"")+'">Processing</span><i></i><span class="'+(stage>=2?"done":"")+'">Completed</span></div>';
-  const lines=(grouped[String(o.id)]||[]).map(x=>'<li>'+esc(x.medicine_name)+' · '+esc(x.pack_size||"")+' × '+esc(x.quantity)+'</li>').join("");
+  const lines=(grouped[String(o.id)]||[]).map(x=>'<li>'+esc(x.medicine_name)+' · '+esc(x.pack_size||"")+' × '+esc(x.quantity)+' box(es)'+(Number(x.strip_quantity)>0?' + '+esc(x.strip_quantity)+' strip(s)':'')+'</li>').join("");
   return '<article class="cartrow order-history-card"><div class="order-history-head"><span><b>Order #'+esc(o.id)+'</b><br><small>'+new Date(o.created_at).toLocaleString()+' · '+esc(o.delivery_method)+'</small></span><b>'+money(o.grand_total)+'</b></div>'+progress+'<p class="order-history-status">Status: <b>'+esc(status.replaceAll("_"," "))+'</b></p><details><summary>View ordered medicines</summary><ul>'+lines+'</ul></details><button type="button" class="secondary" data-repeat-order="'+esc(o.id)+'">Repeat this order</button></article>';
  }).join("");
  $("history").querySelectorAll("[data-repeat-order]").forEach(b=>b.onclick=()=>repeatOrder(b.dataset.repeatOrder));
 }
 async function repeatOrder(orderId){
  if(!approved||!user)return;
- const {data:rows,error}=await db.from("order_items").select("medicine_id,medicine_name,pack_size,quantity").eq("order_id",orderId);
+ const {data:rows,error}=await db.from("order_items").select("medicine_id,medicine_name,pack_size,quantity,strip_quantity").eq("order_id",orderId);
  if(error){$("history").textContent="Could not load this order: "+error.message;return}
  let added=0,skipped=[];
  for(const row of rows||[]){
   const m=medicines.find(x=>String(x.id)===String(row.medicine_id))||medicines.find(x=>(x.name||"").toLowerCase()===(row.medicine_name||"").toLowerCase());
   if(!m){skipped.push(row.medicine_name);continue}
   const qty=Math.max(1,Number(row.quantity)||1),existing=cart.find(x=>x.id===m.id);
-  if(existing)existing.quantity+=qty;
-  else cart.push({id:m.id,name:m.name,pack_size:m.pack_size,hsn_code:m.hsn_code||"",price:price(m),gst_rate:Number(m.gst_rate||0),quantity:qty});
+  if(existing){existing.quantity+=qty;existing.strip_quantity=(Number(existing.strip_quantity)||0)+Math.max(0,Number(row.strip_quantity)||0);}
+  else cart.push({id:m.id,name:m.name,pack_size:m.pack_size,hsn_code:m.hsn_code||"",price:price(m),gst_rate:Number(m.gst_rate||0),quantity:qty,strip_quantity:Math.max(0,Number(row.strip_quantity)||0)});
   added++;
  }
  if(added){renderCart();updateCartQuickBar();showRetailSection("cartPanel");$("orderMessage").textContent="Previous order items added using today's retailer prices. Review quantities and totals before placing a new order.";}
