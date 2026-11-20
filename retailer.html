@@ -175,7 +175,7 @@ async function loadFavorites(){if(!approved||!user)return;const {data,error}=awa
 async function toggleFavorite(id){if(!approved||!user)return;const exists=favorites.has(id),r=exists?await db.from("retailer_favorites").delete().eq("retailer_user_id",user.id).eq("medicine_id",id):await db.from("retailer_favorites").insert({retailer_user_id:user.id,medicine_id:id});if(r.error){$("status").textContent="Favourite update failed: "+r.error.message;return}if(exists)favorites.delete(id);else favorites.add(id);renderProducts();$("status").textContent=exists?"Removed from favourites.":"Added to My Favourites."}
 async function loadSavedCarts(){if(!approved||!user)return;const {data,error}=await db.from("retailer_saved_carts").select("id,cart_name,cart_items,updated_at").eq("retailer_user_id",user.id).order("updated_at",{ascending:false}).limit(30);if(error){$("savedCartList").textContent="Saved carts unavailable: "+error.message;return}savedCarts=data||[];$("savedCartList").innerHTML=savedCarts.map(x=>'<div class="saved-cart-row"><span><b>'+esc(x.cart_name)+'</b><br><small>'+esc(new Date(x.updated_at).toLocaleString())+' · '+(Array.isArray(x.cart_items)?x.cart_items.length:0)+' item(s)</small></span><span><button type="button" class="secondary" data-load-saved-cart="'+esc(x.id)+'">Load</button> <button type="button" class="danger" data-delete-saved-cart="'+esc(x.id)+'">Delete</button></span></div>').join("")||"No saved carts yet."; $("savedCartList").querySelectorAll("[data-load-saved-cart]").forEach(b=>b.onclick=()=>restoreSavedCart(b.dataset.loadSavedCart));$("savedCartList").querySelectorAll("[data-delete-saved-cart]").forEach(b=>b.onclick=()=>deleteSavedCart(b.dataset.deleteSavedCart))}
 async function saveCurrentCart(){if(!approved||!user||!cart.length){$("savedCartMessage").textContent="Add medicines to the cart before saving.";return}const cart_name=$("savedCartName").value.trim()||"Saved cart",cart_items=cart.map(x=>({medicine_id:x.id,medicine_name:x.name,pack_size:x.pack_size,quantity:x.quantity,strip_quantity:x.strip_quantity||0}));const {error}=await db.from("retailer_saved_carts").insert({retailer_user_id:user.id,cart_name,cart_items});$("savedCartMessage").textContent=error?"Save failed: "+error.message:"Cart saved to your retailer account.";if(!error){$("savedCartName").value="";await loadSavedCarts()}}
-async function restoreSavedCart(id){const saved=savedCarts.find(x=>x.id===id);if(!saved)return;let restored=0,missing=[];for(const row of (Array.isArray(saved.cart_items)?saved.cart_items:[])){const m=medicines.find(x=>String(x.id)===String(row.medicine_id))||medicines.find(x=>(x.name||"").toLowerCase()===(row.medicine_name||"").toLowerCase());if(!m){missing.push(row.medicine_name||"Unknown medicine");continue}const qty=Math.max(1,Number(row.quantity)||1),existing=cart.find(x=>x.id===m.id);if(existing)existing.quantity+=qty;else cart.push({id:m.id,name:m.name,pack_size:m.pack_size,hsn_code:m.hsn_code||"",price:price(m),gst_rate:Number(m.gst_rate||0),quantity:qty,strip_quantity:Math.max(0,Number(row.strip_quantity)||0)});restored++}renderCart();updateCartQuickBar();$("savedCartMessage").textContent=restored+" item(s) loaded with current retailer prices."+(missing.length?" Not found: "+missing.join(", "):"")}
+async function restoreSavedCart(id){const saved=savedCarts.find(x=>x.id===id);if(!saved)return;let restored=0,missing=[];for(const row of (Array.isArray(saved.cart_items)?saved.cart_items:[])){const m=medicines.find(x=>String(x.id)===String(row.medicine_id))||medicines.find(x=>(x.name||"").toLowerCase()===(row.medicine_name||"").toLowerCase());if(!m){missing.push(row.medicine_name||"Unknown medicine");continue}const qty=Math.max(1,Number(row.quantity)||1),existing=cart.find(x=>x.id===m.id);if(existing){existing.quantity+=qty;existing.strip_quantity=(Number(existing.strip_quantity)||0)+Math.max(0,Number(row.strip_quantity)||0);}else cart.push({id:m.id,name:m.name,pack_size:m.pack_size,hsn_code:m.hsn_code||"",price:price(m),gst_rate:Number(m.gst_rate||0),quantity:qty,strip_quantity:Math.max(0,Number(row.strip_quantity)||0)});restored++}renderCart();updateCartQuickBar();$("savedCartMessage").textContent=restored+" item(s) loaded with current retailer prices."+(missing.length?" Not found: "+missing.join(", "):"")}
 async function deleteSavedCart(id){if(!confirm("Delete this saved cart?"))return;const {error}=await db.from("retailer_saved_carts").delete().eq("id",id).eq("retailer_user_id",user.id);$("savedCartMessage").textContent=error?"Delete failed: "+error.message:"Saved cart deleted.";if(!error)await loadSavedCarts()}
 function toggleCompare(id){
  if(compareIds.includes(id))compareIds=compareIds.filter(x=>x!==id);
@@ -197,8 +197,8 @@ function openCompare(){
 function closeCompare(){show("compareModal",false)}
 function updateCartQuickBar(){
  
- const count=cart.reduce((n,x)=>n+x.quantity,0),total=cart.reduce((n,x)=>n+x.price*x.quantity,0);
- $("cartQuickSummary").textContent="🛒 "+count+" medicine(s) in cart · "+(approved?"Total: "+money(total):"Price after Admin approval");
+ const count=cart.reduce((n,x)=>n+x.quantity,0),strips=cart.reduce((n,x)=>n+Math.max(0,Number(x.strip_quantity)||0),0),total=cart.reduce((n,x)=>n+x.price*x.quantity,0);
+ $("cartQuickSummary").textContent="🛒 "+count+" box(es) · "+strips+" strip(s) · "+(approved?"Total: "+money(total):"Price after Admin approval");
  show("cartQuickBar",true);
 }
 function goToCart(){
@@ -217,7 +217,7 @@ function cartTotals(){
  const gst=cart.reduce((s,x)=>s+x.price*x.quantity*x.gst_rate/100,0);
  return {subtotal,gst,total:subtotal+gst,count:cart.reduce((n,x)=>n+x.quantity,0),stripCount:cart.reduce((n,x)=>n+Math.max(0,Number(x.strip_quantity)||0),0)};
 }
-function setStripQuantity(id,value){const x=cart.find(y=>y.id===id);if(!x)return;x.strip_quantity=Math.max(0,Math.floor(Number(value)||0));renderCart();}
+function setStripQuantity(id,value){const x=cart.find(y=>y.id===id);if(!x)return;x.strip_quantity=Math.max(0,Math.floor(Number(value)||0));renderCart();updateCartQuickBar();}
 function qty(id,d){
  const x=cart.find(y=>y.id===id);if(!x)return;
  x.quantity+=d;if(x.quantity<1)cart=cart.filter(y=>y.id!==id);
@@ -308,8 +308,8 @@ async function repeatOrder(orderId){
   const m=medicines.find(x=>String(x.id)===String(row.medicine_id))||medicines.find(x=>(x.name||"").toLowerCase()===(row.medicine_name||"").toLowerCase());
   if(!m){skipped.push(row.medicine_name);continue}
   const qty=Math.max(1,Number(row.quantity)||1),existing=cart.find(x=>x.id===m.id);
-  if(existing)existing.quantity+=qty;
-  else cart.push({id:m.id,name:m.name,pack_size:m.pack_size,hsn_code:m.hsn_code||"",price:price(m),gst_rate:Number(m.gst_rate||0),quantity:qty});
+  if(existing){existing.quantity+=qty;existing.strip_quantity=(Number(existing.strip_quantity)||0)+Math.max(0,Number(row.strip_quantity)||0);}
+  else cart.push({id:m.id,name:m.name,pack_size:m.pack_size,hsn_code:m.hsn_code||"",price:price(m),gst_rate:Number(m.gst_rate||0),quantity:qty,strip_quantity:Math.max(0,Number(row.strip_quantity)||0)});
   added++;
  }
  if(added){renderCart();updateCartQuickBar();showRetailSection("cartPanel");$("orderMessage").textContent="Previous order items added using today's retailer prices. Review quantities and totals before placing a new order.";}
