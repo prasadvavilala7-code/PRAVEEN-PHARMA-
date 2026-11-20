@@ -66,7 +66,19 @@ body:has(#portal:not(.hidden)) main{margin-left:248px!important;max-width:calc(1
  .retailer-sidebar .ret-nav[data-retail-section="accountPanel"]{display:none}
 }
 </style>
-</head>
+<style>
+.order-history-card{display:block;margin:12px 0;padding:16px;border:1px solid #dce6ec;border-radius:14px;background:#fff}
+.order-history-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.order-progress{display:flex;align-items:center;gap:7px;margin:14px 0 6px;font-size:11px;color:#718394}
+.order-progress span{padding:5px 8px;border-radius:20px;background:#edf1f4;white-space:nowrap}
+.order-progress span.done{background:#e3f4ec;color:#176846;font-weight:700}
+.order-progress i{height:2px;flex:1;background:#dce6ec;min-width:8px}
+.order-history-status{margin:8px 0;color:#536b7c}
+.order-history-card details{margin:8px 0 12px}
+.order-history-card summary{cursor:pointer;font-weight:650;color:#145b83}
+.order-history-card button{margin-top:8px}
+@media(max-width:520px){.order-progress{gap:3px}.order-progress span{padding:4px 5px;font-size:10px}}
+</style></head>
 <body>
 <header><h1>PRAVEEN PHARMA</h1><p>Retailer Ordering Portal</p><p>Opposite Union Bank, Sircilla, Telangana</p></header>
 <nav aria-label="Main navigation" style="background:#06466f;text-align:center;padding:12px"><a href="./index.html" style="color:#fff;text-decoration:none;margin:0 10px;font-weight:bold">Main Website</a><a href="./retailer.html" style="color:#fff;text-decoration:none;margin:0 10px;font-weight:bold">Retailer Portal</a></nav>
@@ -253,7 +265,39 @@ async function placeOrder(){
  finally{placingOrder=false;$("placeOrder").disabled=!approved||!cart.length}
 }
 
-async function loadHistory(){const {data,error}=await db.from("orders").select("id,created_at,grand_total,order_status,delivery_method").eq("retailer_id",user.id).order("created_at",{ascending:false}).limit(30);if(error){$("history").textContent="Order history error: "+error.message;return}$("history").innerHTML=(data||[]).map(o=>'<div class="cartrow"><span><b>Order '+esc(o.id)+'</b><br><small>'+new Date(o.created_at).toLocaleString()+' · '+esc(o.delivery_method)+'</small></span><span>'+money(o.grand_total)+' · '+esc(o.order_status)+'</span></div>').join("")||"No previous orders."}
+async function loadHistory(){
+ const {data:orders,error}=await db.from("orders").select("id,created_at,grand_total,order_status,delivery_method").eq("retailer_id",user.id).order("created_at",{ascending:false}).limit(30);
+ if(error){$("history").textContent="Order history error: "+error.message;return}
+ if(!orders?.length){$("history").textContent="No previous orders.";return}
+ const ids=orders.map(o=>o.id);
+ const {data:items,error:itemError}=await db.from("order_items").select("order_id,medicine_id,medicine_name,pack_size,quantity").in("order_id",ids);
+ if(itemError){$("history").textContent="Order items could not be loaded: "+itemError.message;return}
+ const grouped=(items||[]).reduce((a,x)=>{(a[String(x.order_id)]??=[]).push(x);return a},{});
+ const steps=["pending","processing","completed"];
+ $("history").innerHTML=orders.map(o=>{
+  const status=String(o.order_status||"pending").toLowerCase(),cancelled=status==="cancelled",quote=status==="awaiting_quote",stage=cancelled?-1:quote?0:Math.max(0,steps.indexOf(status));
+  const progress=cancelled?'<span class="status-pill" style="background:#fff0f0;color:#a32929">Cancelled</span>':quote?'<span class="status-pill">Awaiting quote</span>':'<div class="order-progress" aria-label="Order progress"><span class="'+(stage>=0?"done":"")+'">Placed</span><i></i><span class="'+(stage>=1?"done":"")+'">Processing</span><i></i><span class="'+(stage>=2?"done":"")+'">Completed</span></div>';
+  const lines=(grouped[String(o.id)]||[]).map(x=>'<li>'+esc(x.medicine_name)+' · '+esc(x.pack_size||"")+' × '+esc(x.quantity)+'</li>').join("");
+  return '<article class="cartrow order-history-card"><div class="order-history-head"><span><b>Order #'+esc(o.id)+'</b><br><small>'+new Date(o.created_at).toLocaleString()+' · '+esc(o.delivery_method)+'</small></span><b>'+money(o.grand_total)+'</b></div>'+progress+'<p class="order-history-status">Status: <b>'+esc(status.replaceAll("_"," "))+'</b></p><details><summary>View ordered medicines</summary><ul>'+lines+'</ul></details><button type="button" class="secondary" data-repeat-order="'+esc(o.id)+'">Repeat this order</button></article>';
+ }).join("");
+ $("history").querySelectorAll("[data-repeat-order]").forEach(b=>b.onclick=()=>repeatOrder(b.dataset.repeatOrder));
+}
+async function repeatOrder(orderId){
+ if(!approved||!user)return;
+ const {data:rows,error}=await db.from("order_items").select("medicine_id,medicine_name,pack_size,quantity").eq("order_id",orderId);
+ if(error){$("history").textContent="Could not load this order: "+error.message;return}
+ let added=0,skipped=[];
+ for(const row of rows||[]){
+  const m=medicines.find(x=>String(x.id)===String(row.medicine_id))||medicines.find(x=>(x.name||"").toLowerCase()===(row.medicine_name||"").toLowerCase());
+  if(!m){skipped.push(row.medicine_name);continue}
+  const qty=Math.max(1,Number(row.quantity)||1),existing=cart.find(x=>x.id===m.id);
+  if(existing)existing.quantity+=qty;
+  else cart.push({id:m.id,name:m.name,pack_size:m.pack_size,hsn_code:m.hsn_code||"",price:price(m),gst_rate:Number(m.gst_rate||0),quantity:qty});
+  added++;
+ }
+ if(added){renderCart();updateCartQuickBar();showRetailSection("cartPanel");$("orderMessage").textContent="Previous order items added using today's retailer prices. Review quantities and totals before placing a new order.";}
+ $("history").insertAdjacentHTML("afterbegin",'<p role="status" class="muted">'+added+' item(s) added to cart.'+(skipped.length?' Unavailable items skipped: '+esc(skipped.join(", ")): '')+'</p>');
+}
 async function saveProfile(){const shop_name=$("profileShop").value.trim(),owner_name=$("profileOwner").value.trim(),phone=$("profilePhone").value.trim(),gstin=$("profileGstin").value.trim();if(!shop_name||!phone){$("profileMessage").textContent="Shop name and mobile number are required.";return}const {error}=await db.from("retailer_profiles").insert({user_id:user.id,shop_name,owner_name,phone,gstin,approval_status:"pending"});if(error){$("profileMessage").textContent="Could not submit profile: "+error.message;return}show("profilePanel",false);show("portal",true);await start(user)}
 async function logout(){await db.auth.signOut();user=null;profile=null;cart=[];prices={};approved=false;["portal","cartPanel","historyPanel","profilePanel","registerPanel"].forEach(id=>show(id,false));show("authPanel",true);authMessage("Logged out.")}
 $("openCompare").onclick=openCompare;$("closeCompare").onclick=closeCompare;$("clearCompare").onclick=()=>{compareIds=[];updateCompareBar();renderProducts()};$("compareModal").addEventListener("click",e=>{if(e.target===$("compareModal"))closeCompare()});$("goCartBtn").onclick=goToCart;$("clearCart").onclick=clearCart;$("closePhoto").onclick=closePhoto;$("closeDetails").onclick=closeMedicineDetails;$("medicineDetails").addEventListener("click",e=>{if(e.target===$("medicineDetails"))closeMedicineDetails()});$("photoViewer").addEventListener("click",e=>{if(e.target===$("photoViewer"))closePhoto()});document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("photoViewer").classList.contains("hidden"))closePhoto();if(e.key==="Escape"&&!$("medicineDetails").classList.contains("hidden"))closeMedicineDetails()});$("loginBtn").onclick=login;$("forgotPassword").onclick=resetRetailerPassword;document.querySelectorAll("[data-retail-section]").forEach(b=>b.onclick=()=>showRetailSection(b.dataset.retailSection));$("submitShortage").onclick=submitShortage;$("shortagePhoto").onchange=()=>{$("shortagePhotoPreview").textContent=$("shortagePhoto").files[0]?.name||"No photo selected."};$("saveRetailerPassword").onclick=saveNewRetailerPassword;$("registerBtn").onclick=register;$("showRegister").onclick=()=>{show("authPanel",false);show("registerPanel",true)};$("backLogin").onclick=()=>{show("registerPanel",false);show("authPanel",true)};$("logoutBtn").onclick=logout;$("sideLogout").onclick=logout;$("saveProfile").onclick=saveProfile;$("placeOrder").onclick=placeOrder;$("search").oninput=applyCompanyFilter;$("companyFilter").onchange=applyCompanyFilter;
