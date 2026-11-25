@@ -242,7 +242,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--pp-gold)!important;bo
 <h3>CONTROL CENTRE</h3>
 <div class="nav-grid">
 <button type="button" data-section="dashboardHome" class="active">▦ Dashboard</button>
-<button type="button" data-section="catalogue">▣ Medicines</button><button type="button" data-section="medicineCompanies">🏢 Companies & Publish</button>
+<button type="button" data-section="catalogue">▣ Medicines</button><button type="button" data-section="photoEditStudio">▧ Photo Edit</button><button type="button" data-section="medicineCompanies">🏢 Companies & Publish</button>
 <button type="button" data-section="catalogue">▤ Stock</button>
 <button type="button" data-section="retailerRequests">♙ Retailers</button><button type="button" data-section="publicWebsiteRequests">✉ Website Requests</button><button type="button" data-section="accountsHub">▤ Accounts & Ledger</button><button type="button" data-section="supplierHub">▣ Suppliers & Purchase</button>
 <button type="button" data-section="ordersPanel">▣ Orders</button>
@@ -266,7 +266,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--pp-gold)!important;bo
 <div class="stat"><span class="dash-stat-icon">▤</span><strong id="dashOrderCount">—</strong><span>Orders</span></div><div class="stat"><span class="dash-stat-icon">✉</span><strong id="dashPublicRequestCount">—</strong><span>Website requests</span></div>
 </div>
 <div class="dash-lower-grid">
-<div class="panel dash-inner-panel"><div class="dash-panel-heading"><div><span class="dash-eyebrow">SHORTCUTS</span><h3>Quick actions</h3></div><span class="dash-gold-mark"></span></div><div class="dash-actions"><button type="button" data-go="editor"><span>＋</span> Add medicine</button><button type="button" class="secondary" data-go="editor"><span>▧</span> Upload medicine photo</button><button type="button" class="secondary" data-go="catalogue"><span>▦</span> Manage medicines</button><button type="button" class="secondary" data-go="editor"><span>✦</span> Add medicine photos</button><button type="button" class="secondary" data-go="ordersPanel"><span>▤</span> View orders</button><button type="button" class="secondary" data-go="retailerRequests"><span>♙</span> Retailer approvals</button><button type="button" class="secondary" data-go="publicWebsiteRequests"><span>✉</span> Public website requests</button></div></div>
+<div class="panel dash-inner-panel"><div class="dash-panel-heading"><div><span class="dash-eyebrow">SHORTCUTS</span><h3>Quick actions</h3></div><span class="dash-gold-mark"></span></div><div class="dash-actions"><button type="button" data-go="editor"><span>＋</span> Add medicine</button><button type="button" class="secondary" data-go="editor"><span>▧</span> Upload medicine photo</button><button type="button" class="secondary" data-go="catalogue"><span>▦</span> Manage medicines</button><button type="button" class="secondary" data-go="photoEditStudio"><span>▧</span> Photo Edit Studio</button><button type="button" class="secondary" data-go="editor"><span>✦</span> Add medicine photos</button><button type="button" class="secondary" data-go="ordersPanel"><span>▤</span> View orders</button><button type="button" class="secondary" data-go="retailerRequests"><span>♙</span> Retailer approvals</button><button type="button" class="secondary" data-go="publicWebsiteRequests"><span>✉</span> Public website requests</button></div></div>
 <div class="panel dash-inner-panel dash-status-panel"><div class="dash-panel-heading"><div><span class="dash-eyebrow">SYSTEM</span><h3>Workspace status</h3></div><span class="dash-status-dot"></span></div><p class="dash-status-copy">Your admin workspace is ready. Select a section from the menu to manage your pharmacy operations.</p><p id="dashboardStatus" class="muted">Live figures load after admin sign-in.</p><div class="dash-status-foot"><span class="dash-status-dot"></span> Admin workspace</div></div>
 </div>
 </section>
@@ -325,6 +325,19 @@ input:focus,select:focus,textarea:focus{border-color:var(--pp-gold)!important;bo
 <section class="panel" id="activityPanel" hidden><h2>Admin Activity History</h2><p class="muted">Records important changes made from this Admin Dashboard.</p><div id="activityList">Loading…</div><button class="secondary" id="refreshActivity">Refresh History</button></section>
 <section class="panel" id="backupPanel" hidden><h2>Security & Backup</h2><h3>Admin login history</h3><p class="muted">Successful sign-ins to this Admin Dashboard are recorded here after the secure Supabase alert function is deployed. Retailer logins are not included.</p><div id="loginHistory">Login history will appear after security setup.</div><button type="button" class="secondary" id="refreshLoginHistory">Refresh login history</button><hr><h3>Data Export & Health Check</h3><p class="muted">Export is a browser download of records accessible to this admin account. It is not a full database backup.</p><button id="exportBackup">Export available data (JSON)</button><button class="secondary" id="runHealth">Run connection checks</button><p id="healthStatus" class="muted" role="status"></p></section>
 
+<section class="panel" id="photoEditStudio" hidden>
+<h2>Photo Edit Studio</h2>
+<p class="muted">Upload a medicine photo, add your design instructions/code as reference, create a demo preview, then attach the approved result to a medicine. Your original upload is never overwritten.</p>
+<div class="row"><label>Choose medicine<select id="photoEditMedicine"><option value="">Select medicine to attach photo</option></select></label><label>Upload source photo<input id="photoEditFile" type="file" accept="image/*"></label></div>
+<label for="photoEditPrompt">Your photo-edit code / prompt</label>
+<textarea id="photoEditPrompt" rows="5" placeholder="Paste your photo design prompt or instructions here…"></textarea>
+<p class="muted">Safety: pasted code is treated as text/instructions, not executed as JavaScript or HTML. The demo below is a local catalogue-style composition; AI image transformation requires a connected image-generation service.</p>
+<button type="button" id="createPhotoEditDemo">Create Demo Preview</button>
+<div id="photoEditPreview" class="muted" style="margin:14px 0">No demo created yet.</div>
+<button type="button" id="addPhotoEditToMedicine" hidden>Add Approved Photo to Medicine List</button>
+<button type="button" class="secondary" id="discardPhotoEditDemo" hidden>Discard Demo</button>
+<p id="photoEditStatus" class="muted" role="status"></p>
+</section>
 <section class="panel" id="editor" hidden>
 <h2 id="formTitle">Add New Medicine</h2>
 <input id="medicineId" type="hidden">
@@ -365,7 +378,7 @@ const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&
 async function renderAdminAccess(){const box=$("adminAccessList");if(currentAdminRole!=="owner"){$("adminAccessPanel").hidden=true;return;}const {data,error}=await db.from("admin_users").select("user_id,email,role,is_active,created_at").order("created_at");if(error){box.textContent="Could not load admin users: "+error.message;return;}const rows=data||[];$("adminAccessCount").textContent=rows.length;$("adminAccessActive").textContent=rows.filter(x=>x.is_active).length;box.innerHTML=rows.map(x=>'<div class="medicine"><div><b>'+esc(x.email||x.user_id)+'</b><br><small>'+esc(x.role.toUpperCase())+' · '+esc(x.user_id)+'</small></div><div><span class="badge">'+(x.is_active?"Active":"Inactive")+'</span>'+(x.role==="owner"?"":(x.is_active?' <button class="danger" data-admin-disable="'+esc(x.user_id)+'">Deactivate</button>':""))+'</div></div>').join("")||"No admin accounts.";box.querySelectorAll("[data-admin-disable]").forEach(b=>b.onclick=()=>deactivateAdmin(b.dataset.adminDisable));}
 function showAdminSection(id){
  if(id==="publicWebsiteRequests")loadWebsiteRequests();
- const ids=["dashboardHome","siteLinks","publicWebsiteRequests","retailerRequests","approvedRetailers","accountsHub","supplierHub","ordersPanel","masterSettings","reportsPanel","activityPanel","backupPanel","editor","catalogue","medicineCompanies"];
+ const ids=["dashboardHome","siteLinks","publicWebsiteRequests","retailerRequests","approvedRetailers","accountsHub","supplierHub","ordersPanel","masterSettings","reportsPanel","activityPanel","backupPanel","editor","catalogue","medicineCompanies","photoEditStudio"];
  ids.forEach(x=>{const el=$(x);if(el)el.hidden=x!==id;});
  document.querySelectorAll("[data-section]").forEach(b=>b.classList.toggle("active",b.dataset.section===id||(id==="approvedRetailers"&&b.dataset.section==="retailerRequests")));
 }
@@ -413,7 +426,7 @@ async function loadCompanies(){const {data,error}=await db.from('medicine_compan
 async function addCompany(){const name=$('newCompanyName').value.trim();if(!name){$('companyStatus').textContent='Enter company name.';return;}const {error}=await db.from('medicine_companies').insert({name,is_approved:false});if(error){$('companyStatus').textContent=error.message;return;}$('newCompanyName').value='';$('companyStatus').textContent='Company saved as Draft.';await loadCompanies();await logActivity('Added medicine company',{company_name:name});}
 async function toggleCompanyPublish(id){const c=companiesCache.find(x=>x.id===id);if(!c)return;const next=!c.is_approved;if(!confirm((next?'Publish ':'Unpublish ')+c.name+'?'))return;const {error}=await db.from('medicine_companies').update({is_approved:next,updated_at:new Date().toISOString(),approved_at:next?new Date().toISOString():null,approved_by:next?currentUser.id:null}).eq('id',id);if(error){$('companyStatus').textContent=error.message;return;}await loadCompanies();await loadMedicines();await logActivity(next?'Published company':'Unpublished company',{company_id:id});}
 async function toggleMedicinePublish(id){const m=allMedicines.find(x=>x.id===id);if(!m)return;const next=!m.public_approved;if(!confirm((next?"Publish on Normal Website: ":"Remove from Normal Website: ")+m.name+"? Retailer Website visibility will not change."))return;const {error}=await db.from('medicines').update({public_approved:next}).eq('id',id);if(error){alert(error.message);return;}await loadMedicines();await logActivity(next?"Published on Normal Website":"Unpublished from Normal Website",{medicine_id:id});}
-async function loadMedicines(){let result=await db.from("medicines").select("id,name,composition,pack_size,category,image_url,image_gallery,common_price,gst_rate,hsn_code,is_active,company_id,public_approved,mechanism_of_action,uses,benefits,side_effects,precautions,info_source_url,info_status,info_checked_at").order("name");if(result.error&&/hsn_code/i.test(result.error.message)){result=await db.from("medicines").select("id,name,composition,pack_size,category,image_url,image_gallery,common_price,gst_rate,is_active,company_id,public_approved,mechanism_of_action,uses,benefits,side_effects,precautions,info_source_url,info_status,info_checked_at").order("name");if(result.data)result.data.forEach(m=>m.hsn_code="");}const {data,error}=result;if(error){$("saveStatus").textContent="Catalogue error: "+error.message;return;}allMedicines=data||[];renderList();renderInactiveMedicines();updateDashboardStats();}
+async function loadMedicines(){let result=await db.from("medicines").select("id,name,composition,pack_size,category,image_url,image_gallery,common_price,gst_rate,hsn_code,is_active,company_id,public_approved,mechanism_of_action,uses,benefits,side_effects,precautions,info_source_url,info_status,info_checked_at").order("name");if(result.error&&/hsn_code/i.test(result.error.message)){result=await db.from("medicines").select("id,name,composition,pack_size,category,image_url,image_gallery,common_price,gst_rate,is_active,company_id,public_approved,mechanism_of_action,uses,benefits,side_effects,precautions,info_source_url,info_status,info_checked_at").order("name");if(result.data)result.data.forEach(m=>m.hsn_code="");}const {data,error}=result;if(error){$("saveStatus").textContent="Catalogue error: "+error.message;return;}allMedicines=data||[];renderList();renderInactiveMedicines();updateDashboardStats();if($("photoEditMedicine"))loadPhotoEditMedicineOptions();}
 function showFormulaInfo(m){$("formulaInfoStatus").textContent=m.info_status==="matched_official_label"?"Official label ingredient match saved. Review before publishing.":"No verified formula match; medical information will not be guessed.";}
 async function lookupFormulaInfo(){const formula=$("composition").value.trim();if(!formula)return;$("formulaInfoStatus").textContent="Searching official medicine labels…";try{const rawParts=formula.split(/\s*(?:\+|;|,|&|\band\b)\s*/i).map(x=>x.trim()).filter(Boolean);const parts=rawParts.map(x=>x.replace(/\b\d+(?:\.\d+)?\s*(?:mg|mcg|μg|g|kg|ml|mL|iu|units?|%|meq)\b/gi,"").replace(/\b\d+\s*(?:million|billion)\s*(?:cfu|spores?|cells?)\b/gi,"").replace(/\b(?:eq\.?\s*to|equivalent\s+to)\b.*$/i,"").replace(/\s+/g," ").trim()).filter(Boolean);if(!parts.length)throw new Error("Formula ingredients could not be separated from strengths.");const q=parts.map(x=>'openfda.active_ingredient:"'+x.replace(/["\\]/g,"")+'"').join(" AND ");const response=await fetch("https://api.fda.gov/drug/label.json?search="+encodeURIComponent(q)+"&limit=10");if(!response.ok)throw new Error("No official matching label found.");const data=await response.json(),records=data.results||[];const norm=x=>String(x||"").toLowerCase().replace(/hydrochloride/g,"hcl").replace(/[^a-z0-9]+/g," ").trim();const match=records.find(r=>{const v=norm([...(r.openfda?.active_ingredient||[]),...(r.openfda?.generic_name||[])].join(" "));return parts.every(p=>v.includes(norm(p)));});if(!match)throw new Error("No exact ingredient match found.");const first=x=>Array.isArray(x)?x[0]||"":x||"";const uses=first(match.indications_and_usage)||first(match.purpose),side=first(match.adverse_reactions),prec=[first(match.warnings),first(match.precautions),first(match.do_not_use)].filter(Boolean).join("\n\n");if(!uses&&!side&&!prec)throw new Error("Label has insufficient details.");window.formulaInfoFormula=formula;window.formulaInfo={uses:String(uses),benefits:uses?"Potential benefit based on official indication: "+String(uses):null,mechanism_of_action:String(first(match.mechanism_of_action)||first(match.clinical_pharmacology)||""),side_effects:String(side),precautions:String(prec),info_source_url:"https://api.fda.gov/drug/label.json",info_status:"matched_official_label",info_checked_at:new Date().toISOString()};$("formulaInfoStatus").textContent="Official FDA ingredient-label match found. Uses, side effects and precautions will be saved where present; benefits will be summarized only from the official indication.";}catch(e){window.formulaInfoFormula=formula;window.formulaInfo={uses:null,benefits:null,side_effects:null,precautions:null,info_source_url:null,info_status:"not_verified",info_checked_at:new Date().toISOString()};$("formulaInfoStatus").textContent=(e.message||"No verified match.")+" No medical claims will be guessed. For Indian products, review the manufacturer package insert/CDSCO-approved details.";}}
 $("composition").addEventListener("input",()=>{window.formulaInfoFormula=null;$("formulaInfoStatus").textContent="Formula changed. It will be checked again before saving."});$("composition").addEventListener("blur",lookupFormulaInfo);
@@ -461,6 +474,70 @@ async function makeCatalogueVariant(img,mode){
  }
  return await new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(new Error("Could not render image")), "image/jpeg",0.94));
 }
+
+let photoEditBlob=null,photoEditPreviewUrl=null,photoEditSourceFile=null;
+function loadPhotoEditMedicineOptions(){
+ const sel=$("photoEditMedicine"),current=sel.value;
+ sel.innerHTML='<option value="">Select medicine to attach photo</option>'+allMedicines.filter(m=>m.is_active!==false).map(m=>'<option value="'+esc(m.id)+'">'+esc(m.name)+' · '+esc(m.pack_size||"")+'</option>').join("");
+ if(current)sel.value=current;
+}
+function discardPhotoEditDemo(){
+ photoEditBlob=null;photoEditSourceFile=null;
+ if(photoEditPreviewUrl)URL.revokeObjectURL(photoEditPreviewUrl);
+ photoEditPreviewUrl=null;$("photoEditPreview").textContent="Demo discarded. Original photo and medicine list are unchanged.";
+ $("addPhotoEditToMedicine").hidden=true;$("discardPhotoEditDemo").hidden=true;
+}
+async function createPhotoEditDemo(){
+ const file=$("photoEditFile").files?.[0];
+ if(!file){$("photoEditStatus").textContent="First upload a medicine photo.";return;}
+ if(!file.type.startsWith("image/")||file.size>10*1024*1024){$("photoEditStatus").textContent="Choose an image under 10 MB.";return;}
+ const btn=$("createPhotoEditDemo");btn.disabled=true;$("photoEditStatus").textContent="Creating local demo preview…";
+ try{
+  const src=URL.createObjectURL(file),img=new Image();
+  await new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=()=>reject(new Error("Could not read uploaded image."));img.src=src;});
+  const canvas=document.createElement("canvas");canvas.width=1200;canvas.height=1500;
+  const ctx=canvas.getContext("2d"),grad=ctx.createLinearGradient(0,0,1200,1500);
+  grad.addColorStop(0,"#d8effb");grad.addColorStop(1,"#9dcce5");ctx.fillStyle=grad;ctx.fillRect(0,0,1200,1500);
+  const medicine=allMedicines.find(m=>m.id===$("photoEditMedicine").value);
+  const title=(medicine?.name||file.name.replace(/\.[^.]+$/,"")||"PRAVEEN PHARMA").slice(0,48);
+  ctx.fillStyle="#102f4b";ctx.textAlign="center";ctx.font="700 48px Arial";ctx.fillText(title,600,100);
+  const note=$("photoEditPrompt").value.trim().replace(/\s+/g," ").slice(0,95);
+  if(note){ctx.font="22px Arial";ctx.fillStyle="#315b76";ctx.fillText(note,600,145);}
+  const maxW=900,maxH=1080,scale=Math.min(maxW/img.naturalWidth,maxH/img.naturalHeight);
+  const w=img.naturalWidth*scale,h=img.naturalHeight*scale,x=(1200-w)/2,y=220+(1080-h)/2;
+  ctx.save();ctx.shadowColor="rgba(9,35,55,.28)";ctx.shadowBlur=34;ctx.shadowOffsetY=22;ctx.fillStyle="#fff";ctx.fillRect(x-34,y-34,w+68,h+68);ctx.restore();
+  ctx.drawImage(img,x,y,w,h);
+  ctx.fillStyle="#173c58";ctx.font="bold 23px Arial";ctx.fillText("PRAVEEN PHARMA · CATALOGUE PREVIEW",600,1435);
+  photoEditBlob=await new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(new Error("Could not render demo.")),"image/jpeg",.94));
+  photoEditSourceFile=file;if(photoEditPreviewUrl)URL.revokeObjectURL(photoEditPreviewUrl);
+  photoEditPreviewUrl=URL.createObjectURL(photoEditBlob);
+  $("photoEditPreview").innerHTML='<div class="tile"><b>Demo Preview — not saved yet</b><img style="display:block;max-width:100%;max-height:520px;object-fit:contain;border:1px solid #dce6ec;border-radius:12px;background:#fff" src="'+photoEditPreviewUrl+'" alt="Photo edit demo preview"></div>';
+  $("addPhotoEditToMedicine").hidden=false;$("discardPhotoEditDemo").hidden=false;
+  $("photoEditStatus").textContent="Demo ready. Select a medicine, review the image, then add it to that medicine.";
+  if(!medicine)$("photoEditStatus").textContent="Demo ready. Select a medicine above before adding it to the medicine list.";
+ }catch(e){$("photoEditStatus").textContent="Demo failed: "+(e.message||String(e));}
+ finally{btn.disabled=false;URL.revokeObjectURL(src);}
+}
+async function addPhotoEditToMedicine(){
+ const medicineId=$("photoEditMedicine").value;
+ if(!medicineId||!photoEditBlob){$("photoEditStatus").textContent="Select a medicine and create a demo first.";return;}
+ const medicine=allMedicines.find(m=>m.id===medicineId);if(!medicine)return;
+ const btn=$("addPhotoEditToMedicine");btn.disabled=true;
+ try{
+  const path=medicineId+"/photo-edit-"+Date.now()+".jpg";
+  const {error:uploadError}=await db.storage.from(BUCKET).upload(path,photoEditBlob,{upsert:false,contentType:"image/jpeg"});
+  if(uploadError)throw uploadError;
+  const url=db.storage.from(BUCKET).getPublicUrl(path).data.publicUrl;
+  const gallery=[...new Set([...(Array.isArray(medicine.image_gallery)?medicine.image_gallery:[]),...(medicine.image_url?[medicine.image_url]:[]),url])];
+  const {error:updateError}=await db.from("medicines").update({image_url:url,image_gallery:gallery}).eq("id",medicineId);
+  if(updateError)throw updateError;
+  await logActivity("Added Photo Edit Studio image",{medicine_id:medicineId,medicine_name:medicine.name});
+  $("photoEditStatus").textContent="Photo added to "+medicine.name+". The previous photo is preserved in its gallery. Publish status was not changed.";
+  await loadMedicines();discardPhotoEditDemo();
+ }catch(e){$("photoEditStatus").textContent="Could not add photo: "+(e.message||String(e));}
+ finally{btn.disabled=false;}
+}
+
 async function generateLocalMedicinePhotos(){
  const files=Array.from(selectedFiles||[]).slice(0,8);
  if(!files.length){$("medicinePhotoStatus").textContent="First choose the product photos. Add front and back photos for each package view you want shown.";return;}
@@ -698,7 +775,7 @@ $("navLogout").addEventListener("click",async()=>{await db.auth.signOut();locati
 $("refreshWebsiteRequests").addEventListener("click",loadWebsiteRequests);$("saveLedgerEntry").addEventListener("click",saveLedgerEntry);$("saveSupplier").addEventListener("click",saveSupplier);$("addPoLine").addEventListener("click",addPoLine);$("createPurchaseOrder").addEventListener("click",createPurchaseOrder);$("saveSettings").addEventListener("click",saveSettings);$("refreshActivity").addEventListener("click",loadActivity);$("reloadSettings").addEventListener("click",loadSettings);$("refreshReports").addEventListener("click",loadReports);$("exportBackup").addEventListener("click",exportBackup);$("runHealth").addEventListener("click",runHealth);$("refreshLoginHistory").addEventListener("click",loadLoginHistory);
 $("searchPhoto").addEventListener("click",()=>{const q=$("name").value.trim();if(!q){$("saveStatus").textContent="Enter medicine name first.";return;}window.open("https://www.google.com/search?tbm=isch&q="+encodeURIComponent(q+" medicine box strip packaging"),"_blank","noopener");});
 $("photoFile").addEventListener("change",e=>{selectedFiles=Array.from(e.target.files||[]);selectedFile=selectedFiles[0]||null;if(window.photoPreviewUrls){window.photoPreviewUrls.forEach(u=>URL.revokeObjectURL(u));}window.photoPreviewUrls=[];if(!selectedFiles.length){$("photoPreview").textContent="No new photos selected.";return;}const invalid=selectedFiles.find(f=>!f.type.startsWith("image/")||f.size>10*1024*1024);if(invalid){selectedFiles=[];selectedFile=null;e.target.value="";$("photoPreview").textContent=!invalid.type.startsWith("image/")?"Please choose image files only.":invalid.name+" is larger than 10 MB.";return;}if(selectedFiles.length>8){selectedFiles=[];selectedFile=null;e.target.value="";$("photoPreview").textContent="Select up to 8 photos at a time.";return;}window.photoPreviewUrls=selectedFiles.map(f=>URL.createObjectURL(f));$("photoPreview").innerHTML='<div class="preview">'+selectedFiles.map((f,i)=>'<div class="tile"><b>Original '+(i+1)+': '+esc(f.name)+'</b><img src="'+window.photoPreviewUrls[i]+'" alt="Original uploaded medicine photo '+(i+1)+'"></div>').join("")+'</div>';});
-$("adminForgotPassword").addEventListener("click",sendAdminPasswordReset);$("saveAdminPassword").addEventListener("click",saveNewAdminPassword);$("adminLogout").addEventListener("click",async()=>{await db.auth.signOut();location.reload();});$("saveMedicine").addEventListener("click",()=>saveMedicine(false));$("generateMedicinePhotos").addEventListener("click",generateMedicinePhotos);$("approveMedicinePhotoSet").addEventListener("click",approveLocalMedicinePhotos);$("addCompany").addEventListener("click",addCompany);$("clearForm").addEventListener("click",clearForm);$("filter").addEventListener("input",renderList);init();
+$("adminForgotPassword").addEventListener("click",sendAdminPasswordReset);$("saveAdminPassword").addEventListener("click",saveNewAdminPassword);$("adminLogout").addEventListener("click",async()=>{await db.auth.signOut();location.reload();});$("photoEditMedicine").addEventListener("focus",loadPhotoEditMedicineOptions);$("createPhotoEditDemo").addEventListener("click",createPhotoEditDemo);$("addPhotoEditToMedicine").addEventListener("click",addPhotoEditToMedicine);$("discardPhotoEditDemo").addEventListener("click",discardPhotoEditDemo);$("saveMedicine").addEventListener("click",()=>saveMedicine(false));$("generateMedicinePhotos").addEventListener("click",generateMedicinePhotos);$("approveMedicinePhotoSet").addEventListener("click",approveLocalMedicinePhotos);$("addCompany").addEventListener("click",addCompany);$("clearForm").addEventListener("click",clearForm);$("filter").addEventListener("input",renderList);init();
 db.auth.onAuthStateChange((event,session)=>{if(event==="PASSWORD_RECOVERY"){$("loginPanel").hidden=true;$("adminShell").hidden=true;$("adminResetPasswordPanel").hidden=false;$("adminResetMessage").textContent="Recovery link verified. Set your new Admin password.";}});
 </script>
 <script>
