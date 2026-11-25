@@ -329,8 +329,8 @@ input:focus,select:focus,textarea:focus{border-color:var(--pp-gold)!important;bo
 <h2>Photo Edit Studio</h2>
 <p class="muted">Upload a medicine photo and create a catalogue layout preview. The original photo stays unchanged. Review the preview, save it to a medicine, then publish it separately to the customer website.</p>
 <div class="row"><label>Choose medicine<select id="photoEditMedicine"><option value="">Select medicine to attach photo</option></select></label><label>Upload source photo<input id="photoEditFile" type="file" accept="image/*"></label></div>
-<label for="photoEditPrompt">Your photo-edit code / prompt</label>
-<textarea id="photoEditPrompt" rows="5" placeholder="Paste your photo design prompt or instructions here…"></textarea>
+<label for="photoEditPrompt">Design notes (reference only)</label>
+<textarea id="photoEditPrompt" rows="3" placeholder="Add notes for the next AI-editing upgrade. These notes are not applied by the local preview yet."></textarea>
 <p class="muted">This is a local catalogue layout preview, not AI photo retouching. It preserves the uploaded packaging image without changing its printed text. Real AI editing needs a connected image service.</p>
 <button type="button" id="createPhotoEditDemo">Create Demo Preview</button>
 <div id="photoEditPreview" class="muted" style="margin:14px 0">No demo created yet.</div>
