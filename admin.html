@@ -492,8 +492,8 @@ async function createPhotoEditDemo(){
  if(!file){$("photoEditStatus").textContent="First upload a medicine photo.";return;}
  if(!file.type.startsWith("image/")||file.size>10*1024*1024){$("photoEditStatus").textContent="Choose an image under 10 MB.";return;}
  const btn=$("createPhotoEditDemo");btn.disabled=true;$("photoEditStatus").textContent="Creating local demo preview…";
- try{
-  const src=URL.createObjectURL(file),img=new Image();
+ let src="";try{
+  src=URL.createObjectURL(file);const img=new Image();
   await new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=()=>reject(new Error("Could not read uploaded image."));img.src=src;});
   const canvas=document.createElement("canvas");canvas.width=1200;canvas.height=1500;
   const ctx=canvas.getContext("2d"),grad=ctx.createLinearGradient(0,0,1200,1500);
@@ -501,8 +501,7 @@ async function createPhotoEditDemo(){
   const medicine=allMedicines.find(m=>m.id===$("photoEditMedicine").value);
   const title=(medicine?.name||file.name.replace(/\.[^.]+$/,"")||"PRAVEEN PHARMA").slice(0,48);
   ctx.fillStyle="#102f4b";ctx.textAlign="center";ctx.font="700 48px Arial";ctx.fillText(title,600,100);
-  const note=$("photoEditPrompt").value.trim().replace(/\s+/g," ").slice(0,95);
-  if(note){ctx.font="22px Arial";ctx.fillStyle="#315b76";ctx.fillText(note,600,145);}
+  // Prompt/code is retained as a design reference; this local demo does not execute pasted code.
   const maxW=900,maxH=1080,scale=Math.min(maxW/img.naturalWidth,maxH/img.naturalHeight);
   const w=img.naturalWidth*scale,h=img.naturalHeight*scale,x=(1200-w)/2,y=220+(1080-h)/2;
   ctx.save();ctx.shadowColor="rgba(9,35,55,.28)";ctx.shadowBlur=34;ctx.shadowOffsetY=22;ctx.fillStyle="#fff";ctx.fillRect(x-34,y-34,w+68,h+68);ctx.restore();
