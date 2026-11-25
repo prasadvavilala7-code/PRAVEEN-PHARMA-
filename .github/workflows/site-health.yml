@@ -87,6 +87,12 @@ jobs:
           set -euo pipefail
           curl --fail --silent --show-error --location --max-time 30 "https://prasadvavilala7-code.github.io/PRAVEEN-PHARMA-/retailer.html" -o /tmp/retailer.html
           grep -qi "PRAVEEN" /tmp/retailer.html
+      - name: Check live customer brochure
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --location --max-time 30 "https://prasadvavilala7-code.github.io/PRAVEEN-PHARMA-/brochure/" -o /tmp/brochure.html
+          grep -qi "Our Products" /tmp/brochure.html
+          grep -qi "public_medicine_details" /tmp/brochure.html
       - name: Save diagnostic logs on failure
         if: failure()
         uses: actions/upload-artifact@v4
@@ -96,4 +102,5 @@ jobs:
             /tmp/main.html
             /tmp/admin.html
             /tmp/retailer.html
+            /tmp/brochure.html
           if-no-files-found: ignore
