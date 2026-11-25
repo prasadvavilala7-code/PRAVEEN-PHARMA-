@@ -327,15 +327,16 @@ input:focus,select:focus,textarea:focus{border-color:var(--pp-gold)!important;bo
 
 <section class="panel" id="photoEditStudio" hidden>
 <h2>Photo Edit Studio</h2>
-<p class="muted">Upload a medicine photo, add your design instructions/code as reference, create a demo preview, then attach the approved result to a medicine. Your original upload is never overwritten.</p>
+<p class="muted">Upload a medicine photo and create a catalogue layout preview. The original photo stays unchanged. Review the preview, save it to a medicine, then publish it separately to the customer website.</p>
 <div class="row"><label>Choose medicine<select id="photoEditMedicine"><option value="">Select medicine to attach photo</option></select></label><label>Upload source photo<input id="photoEditFile" type="file" accept="image/*"></label></div>
 <label for="photoEditPrompt">Your photo-edit code / prompt</label>
 <textarea id="photoEditPrompt" rows="5" placeholder="Paste your photo design prompt or instructions here…"></textarea>
-<p class="muted">Safety: pasted code is treated as text/instructions, not executed as JavaScript or HTML. The demo below is a local catalogue-style composition; AI image transformation requires a connected image-generation service.</p>
+<p class="muted">This is a local catalogue layout preview, not AI photo retouching. It preserves the uploaded packaging image without changing its printed text. Real AI editing needs a connected image service.</p>
 <button type="button" id="createPhotoEditDemo">Create Demo Preview</button>
 <div id="photoEditPreview" class="muted" style="margin:14px 0">No demo created yet.</div>
-<button type="button" id="addPhotoEditToMedicine" hidden>Add Approved Photo to Medicine List</button>
-<button type="button" class="secondary" id="discardPhotoEditDemo" hidden>Discard Demo</button>
+<button type="button" id="addPhotoEditToMedicine" hidden>Save Photo to Medicine</button>
+<button type="button" id="publishPhotoEditMedicine" hidden>Publish on Customer Website</button>
+<button type="button" class="secondary" id="discardPhotoEditDemo" hidden>Discard Preview</button>
 <p id="photoEditStatus" class="muted" role="status"></p>
 </section>
 <section class="panel" id="editor" hidden>
@@ -477,17 +478,17 @@ async function makeCatalogueVariant(img,mode){
  return await new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(new Error("Could not render image")), "image/jpeg",0.94));
 }
 
-let photoEditBlob=null,photoEditPreviewUrl=null,photoEditSourceFile=null;
+let photoEditBlob=null,photoEditPreviewUrl=null,photoEditSourceFile=null,photoEditSavedMedicineId=null;
 function loadPhotoEditMedicineOptions(){
  const sel=$("photoEditMedicine"),current=sel.value;
  sel.innerHTML='<option value="">Select medicine to attach photo</option>'+allMedicines.filter(m=>m.is_active!==false).map(m=>'<option value="'+esc(m.id)+'">'+esc(m.name)+' · '+esc(m.pack_size||"")+'</option>').join("");
  if(current)sel.value=current;
 }
 function discardPhotoEditDemo(){
- photoEditBlob=null;photoEditSourceFile=null;
+ photoEditBlob=null;photoEditSourceFile=null;photoEditSavedMedicineId=null;
  if(photoEditPreviewUrl)URL.revokeObjectURL(photoEditPreviewUrl);
  photoEditPreviewUrl=null;$("photoEditPreview").textContent="Demo discarded. Original photo and medicine list are unchanged.";
- $("addPhotoEditToMedicine").hidden=true;$("discardPhotoEditDemo").hidden=true;
+ $("addPhotoEditToMedicine").hidden=true;$("publishPhotoEditMedicine").hidden=true;$("discardPhotoEditDemo").hidden=true;
 }
 async function createPhotoEditDemo(){
  const file=$("photoEditFile").files?.[0];
@@ -514,8 +515,8 @@ async function createPhotoEditDemo(){
   photoEditPreviewUrl=URL.createObjectURL(photoEditBlob);
   $("photoEditPreview").innerHTML='<div class="tile"><b>Demo Preview — not saved yet</b><img style="display:block;max-width:100%;max-height:520px;object-fit:contain;border:1px solid #dce6ec;border-radius:12px;background:#fff" src="'+photoEditPreviewUrl+'" alt="Photo edit demo preview"></div>';
   $("addPhotoEditToMedicine").hidden=false;$("discardPhotoEditDemo").hidden=false;
-  $("photoEditStatus").textContent="Demo ready. Select a medicine, review the image, then add it to that medicine.";
-  if(!medicine)$("photoEditStatus").textContent="Demo ready. Select a medicine above before adding it to the medicine list.";
+  $("photoEditStatus").textContent="Preview ready. Select a medicine, review the image, then save it to that medicine.";
+  if(!medicine)$("photoEditStatus").textContent="Preview ready. Select a medicine above before saving.";
  }catch(e){$("photoEditStatus").textContent="Demo failed: "+(e.message||String(e));}
  finally{btn.disabled=false;URL.revokeObjectURL(src);}
 }
@@ -533,9 +534,30 @@ async function addPhotoEditToMedicine(){
   const {error:updateError}=await db.from("medicines").update({image_url:url,image_gallery:gallery}).eq("id",medicineId);
   if(updateError)throw updateError;
   await logActivity("Added Photo Edit Studio image",{medicine_id:medicineId,medicine_name:medicine.name});
-  $("photoEditStatus").textContent="Photo added to "+medicine.name+". The previous photo is preserved in its gallery. Publish status was not changed.";
-  await loadMedicines();discardPhotoEditDemo();
- }catch(e){$("photoEditStatus").textContent="Could not add photo: "+(e.message||String(e));}
+  photoEditSavedMedicineId=medicineId;
+  await loadMedicines();
+  const refreshed=allMedicines.find(m=>m.id===medicineId);
+  if(refreshed?.public_approved){$("publishPhotoEditMedicine").hidden=true;$("photoEditStatus").textContent="Photo saved and updated. This medicine is already published; the customer website will use the new main photo.";}else{$("publishPhotoEditMedicine").hidden=false;$("photoEditStatus").textContent="Photo saved to "+medicine.name+". Previous photo is kept in the gallery. Press Publish on Customer Website when ready.";}
+ }catch(e){$("photoEditStatus").textContent="Could not save photo: "+(e.message||String(e));}
+ finally{btn.disabled=false;}
+}
+
+async function publishPhotoEditMedicine(){
+ const id=photoEditSavedMedicineId;
+ if(!id){$("photoEditStatus").textContent="Save the photo to a medicine first.";return;}
+ const medicine=allMedicines.find(m=>m.id===id);
+ if(!medicine){$("photoEditStatus").textContent="Medicine not found. Refresh the medicine list and try again.";return;}
+ if(medicine.public_approved){$("publishPhotoEditMedicine").hidden=true;$("photoEditStatus").textContent="This medicine is already published. The saved photo is now its main photo.";return;}
+ if(!confirm("Publish "+medicine.name+" with its newly saved photo on the Customer Website?"))return;
+ const btn=$("publishPhotoEditMedicine");btn.disabled=true;$("photoEditStatus").textContent="Publishing medicine…";
+ try{
+  const {error}=await db.from("medicines").update({public_approved:true}).eq("id",id);
+  if(error)throw error;
+  await loadMedicines();
+  await logActivity("Published medicine from Photo Edit Studio",{medicine_id:id,medicine_name:medicine.name});
+  $("photoEditStatus").textContent=medicine.name+" is now published on the Customer Website.";
+  btn.hidden=true;
+ }catch(e){$("photoEditStatus").textContent="Publish failed: "+(e.message||String(e))+". The saved photo is still attached; retry publishing from here or the medicine list.";}
  finally{btn.disabled=false;}
 }
 
@@ -776,7 +798,7 @@ $("navLogout").addEventListener("click",async()=>{await db.auth.signOut();locati
 $("refreshWebsiteRequests").addEventListener("click",loadWebsiteRequests);$("saveLedgerEntry").addEventListener("click",saveLedgerEntry);$("saveSupplier").addEventListener("click",saveSupplier);$("addPoLine").addEventListener("click",addPoLine);$("createPurchaseOrder").addEventListener("click",createPurchaseOrder);$("saveSettings").addEventListener("click",saveSettings);$("refreshActivity").addEventListener("click",loadActivity);$("reloadSettings").addEventListener("click",loadSettings);$("refreshReports").addEventListener("click",loadReports);$("exportBackup").addEventListener("click",exportBackup);$("runHealth").addEventListener("click",runHealth);$("refreshLoginHistory").addEventListener("click",loadLoginHistory);
 $("searchPhoto").addEventListener("click",()=>{const q=$("name").value.trim();if(!q){$("saveStatus").textContent="Enter medicine name first.";return;}window.open("https://www.google.com/search?tbm=isch&q="+encodeURIComponent(q+" medicine box strip packaging"),"_blank","noopener");});
 $("photoFile").addEventListener("change",e=>{selectedFiles=Array.from(e.target.files||[]);selectedFile=selectedFiles[0]||null;if(window.photoPreviewUrls){window.photoPreviewUrls.forEach(u=>URL.revokeObjectURL(u));}window.photoPreviewUrls=[];if(!selectedFiles.length){$("photoPreview").textContent="No new photos selected.";return;}const invalid=selectedFiles.find(f=>!f.type.startsWith("image/")||f.size>10*1024*1024);if(invalid){selectedFiles=[];selectedFile=null;e.target.value="";$("photoPreview").textContent=!invalid.type.startsWith("image/")?"Please choose image files only.":invalid.name+" is larger than 10 MB.";return;}if(selectedFiles.length>8){selectedFiles=[];selectedFile=null;e.target.value="";$("photoPreview").textContent="Select up to 8 photos at a time.";return;}window.photoPreviewUrls=selectedFiles.map(f=>URL.createObjectURL(f));$("photoPreview").innerHTML='<div class="preview">'+selectedFiles.map((f,i)=>'<div class="tile"><b>Original '+(i+1)+': '+esc(f.name)+'</b><img src="'+window.photoPreviewUrls[i]+'" alt="Original uploaded medicine photo '+(i+1)+'"></div>').join("")+'</div>';});
-$("adminForgotPassword").addEventListener("click",sendAdminPasswordReset);$("saveAdminPassword").addEventListener("click",saveNewAdminPassword);$("adminLogout").addEventListener("click",async()=>{await db.auth.signOut();location.reload();});$("photoEditMedicine").addEventListener("focus",loadPhotoEditMedicineOptions);$("createPhotoEditDemo").addEventListener("click",createPhotoEditDemo);$("addPhotoEditToMedicine").addEventListener("click",addPhotoEditToMedicine);$("discardPhotoEditDemo").addEventListener("click",discardPhotoEditDemo);$("saveMedicine").addEventListener("click",()=>saveMedicine(false));$("removeMedicinePhotos").addEventListener("click",removeSavedMedicinePhotos);$("generateMedicinePhotos").addEventListener("click",generateMedicinePhotos);$("approveMedicinePhotoSet").addEventListener("click",approveLocalMedicinePhotos);$("addCompany").addEventListener("click",addCompany);$("clearForm").addEventListener("click",clearForm);$("filter").addEventListener("input",renderList);init();
+$("adminForgotPassword").addEventListener("click",sendAdminPasswordReset);$("saveAdminPassword").addEventListener("click",saveNewAdminPassword);$("adminLogout").addEventListener("click",async()=>{await db.auth.signOut();location.reload();});$("photoEditMedicine").addEventListener("focus",loadPhotoEditMedicineOptions);$("createPhotoEditDemo").addEventListener("click",createPhotoEditDemo);$("addPhotoEditToMedicine").addEventListener("click",addPhotoEditToMedicine);$("discardPhotoEditDemo").addEventListener("click",discardPhotoEditDemo);$("publishPhotoEditMedicine").addEventListener("click",publishPhotoEditMedicine);$("saveMedicine").addEventListener("click",()=>saveMedicine(false));$("removeMedicinePhotos").addEventListener("click",removeSavedMedicinePhotos);$("generateMedicinePhotos").addEventListener("click",generateMedicinePhotos);$("approveMedicinePhotoSet").addEventListener("click",approveLocalMedicinePhotos);$("addCompany").addEventListener("click",addCompany);$("clearForm").addEventListener("click",clearForm);$("filter").addEventListener("input",renderList);init();
 db.auth.onAuthStateChange((event,session)=>{if(event==="PASSWORD_RECOVERY"){$("loginPanel").hidden=true;$("adminShell").hidden=true;$("adminResetPasswordPanel").hidden=false;$("adminResetMessage").textContent="Recovery link verified. Set your new Admin password.";}});
 </script>
 <script>
