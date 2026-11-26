@@ -519,6 +519,7 @@ async function makeCatalogueVariant(img,mode){
 }
 
 let photoEditBlob=null,photoEditPreviewUrl=null,photoEditSourceFile=null,photoEditSavedMedicineId=null;
+function medicinePhotoUrls(medicine){return [...new Set([...(medicine?.image_url?[medicine.image_url]:[]),...(Array.isArray(medicine?.image_gallery)?medicine.image_gallery:[])].filter(Boolean))];}
 function loadPhotoEditMedicineOptions(){
  const sel=$("photoEditMedicine"),current=sel.value;
  sel.innerHTML='<option value="">Select medicine to attach photo</option>'+allMedicines.filter(m=>m.is_active!==false).map(m=>'<option value="'+esc(m.id)+'">'+esc(m.name)+' · '+esc(m.pack_size||"")+'</option>').join("");
@@ -564,13 +565,16 @@ async function addPhotoEditToMedicine(){
  const medicineId=$("photoEditMedicine").value;
  if(!medicineId||!photoEditBlob){$("photoEditStatus").textContent="Select a medicine and create a demo first.";return;}
  const medicine=allMedicines.find(m=>m.id===medicineId);if(!medicine)return;
+ const existingPhotos=medicinePhotoUrls(medicine);
+ if(existingPhotos.length>=4){$("photoEditStatus").textContent="Maximum 4 photos allowed for this medicine. Remove one existing photo before adding another.";return;}
  const btn=$("addPhotoEditToMedicine");btn.disabled=true;
  try{
   const path=medicineId+"/photo-edit-"+Date.now()+".jpg";
   const {error:uploadError}=await db.storage.from(BUCKET).upload(path,photoEditBlob,{upsert:false,contentType:"image/jpeg"});
   if(uploadError)throw uploadError;
   const url=db.storage.from(BUCKET).getPublicUrl(path).data.publicUrl;
-  const gallery=[...new Set([...(Array.isArray(medicine.image_gallery)?medicine.image_gallery:[]),...(medicine.image_url?[medicine.image_url]:[]),url])];
+  const gallery=[...new Set([...existingPhotos,url])];
+  if(gallery.length>4)throw new Error("Maximum 4 photos allowed for this medicine.");
   const {error:updateError}=await db.from("medicines").update({image_url:url,image_gallery:gallery}).eq("id",medicineId);
   if(updateError)throw updateError;
   await logActivity("Added Photo Edit Studio image",{medicine_id:medicineId,medicine_name:medicine.name});
@@ -636,6 +640,7 @@ async function approveLocalMedicinePhotos(){
  try{
   const medicineId=await saveMedicine(true);if(!medicineId)throw new Error("Medicine details could not be saved; check the message above.");
   const {data:current,error:readError}=await db.from("medicines").select("image_url,image_gallery").eq("id",medicineId).single();if(readError)throw readError;
+  if(medicinePhotoUrls(current).length>=4)throw new Error("Maximum 4 photos allowed for this medicine. Remove an existing photo before saving another catalogue photo.");
   const urls=[];
   for(let i=0;i<photos.length;i++){const path=medicineId+"/free-catalogue-"+Date.now()+"-"+i+".jpg";const {error}=await db.storage.from(BUCKET).upload(path,photos[i].blob,{upsert:false,contentType:"image/jpeg"});if(error)throw error;urls.push(db.storage.from(BUCKET).getPublicUrl(path).data.publicUrl);}
   const originals=[current.image_url,...(Array.isArray(current.image_gallery)?current.image_gallery:[])].filter(Boolean);
@@ -656,6 +661,7 @@ async function approveMedicinePhotoSet(){
   const {data:current,error:readError}=await db.from("medicines").select("image_url,image_gallery").eq("id",set.medicineId).single();if(readError)throw readError;
   const originalUrls=[current.image_url,set.sourceUrl,...(Array.isArray(current.image_gallery)?current.image_gallery:[])].filter(Boolean);
   const gallery=[...new Set([...urls,...originalUrls])];
+  if(gallery.length>4)throw new Error("Maximum 4 photos allowed for this medicine. Remove existing photos before approving this photo set.");
   const {error:me}=await db.from("medicines").update({image_url:urls[0],image_gallery:gallery}).eq("id",set.medicineId);if(me)throw me;
   const {error:pe}=await db.from("medicine_photo_studio").update({status:"approved",approved_at:new Date().toISOString(),approved_by:currentUser.id}).eq("id",set.id).eq("medicine_id",set.medicineId);if(pe)throw pe;
   $("medicinePhotoStatus").textContent="Approved. Generated catalogue photos are linked; the original uploaded photo is preserved in the gallery.";
