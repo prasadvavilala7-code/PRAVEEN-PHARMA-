@@ -400,7 +400,7 @@ const BUCKET="medicine-images";
 const $=id=>document.getElementById(id);
 if(!window.supabase?.createClient){const status=$("loginStatus");if(status)status.textContent="Admin connection library did not load. Check internet and refresh this page.";throw new Error("Supabase SDK unavailable");}
 const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
-$("adminLogin").addEventListener("click",adminLogin);
+$("adminLogin").addEventListener("click",adminLogin);$("adminLogin").dataset.loginBound="1";
 let currentUser=null,currentAdminRole=null,allMedicines=[],selectedFile=null,selectedFiles=[],poDraftLines=[];
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 
@@ -886,6 +886,31 @@ $("dashboardSearch").addEventListener("input",renderDashboardMedicineRows);$("se
 $("photoFile").addEventListener("change",e=>{selectedFiles=Array.from(e.target.files||[]);selectedFile=selectedFiles[0]||null;if(window.photoPreviewUrls){window.photoPreviewUrls.forEach(u=>URL.revokeObjectURL(u));}window.photoPreviewUrls=[];if(!selectedFiles.length){$("photoPreview").textContent="No new photos selected.";return;}const invalid=selectedFiles.find(f=>!f.type.startsWith("image/")||f.size>10*1024*1024);if(invalid){selectedFiles=[];selectedFile=null;e.target.value="";$("photoPreview").textContent=!invalid.type.startsWith("image/")?"Please choose image files only.":invalid.name+" is larger than 10 MB.";return;}if(selectedFiles.length>8){selectedFiles=[];selectedFile=null;e.target.value="";$("photoPreview").textContent="Select up to 8 photos at a time.";return;}window.photoPreviewUrls=selectedFiles.map(f=>URL.createObjectURL(f));$("photoPreview").innerHTML='<div class="preview">'+selectedFiles.map((f,i)=>'<div class="tile"><b>Original '+(i+1)+': '+esc(f.name)+'</b><img src="'+window.photoPreviewUrls[i]+'" alt="Original uploaded medicine photo '+(i+1)+'"></div>').join("")+'</div>';});
 $("adminForgotPassword").addEventListener("click",sendAdminPasswordReset);$("saveAdminPassword").addEventListener("click",saveNewAdminPassword);$("adminLogout").addEventListener("click",async()=>{await db.auth.signOut();location.reload();});$("photoEditMedicine").addEventListener("focus",loadPhotoEditMedicineOptions);$("createPhotoEditDemo").addEventListener("click",createPhotoEditDemo);$("addPhotoEditToMedicine").addEventListener("click",addPhotoEditToMedicine);$("discardPhotoEditDemo").addEventListener("click",discardPhotoEditDemo);$("publishPhotoEditMedicine").addEventListener("click",publishPhotoEditMedicine);$("saveMedicine").addEventListener("click",()=>saveMedicine(false));$("removeMedicinePhotos").addEventListener("click",removeSavedMedicinePhotos);$("generateMedicinePhotos").addEventListener("click",generateMedicinePhotos);$("approveMedicinePhotoSet").addEventListener("click",approveLocalMedicinePhotos);$("addCompany").addEventListener("click",addCompany);$("clearForm").addEventListener("click",clearForm);$("filter").addEventListener("input",renderList);["photoRemoveSearch","publishSearch","deleteSearch"].forEach(id=>$(id).addEventListener("input",renderSeparateMedicineActions));init();
 db.auth.onAuthStateChange((event,session)=>{if(event==="PASSWORD_RECOVERY"){$("loginPanel").hidden=true;$("adminShell").hidden=true;$("adminResetPasswordPanel").hidden=false;$("adminResetMessage").textContent="Recovery link verified. Set your new Admin password.";}});
+</script>
+<script>
+/* Login safety fallback: still gives visible feedback if the main Admin script fails before wiring its handler. */
+(function(){
+ const btn=document.getElementById("adminLogin"),status=document.getElementById("loginStatus");
+ if(!btn||btn.dataset.loginBound==="1")return;
+ btn.type="button";
+ btn.addEventListener("click",async function(){
+  const email=(document.getElementById("adminEmail")?.value||"").trim();
+  const password=document.getElementById("adminPassword")?.value||"";
+  if(!email||!password){if(status)status.textContent="Enter admin email and password.";return;}
+  btn.disabled=true;btn.textContent="Connecting…";
+  if(status)status.textContent="Connecting securely to Admin…";
+  try{
+   if(!window.supabase?.createClient)throw new Error("Admin connection library did not load. Check internet and refresh.");
+   const client=window.supabase.createClient("https://hdoftqemjttaegkysjyq.supabase.co","sb_publishable_75Bn2frOUV-LeTqXvgUVtg__jIxuA72");
+   const {data,error}=await client.auth.signInWithPassword({email,password});
+   if(error)throw error;
+   if(!data?.session)throw new Error("No login session was created. Please try again.");
+   if(status)status.textContent="Login successful. Opening Admin dashboard…";
+   location.reload();
+  }catch(err){if(status)status.textContent="Login failed: "+(err?.message||String(err));}
+  finally{btn.disabled=false;btn.textContent="Login to Admin";}
+ });
+})();
 </script>
 <script>
 if("serviceWorker" in navigator && location.protocol!=="file:"){
