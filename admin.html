@@ -568,7 +568,7 @@ async function verifyAllMedicineFormulas(){const btn=$("verifyAllFormulas");btn.
 async function saveMedicine(keepForm=false){
  const name=$("name").value.trim(),composition=$("composition").value.trim();
  if(!name||!composition){$("saveStatus").textContent="Medicine name and composition / formula are required.";return null;}
- const id=$("medicineId").value;if(window.formulaInfoFormula!==composition)await lookupFormulaInfo();
+ const id=$("medicineId").value;
  const existing=id?allMedicines.find(m=>m.id===id):null;
  const payload={...(window.formulaInfo||{info_status:"not_verified"}),name,composition,pack_size:$("pack").value.trim(),category:$("category").value.trim(),common_price:Number($("price").value||0),gst_rate:Number($("gst").value||0),is_active:existing?existing.is_active!==false:true,company_id:$("medicineCompany").value||null,uses:$("uses").value.trim(),benefits:$("benefits").value.trim(),side_effects:$("sideEffects").value.trim()};
  if($("hsnCode").value.trim())payload.hsn_code=$("hsnCode").value.trim();
@@ -578,8 +578,7 @@ async function saveMedicine(keepForm=false){
   let result,savedId=id;if(id)result=await db.from("medicines").update(payload).eq("id",id);else{result=await db.from("medicines").insert(payload).select("id").single();savedId=result.data?.id;}
   if(result.error)throw result.error;if(!savedId)throw new Error("Saved medicine ID was not returned.");
   $("medicineId").value=savedId;$("formTitle").textContent="Edit Medicine";
-  $("saveStatus").textContent="Medicine saved. Checking official formula information…";
-  try{const v=await runFormulaVerification(savedId);$("saveStatus").textContent=v.status==="matched_official_label"?"Medicine saved. Official label match found.":"Medicine saved. No exact official label match; details remain unverified.";}catch(e){$("saveStatus").textContent="Medicine saved. Formula verification unavailable: "+(e.message||String(e));}
+  $("saveStatus").textContent="Medicine saved. Your manually entered Uses, Benefits and Side Effects are saved.";
   await logActivity(id?"Updated medicine":"Added medicine",{medicine_name:name,medicine_id:savedId});await loadMedicines();
   if(!keepForm){await loadActivity();clearForm();}return savedId;
  }catch(e){$("saveStatus").textContent="Save failed: "+(e.message||String(e));return null;}
