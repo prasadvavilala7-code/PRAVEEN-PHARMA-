@@ -258,6 +258,19 @@ body{background:var(--dash-bg)!important;color:var(--dash-text)!important}header
 button{background:#765be0!important;color:#fff!important}button.secondary{background:#29243e!important;color:#d2c8ff!important;border:1px solid #49406d!important}input,select,textarea{background:#202235!important;color:#f0eef9!important;border-color:#3a3c53!important}input::placeholder,textarea::placeholder{color:#85869e!important}.panel h2,.panel h3{color:#f0eef9!important}.muted{color:#a3a4b8!important}.app-admin-bottom{background:#171927ed!important;border-top:1px solid #303249!important}.app-admin-bottom button{color:#d5d2e8!important}
 @media(max-width:850px){#dashboardHome .dash-main-grid{grid-template-columns:1fr}}@media(max-width:760px){#dashboardHome .stats{grid-template-columns:repeat(2,minmax(0,1fr))!important}}@media(max-width:600px){#dashboardHome{padding:0 0 18px!important}#dashboardHome .dash-topline h2{font-size:23px!important}#dashboardHome .dash-toolbar{align-items:stretch;flex-direction:column}#dashboardHome .dash-toolbar>button{width:100%}#dashboardHome .stat{min-height:96px!important;padding:12px!important}#dashboardHome .stat strong{font-size:24px!important}#dashboardHome .dash-table-panel,#dashboardHome .dash-activity-panel{padding:12px!important}#dashboardHome .dash-footer{align-items:flex-start;flex-direction:column}#dashboardHome .dash-shortcuts{width:100%}#dashboardHome .dash-shortcuts button{flex:1}}
 </style>
+
+<style id="overviewMedicinePhotoStyles">
+/* Overview: show each medicine photo clearly on the left, with medicine details beside it. */
+#dashboardHome .dash-medicine-table th:first-child{min-width:270px}
+#dashboardHome .dash-medicine-identity{display:flex;align-items:center;gap:14px;min-width:230px}
+#dashboardHome .dash-medicine-thumb{display:block!important;visibility:visible!important;width:84px;height:84px;min-width:84px;flex:0 0 84px;object-fit:contain;background:#f5f8fc;border:1px solid #dce5ef;border-radius:10px;padding:5px}
+#dashboardHome .dash-no-photo{display:flex!important;align-items:center;justify-content:center;color:#8b98a8;font-size:25px}
+#dashboardHome .dash-medicine-identity>div{min-width:0}
+#dashboardHome .dash-medicine-identity strong{display:block;font-size:14px;line-height:1.35}
+#dashboardHome .dash-medicine-identity small{display:block;margin-top:4px;color:#68788b;font-size:12px;line-height:1.4;white-space:normal}
+#dashboardHome .dash-medicine-table td{vertical-align:middle;padding-top:10px;padding-bottom:10px}
+@media(max-width:600px){#dashboardHome .dash-medicine-identity{gap:10px;min-width:205px}#dashboardHome .dash-medicine-thumb{width:72px;height:72px;min-width:72px;flex-basis:72px}}
+</style>
 </head>
 <body>
 <header><h1>PRAVEEN PHARMA</h1><p>Admin Dashboard · Medicine Catalogue</p></header>
