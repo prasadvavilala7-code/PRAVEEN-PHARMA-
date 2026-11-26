@@ -888,28 +888,29 @@ $("adminForgotPassword").addEventListener("click",sendAdminPasswordReset);$("sav
 db.auth.onAuthStateChange((event,session)=>{if(event==="PASSWORD_RECOVERY"){$("loginPanel").hidden=true;$("adminShell").hidden=true;$("adminResetPasswordPanel").hidden=false;$("adminResetMessage").textContent="Recovery link verified. Set your new Admin password.";}});
 </script>
 <script>
-/* Login safety fallback: still gives visible feedback if the main Admin script fails before wiring its handler. */
+/* Independent capture-phase login handler. */
 (function(){
  const btn=document.getElementById("adminLogin"),status=document.getElementById("loginStatus");
- if(!btn||btn.dataset.loginBound==="1")return;
+ if(!btn)return;
  btn.type="button";
- btn.addEventListener("click",async function(){
+ btn.addEventListener("click",async function(event){
+  event.preventDefault();event.stopImmediatePropagation();
   const email=(document.getElementById("adminEmail")?.value||"").trim();
   const password=document.getElementById("adminPassword")?.value||"";
   if(!email||!password){if(status)status.textContent="Enter admin email and password.";return;}
   btn.disabled=true;btn.textContent="Connecting…";
   if(status)status.textContent="Connecting securely to Admin…";
   try{
-   if(!window.supabase?.createClient)throw new Error("Admin connection library did not load. Check internet and refresh.");
+   if(!window.supabase?.createClient)throw new Error("Supabase library did not load. Check internet and reopen Admin.");
    const client=window.supabase.createClient("https://hdoftqemjttaegkysjyq.supabase.co","sb_publishable_75Bn2frOUV-LeTqXvgUVtg__jIxuA72");
    const {data,error}=await client.auth.signInWithPassword({email,password});
    if(error)throw error;
    if(!data?.session)throw new Error("No login session was created. Please try again.");
-   if(status)status.textContent="Login successful. Opening Admin dashboard…";
+   if(status)status.textContent="Login successful. Opening dashboard…";
    location.reload();
   }catch(err){if(status)status.textContent="Login failed: "+(err?.message||String(err));}
   finally{btn.disabled=false;btn.textContent="Login to Admin";}
- });
+ },true);
 })();
 </script>
 <script>
