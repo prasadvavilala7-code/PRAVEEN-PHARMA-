@@ -230,6 +230,16 @@ input:focus,select:focus,textarea:focus{border-color:var(--pp-gold)!important;bo
 .admin-nav button:hover,.admin-nav button.active{background:#214d66!important;border-color:#426a80!important}
 @media(max-width:760px){.admin-nav .nav-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 </style>
+
+<style id="brochure-admin-simplified">
+/* Brochure-focused Admin: hide unrelated retailer, ordering and accounting tools without deleting data or code. */
+.admin-nav button[data-section="retailerRequests"],.admin-nav button[data-section="publicWebsiteRequests"],.admin-nav button[data-section="accountsHub"],.admin-nav button[data-section="supplierHub"],.admin-nav button[data-section="ordersPanel"],.admin-nav button[data-section="reportsPanel"],.admin-nav button[data-section="activityPanel"],.admin-nav button[data-section="backupPanel"]{display:none!important}
+#retailerRequests,#approvedRetailers,#publicWebsiteRequests,#accountsHub,#supplierHub,#ordersPanel,#reportsPanel,#activityPanel,#backupPanel{display:none!important}
+.app-admin-bottom button[data-section="ordersPanel"],.app-admin-bottom button[data-section="retailerRequests"]{display:none!important}
+#dashboardHome .stats .stat:nth-child(n+3){display:none!important}
+#dashboardHome .dash-actions button[data-go="ordersPanel"],#dashboardHome .dash-actions button[data-go="retailerRequests"],#dashboardHome .dash-actions button[data-go="publicWebsiteRequests"]{display:none!important}
+#siteLinks a[href*="retailer.html"]{display:none!important}
+</style>
 </head>
 <body>
 <header><h1>PRAVEEN PHARMA</h1><p>Admin Dashboard · Medicine Catalogue</p></header>
@@ -245,7 +255,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--pp-gold)!important;bo
 <div class="nav-grid">
 <button type="button" data-section="dashboardHome" class="active">▦ Dashboard</button>
 <button type="button" data-section="catalogue">▣ Medicines</button><button type="button" data-section="photoEditStudio">▧ Photo Edit</button><button type="button" data-section="medicineCompanies">🏢 Companies & Publish</button>
-<button type="button" data-section="catalogue">▤ Stock</button>
+
 <button type="button" data-section="retailerRequests">♙ Retailers</button><button type="button" data-section="publicWebsiteRequests">✉ Website Requests</button><button type="button" data-section="accountsHub">▤ Accounts & Ledger</button><button type="button" data-section="supplierHub">▣ Suppliers & Purchase</button>
 <button type="button" data-section="ordersPanel">▣ Orders</button>
 <button type="button" data-section="siteLinks">◎ Websites</button>
@@ -259,7 +269,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--pp-gold)!important;bo
 <nav class="app-admin-bottom" aria-label="Admin quick navigation"><button type="button" data-section="dashboardHome">▦<br>Home</button><button type="button" data-section="catalogue">▣<br>Medicines</button><button type="button" data-section="ordersPanel">▤<br>Orders</button><button type="button" data-section="retailerRequests">♙<br>Retailers</button></nav>
 <div class="content-area">
 <section class="panel" id="dashboardHome">
-<div class="dash-topline"><div><span class="dash-eyebrow">PRAVEEN PHARMA · ADMIN</span><h2>Dashboard Overview</h2><p class="muted">Your business at a glance. Manage medicines, retailers and orders from one place.</p></div><div class="dash-date">CONTROL CENTRE</div></div>
+<div class="dash-topline"><div><span class="dash-eyebrow">PRAVEEN PHARMA · ADMIN</span><h2>Dashboard Overview</h2><p class="muted">Manage your medicine catalogue and customer brochure from one place.</p></div><div class="dash-date">CONTROL CENTRE</div></div>
 <div class="dash-section-label">BUSINESS SUMMARY</div>
 <div class="stats">
 <div class="stat"><span class="dash-stat-icon">▦</span><strong id="dashMedicineCount">—</strong><span>Total medicines</span></div>
@@ -269,7 +279,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--pp-gold)!important;bo
 </div>
 <div class="dash-lower-grid">
 <div class="panel dash-inner-panel"><div class="dash-panel-heading"><div><span class="dash-eyebrow">SHORTCUTS</span><h3>Quick actions</h3></div><span class="dash-gold-mark"></span></div><div class="dash-actions"><button type="button" data-go="editor"><span>＋</span> Add medicine</button><button type="button" class="secondary" data-go="editor"><span>▧</span> Upload medicine photo</button><button type="button" class="secondary" data-go="catalogue"><span>▦</span> Manage medicines</button><button type="button" class="secondary" data-go="photoEditStudio"><span>▧</span> Photo Edit Studio</button><button type="button" class="secondary" data-go="editor"><span>✦</span> Add medicine photos</button><button type="button" class="secondary" data-go="ordersPanel"><span>▤</span> View orders</button><button type="button" class="secondary" data-go="retailerRequests"><span>♙</span> Retailer approvals</button><button type="button" class="secondary" data-go="publicWebsiteRequests"><span>✉</span> Public website requests</button></div></div>
-<div class="panel dash-inner-panel dash-status-panel"><div class="dash-panel-heading"><div><span class="dash-eyebrow">SYSTEM</span><h3>Workspace status</h3></div><span class="dash-status-dot"></span></div><p class="dash-status-copy">Your admin workspace is ready. Select a section from the menu to manage your pharmacy operations.</p><p id="dashboardStatus" class="muted">Live figures load after admin sign-in.</p><div class="dash-status-foot"><span class="dash-status-dot"></span> Admin workspace</div></div>
+<div class="panel dash-inner-panel dash-status-panel"><div class="dash-panel-heading"><div><span class="dash-eyebrow">SYSTEM</span><h3>Workspace status</h3></div><span class="dash-status-dot"></span></div><p class="dash-status-copy">Your brochure workspace is ready. Manage medicines, publication and website settings.</p><p id="dashboardStatus" class="muted">Live figures load after admin sign-in.</p><div class="dash-status-foot"><span class="dash-status-dot"></span> Admin workspace</div></div>
 </div>
 </section>
 <section class="panel" id="siteLinks" hidden>
