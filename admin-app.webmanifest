@@ -1,0 +1,19 @@
+{
+  "name": "PRAVEEN PHARMA Admin",
+  "short_name": "PP Admin",
+  "description": "PRAVEEN PHARMA administrator dashboard",
+  "start_url": "./admin.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f3f7fa",
+  "theme_color": "#102b43",
+  "icons": [
+    {
+      "src": "./app-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
