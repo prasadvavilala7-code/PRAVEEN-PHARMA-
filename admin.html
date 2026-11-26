@@ -570,7 +570,7 @@ async function saveMedicine(keepForm=false){
  if(!name||!composition){$("saveStatus").textContent="Medicine name and composition / formula are required.";return null;}
  const id=$("medicineId").value;if(window.formulaInfoFormula!==composition)await lookupFormulaInfo();
  const existing=id?allMedicines.find(m=>m.id===id):null;
- const payload={name,composition,pack_size:$("pack").value.trim(),category:$("category").value.trim(),common_price:Number($("price").value||0),gst_rate:Number($("gst").value||0),is_active:existing?existing.is_active!==false:true,company_id:$("medicineCompany").value||null,uses:$("uses").value.trim(),benefits:$("benefits").value.trim(),side_effects:$("sideEffects").value.trim(),...(window.formulaInfo||{info_status:"not_verified"})};
+ const payload={...(window.formulaInfo||{info_status:"not_verified"}),name,composition,pack_size:$("pack").value.trim(),category:$("category").value.trim(),common_price:Number($("price").value||0),gst_rate:Number($("gst").value||0),is_active:existing?existing.is_active!==false:true,company_id:$("medicineCompany").value||null,uses:$("uses").value.trim(),benefits:$("benefits").value.trim(),side_effects:$("sideEffects").value.trim()};
  if($("hsnCode").value.trim())payload.hsn_code=$("hsnCode").value.trim();
  $("saveMedicine").disabled=true;$("saveStatus").textContent="Saving medicine…";
  try{
