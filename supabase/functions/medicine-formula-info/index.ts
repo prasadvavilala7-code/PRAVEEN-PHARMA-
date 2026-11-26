@@ -40,8 +40,7 @@ async function verifyMedicine(m: any, force = false) {
   if (!response.ok) {
     await supabase.from("medicines").update({
       info_status: "not_verified", info_checked_at: new Date().toISOString(),
-      info_source_url: null, mechanism_of_action: null, uses: null, benefits: null,
-      side_effects: null, precautions: null,
+      info_source_url: null, mechanism_of_action: null,
     }).eq("id", m.id);
     return { id: m.id, status: "not_verified", reason: "No official matching label in FDA database" };
   }
@@ -53,8 +52,7 @@ async function verifyMedicine(m: any, force = false) {
   if (!match) {
     await supabase.from("medicines").update({
       info_status: "not_verified", info_checked_at: new Date().toISOString(),
-      info_source_url: null, mechanism_of_action: null, uses: null, benefits: null,
-      side_effects: null, precautions: null,
+      info_source_url: null, mechanism_of_action: null,
     }).eq("id", m.id);
     return { id: m.id, status: "not_verified", reason: "No exact active-ingredient match" };
   }
@@ -66,17 +64,16 @@ async function verifyMedicine(m: any, force = false) {
   if (!hasUsefulData) {
     await supabase.from("medicines").update({
       info_status: "not_verified", info_checked_at: new Date().toISOString(),
-      info_source_url: endpoint, mechanism_of_action: null, uses: null, benefits: null,
-      side_effects: null, precautions: null,
+      info_source_url: endpoint, mechanism_of_action: null,
     }).eq("id", m.id);
     return { id: m.id, status: "not_verified", reason: "Official label has insufficient clinical details" };
   }
   const { error } = await supabase.from("medicines").update({
     mechanism_of_action: mechanism || null,
-    uses: uses || null,
-    benefits: uses ? "Potential benefit based on official indication: " + uses : null,
-    side_effects: sideEffects || null,
-    precautions: precautions || null,
+    uses: m.uses || uses || null,
+    benefits: m.benefits || (uses ? "Potential benefit based on official indication: " + uses : null),
+    side_effects: m.side_effects || sideEffects || null,
+    precautions: m.precautions || precautions || null,
     info_source_url: endpoint,
     info_status: "matched_official_label",
     info_checked_at: new Date().toISOString(),
@@ -100,13 +97,13 @@ Deno.serve(async (req) => {
     const body = await req.json();
     if (body.action === "one") {
       const { data: medicine, error } = await supabase.from("medicines")
-        .select("id,composition,info_status").eq("id", body.medicine_id).single();
+        .select("id,composition,info_status,uses,benefits,side_effects,precautions").eq("id", body.medicine_id).single();
       if (error) throw error;
       return json(await verifyMedicine(medicine, true));
     }
     if (body.action === "backfill") {
       const { data: medicines, error } = await supabase.from("medicines")
-        .select("id,composition,info_status")
+        .select("id,composition,info_status,uses,benefits,side_effects,precautions")
         .order("name").limit(100);
       if (error) throw error;
       const results = [];
