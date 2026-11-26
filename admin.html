@@ -371,7 +371,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--pp-gold)!important;bo
 <button type="button" class="secondary" id="clearForm">Clear</button>
 <p id="saveStatus" class="muted" role="status"></p>
 </section>
-<section class="panel" id="medicineCompanies" hidden><h2>Normal Website Publication & Companies</h2><p class="muted">Company approval is optional and does not control the Retailer Website. Publish each medicine separately only when you want it shown on the Normal Website.</p><div class="row"><input id="newCompanyName" placeholder="Company name"><button type="button" id="addCompany">＋ Add Company</button></div><p id="companyStatus" class="muted" role="status"></p><div id="companyList">Loading companies…</div></section><section class="panel" id="photoRemoveHub" hidden><h2>Remove Medicine Photos</h2><p class="muted">Remove photo links from a medicine without deleting the medicine record. Original files in Storage are not deleted.</p><input id="photoRemoveSearch" placeholder="Search medicine"><div id="photoRemoveList">Loading medicines…</div><p id="photoRemoveHubStatus" class="muted" role="status"></p></section>
+<section class="panel" id="medicineCompanies" hidden><h2>Normal Website Publication & Companies</h2><p class="muted">Company approval is optional and does not control the Retailer Website. Publish each medicine separately only when you want it shown on the Normal Website.</p><div class="row"><input id="newCompanyName" placeholder="Company name"><button type="button" id="addCompany">＋ Add Company</button></div><p id="companyStatus" class="muted" role="status"></p><div id="companyList">Loading companies…</div></section><section class="panel" id="photoRemoveHub" hidden><h2>Manage Medicine Photos</h2><p class="muted">Select an individual photo to make it the Main Photo or remove only that photo. Other photos and medicine details stay safe; original Storage files are not deleted.</p><input id="photoRemoveSearch" placeholder="Search medicine"><div id="photoRemoveList">Loading medicines…</div><p id="photoRemoveHubStatus" class="muted" role="status"></p></section>
 <section class="panel" id="medicinePublishHub" hidden><h2>Medicine Publishing</h2><p class="muted">Publish or unpublish medicines separately on the Customer Brochure.</p><input id="publishSearch" placeholder="Search medicine"><div id="medicinePublishList">Loading medicines…</div></section>
 <section class="panel" id="medicineDeleteHub" hidden><h2>Medicine Delete / Restore</h2><p class="muted">Delete moves a medicine to inactive status; it does not permanently erase its record or old order references.</p><input id="deleteSearch" placeholder="Search medicine"><div id="medicineDeleteList">Loading medicines…</div></section>
 <section class="panel" id="catalogue" hidden>
@@ -438,9 +438,10 @@ async function setMedicineActive(id,active){
 function renderSeparateMedicineActions(){
  const photoQ=($("photoRemoveSearch")?.value||"").trim().toLowerCase(),pubQ=($("publishSearch")?.value||"").trim().toLowerCase(),delQ=($("deleteSearch")?.value||"").trim().toLowerCase();
  const matches=(m,q)=>(m.name||"").toLowerCase().includes(q)||(m.composition||"").toLowerCase().includes(q);
- const photos=allMedicines.filter(m=>m.is_active!==false&&(m.image_url||(Array.isArray(m.image_gallery)&&m.image_gallery.length))&&matches(m,photoQ));
- $("photoRemoveList").innerHTML=photos.map(m=>'<div class="medicine"><div><b>'+esc(m.name)+'</b><br><small>Saved photo views: '+((m.image_gallery||[]).length+(m.image_url?1:0))+'</small></div><button type="button" class="danger" data-photo-remove="'+esc(m.id)+'">Remove Photos</button></div>').join("")||"No medicines with saved photos found.";
- $("photoRemoveList").querySelectorAll("[data-photo-remove]").forEach(b=>b.onclick=()=>removeMedicinePhotosById(b.dataset.photoRemove));
+ const photos=allMedicines.filter(m=>m.is_active!==false&&medicinePhotoUrls(m).length&&matches(m,photoQ));
+ $("photoRemoveList").innerHTML=photos.map(m=>{const urls=medicinePhotoUrls(m);return '<div class="panel" style="margin:12px 0;padding:14px"><b>'+esc(m.name)+'</b><br><small class="muted">'+urls.length+' / 4 photos saved</small><div class="row" style="grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:12px;margin-top:12px">'+urls.map((url,i)=>'<div style="border:1px solid #dce6ec;border-radius:10px;padding:9px;min-width:0"><img src="'+esc(url)+'" alt="Photo '+(i+1)+' for '+esc(m.name)+'" style="width:100%;height:130px;object-fit:contain;background:#f5f8fa;border-radius:8px"><small style="display:block;margin:7px 0">'+(url===m.image_url?'Main Photo':'Additional Photo '+(i+1))+'</small><button type="button" class="secondary" data-photo-main="'+esc(m.id)+'" data-photo-url="'+esc(url)+'" '+(url===m.image_url?'disabled':'')+'>Set as Main</button><button type="button" class="danger" data-photo-single-remove="'+esc(m.id)+'" data-photo-url="'+esc(url)+'">Remove This Photo</button></div>').join('')+'</div></div>';}).join("")||"No medicines with saved photos found.";
+ $("photoRemoveList").querySelectorAll("[data-photo-main]").forEach(b=>b.onclick=()=>setMedicineMainPhoto(b.dataset.photoMain,b.dataset.photoUrl));
+ $("photoRemoveList").querySelectorAll("[data-photo-single-remove]").forEach(b=>b.onclick=()=>removeSingleMedicinePhoto(b.dataset.photoSingleRemove,b.dataset.photoUrl));
  const pubs=allMedicines.filter(m=>m.is_active!==false&&matches(m,pubQ));
  $("medicinePublishList").innerHTML=pubs.map(m=>'<div class="medicine"><div><b>'+esc(m.name)+'</b><br><small>Customer Brochure: '+(m.public_approved?"Published":"Not published")+'</small></div><button type="button" class="'+(m.public_approved?"secondary":"")+'" data-medicine-publish="'+esc(m.id)+'">'+(m.public_approved?"Unpublish":"Publish")+'</button></div>').join("")||"No medicines found.";
  $("medicinePublishList").querySelectorAll("[data-medicine-publish]").forEach(b=>b.onclick=()=>toggleMedicinePublish(b.dataset.medicinePublish));
@@ -449,15 +450,30 @@ function renderSeparateMedicineActions(){
  $("medicineDeleteList").querySelectorAll("[data-medicine-delete]").forEach(b=>b.onclick=()=>setMedicineActive(b.dataset.medicineDelete,false));
  $("medicineDeleteList").querySelectorAll("[data-medicine-restore]").forEach(b=>b.onclick=()=>setMedicineActive(b.dataset.medicineRestore,true));
 }
+async function saveMedicinePhotoSelection(m,urls,action,selectedUrl){
+ const gallery=[...new Set(urls)];
+ const mainUrl=selectedUrl||gallery[0]||null;
+ const {error}=await db.from("medicines").update({image_url:mainUrl,image_gallery:gallery}).eq("id",m.id);
+ if(error)throw error;
+ await logActivity(action,{medicine_id:m.id,medicine_name:m.name,remaining_photo_count:gallery.length});
+ await loadMedicines();
+ $("photoRemoveHubStatus").textContent=gallery.length+" photo(s) remain for "+m.name+".";
+}
+async function setMedicineMainPhoto(id,url){
+ const m=allMedicines.find(x=>x.id===id);if(!m||!medicinePhotoUrls(m).includes(url))return;
+ try{await saveMedicinePhotoSelection(m,medicinePhotoUrls(m),"Changed medicine main photo",url);}catch(e){$("photoRemoveHubStatus").textContent="Could not set main photo: "+e.message;}
+}
+async function removeSingleMedicinePhoto(id,url){
+ const m=allMedicines.find(x=>x.id===id);if(!m)return;
+ const urls=medicinePhotoUrls(m);if(!urls.includes(url))return;
+ if(!confirm("Remove only this selected photo from "+m.name+"? Other photos and medicine details will remain. The original Storage file will not be deleted."))return;
+ const remaining=urls.filter(x=>x!==url);
+ try{await saveMedicinePhotoSelection(m,remaining,"Removed one medicine photo",remaining.includes(m.image_url)?m.image_url:(remaining[0]||null));}catch(e){$("photoRemoveHubStatus").textContent="Could not remove selected photo: "+e.message;}
+}
 async function removeMedicinePhotosById(id){
  const m=allMedicines.find(x=>x.id===id);if(!m)return;
- if(!confirm("Remove saved photo links for "+m.name+"? The medicine details remain and original Storage files are not deleted."))return;
- $("photoRemoveHubStatus").textContent="Removing photo references…";
- const {error}=await db.from("medicines").update({image_url:null,image_gallery:[]}).eq("id",id);
- if(error){$("photoRemoveHubStatus").textContent="Photo removal failed: "+error.message;return;}
- await logActivity("Removed medicine photos",{medicine_id:id,medicine_name:m.name});
- $("photoRemoveHubStatus").textContent="Photo references removed. Medicine details and original Storage files remain.";
- await loadMedicines();
+ if(!confirm("Remove all saved photo links for "+m.name+"? The medicine details remain and original Storage files are not deleted."))return;
+ try{await saveMedicinePhotoSelection(m,[],"Removed all medicine photos",null);}catch(e){$("photoRemoveHubStatus").textContent="Photo removal failed: "+e.message;}
 }
 function renderInactiveMedicines(){
  const inactive=allMedicines.filter(m=>m.is_active===false);
