@@ -45,7 +45,7 @@ grant select, insert, update, delete on public.godam_stock_products to authentic
 create or replace function public.replace_godam_stock_rows(p_rows jsonb)
 returns integer
 language plpgsql
-security definer
+security invoker
 set search_path = ''
 as $$
 declare
