@@ -51,7 +51,7 @@ Deno.serve(async (req: Request) => {
   if (!settings?.automatic_enabled) return json({ ok: true, message: "Automatic follow-up is paused", scheduled: 0, sent: 0 });
 
   // Create idempotent reminders for opted-in customers with recent orders.
-  const cutoff = new Date(now.getTime() - 100 * 24 * 60 * 60 * 1000).toISOString();
+  const cutoff = new Date(now.getTime() - 400 * 24 * 60 * 60 * 1000).toISOString();
   const [{ data: orders, error: orderError }, { data: contacts, error: contactError }, { data: templates, error: templateError }] = await Promise.all([
     db.from("orders").select("id,customer_name,phone,created_at,order_status").gte("created_at", cutoff).not("phone", "is", null).order("created_at", { ascending: false }).limit(5000),
     db.from("followup_contacts").select("id,customer_name,shop_name,phone,phone_normalized,whatsapp_opt_in,do_not_contact").eq("whatsapp_opt_in", true).eq("do_not_contact", false).limit(5000),
@@ -71,6 +71,8 @@ Deno.serve(async (req: Request) => {
     if (!contact) continue;
     for (const delay of settings.schedule_days || []) {
       const due = new Date(new Date(order.created_at).getTime() + Number(delay) * 86400000);
+      // Do not send a backlog of reminders if the scheduler was offline for more than 24 hours.
+      if (due.getTime() < now.getTime() - 24 * 60 * 60 * 1000) continue;
       scheduleRows.push({
         contact_id: contact.id,
         order_id: order.id,
@@ -102,7 +104,8 @@ Deno.serve(async (req: Request) => {
   let failed = 0;
   for (const item of dueRows || []) {
     const contact = Array.isArray(item.contact) ? item.contact[0] : item.contact;
-    const tpl = Array.isArray(item.template) ? item.template[0] : item.template;
+    const joinedTemplate = Array.isArray(item.template) ? item.template[0] : item.template;
+    const tpl = joinedTemplate || template;
     if (!contact?.whatsapp_opt_in || contact?.do_not_contact) {
       await db.from("followup_schedule").update({ status: "cancelled", last_error: "Customer consent missing or revoked" }).eq("id", item.id);
       continue;
