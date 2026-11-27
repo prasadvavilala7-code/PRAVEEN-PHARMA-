@@ -640,8 +640,8 @@ function openGodamDetail(id){
  '<small class="muted">Each Cotton value can be edited separately. FIFO Less will reduce Cotton 1 first, then Cotton 2, and continue.</small>'+
  (r.cotton_entry_raw?'<p class="muted" style="margin-top:8px">Original Excel entry: <b>'+esc(r.cotton_entry_raw)+'</b></p>':'')+'</div>'+
  '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-top:12px">'+
- '<label>Add Boxes <span style="color:#2877c7">(Blue)</span><input id="gsAdd" type="number" min="0" step="1" value="'+esc(r.add_boxes||0)+'"></label>'+
- '<label>Less Boxes <span style="color:#c45b79">(Pink · FIFO)</span><input id="gsLess" type="number" min="0" step="1" value="'+esc(r.less_boxes||0)+'"></label>'+
+ '<label>Add Boxes <span style="color:#2877c7">(Blue)</span><input id="gsAdd" style="border:1px solid #5b9bd5;background:#f3f8ff" type="number" min="0" step="1" value="'+esc(r.add_boxes||0)+'"></label>'+
+ '<label>Less Boxes <span style="color:#c45b79">(Pink · FIFO)</span><input id="gsLess" style="border:1px solid #d98aa4;background:#fff5f8" type="number" min="0" step="1" value="'+esc(r.less_boxes||0)+'"></label>'+
  '<label>Full Cotton Less (No.)<input id="gsFullLess" type="number" min="0" step="1" value="'+esc(r.full_cotton_less||0)+'"></label>'+
  '<label>Units per Box<input id="gsUnits" type="number" min="0" step="1" value="'+esc(r.units_per_box??"")+'"></label></div>'+
  '<p class="muted">When Pack Size changes, Units per Box is suggested from the pack text. You can edit it if needed.</p>'+
