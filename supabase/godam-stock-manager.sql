@@ -63,6 +63,8 @@ create policy godam_backup_admin_select on public.godam_stock_import_backups
 create policy godam_backup_admin_insert on public.godam_stock_import_backups
   for insert to authenticated with check (private.is_active_admin() and (created_by is null or created_by = (select auth.uid())));
 grant select, insert on public.godam_stock_import_backups to authenticated;
+create index if not exists godam_stock_products_created_by_idx on public.godam_stock_products(created_by);
+create index if not exists godam_stock_import_backups_created_by_idx on public.godam_stock_import_backups(created_by);
 
 create or replace function public.replace_godam_stock_rows(p_rows jsonb)
 returns integer
