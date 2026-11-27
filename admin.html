@@ -313,7 +313,33 @@ button{background:#765be0!important;color:#fff!important}button.secondary{backgr
 #medicineList .medicine-list-copy,#inactiveMedicines .medicine-list-copy{min-width:0;flex:1}
 @media(max-width:600px){#medicineList .medicine-list-photo,#inactiveMedicines .medicine-list-photo{width:82px;height:82px;min-width:82px}}
 </style>
-</head>
+<style id="godamProfessionalDashboardStyles">
+#godamProfessionalDashboard{margin:18px 0 22px;color:#102b50}
+#godamProfessionalDashboard .godam-dash-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:0 0 14px}
+#godamProfessionalDashboard .godam-eyebrow{font-size:10px;letter-spacing:.15em;font-weight:800;color:#a17b35}
+#godamProfessionalDashboard h3{font-size:22px;margin:4px 0;color:#092d59}
+#godamProfessionalDashboard p{margin:0;color:#718096;font-size:13px}
+#godamProfessionalDashboard .godam-live{font-size:11px;font-weight:800;color:#16835a;background:#e8f7ef;padding:8px 11px;border-radius:20px}
+#godamProfessionalDashboard .godam-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+#godamProfessionalDashboard .godam-metric{display:flex;align-items:center;gap:13px;padding:17px;background:#fff;border:1px solid #e2e9f1;border-radius:13px;box-shadow:0 4px 15px #092d590b;min-width:0}
+#godamProfessionalDashboard .godam-metric-icon{width:42px;height:42px;display:grid;place-items:center;border-radius:12px;background:#edf4fc;color:#1762b5;font-size:24px;font-weight:800}
+#godamProfessionalDashboard .godam-metric strong{display:block;font-size:25px;line-height:1.2;color:#092d59}
+#godamProfessionalDashboard .godam-metric small{display:block;color:#718096;font-size:12px;margin-top:3px}
+#godamProfessionalDashboard .godam-dash-panels{display:grid;grid-template-columns:1.2fr 1fr;gap:12px;margin-top:12px}
+#godamProfessionalDashboard .godam-dash-panel{background:#fff;border:1px solid #e2e9f1;border-radius:13px;padding:17px;box-shadow:0 4px 15px #092d590b}
+#godamProfessionalDashboard h4{margin:0 0 15px;color:#092d59;font-size:15px}
+#godamProfessionalDashboard .godam-stock-bar{height:11px;border-radius:20px;background:#f2d7d4;overflow:hidden}
+#godamProfessionalDashboard .godam-stock-bar span{display:block;height:100%;background:#1eae75;border-radius:20px;transition:width .2s}
+#godamProfessionalDashboard .godam-legend{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:15px}
+#godamProfessionalDashboard .godam-legend span{font-size:11px;color:#596a80;display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+#godamProfessionalDashboard .godam-legend b{color:#102b50}
+#godamProfessionalDashboard .gs-dot{width:9px;height:9px;border-radius:50%;display:inline-block;flex:none}
+#godamProfessionalDashboard .gs-ok{background:#1eae75}#godamProfessionalDashboard .gs-warn{background:#e8a52b}#godamProfessionalDashboard .gs-low{background:#df5148}
+#godamProfessionalDashboard .godam-alert-row{display:flex;align-items:center;gap:9px;padding:9px 0;border-top:1px solid #edf1f5;font-size:12px;color:#52647b}
+#godamProfessionalDashboard .godam-alert-row b{margin-left:auto;color:#102b50;font-size:14px}
+@media(max-width:700px){#godamProfessionalDashboard .godam-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}#godamProfessionalDashboard .godam-dash-panels{grid-template-columns:1fr}#godamProfessionalDashboard .godam-metric{padding:13px;gap:9px}#godamProfessionalDashboard .godam-metric strong{font-size:21px}}
+@media(max-width:380px){#godamProfessionalDashboard .godam-metrics{grid-template-columns:1fr 1fr}#godamProfessionalDashboard .godam-legend{grid-template-columns:1fr}}
+</style></head>
 <body>
 <header><div class="admin-app-head"><div><h1>PRAVEEN PHARMA</h1><p>Admin Dashboard · Medicine Catalogue</p></div><button id="installAdminApp" class="secondary" type="button" hidden>Install Admin App</button></div></header>
 <main>
@@ -478,7 +504,19 @@ button{background:#765be0!important;color:#fff!important}button.secondary{backgr
 <p id="settingsStatus" class="muted" role="status"></p>
 <h3>Deleted medicines</h3><p class="muted">Deleted medicines are kept inactive so old orders remain intact. Restore them here when needed.</p><div id="inactiveMedicines">Loading deleted medicines…</div><h3>Previous settings / Rollback</h3><div id="settingsHistory">Loading…</div>
 </section>
-<section class="panel" id="godamStockHub" hidden><h2>GODAM STOCK</h2><p class="muted">Original PRAVEEN PHARMA GODAM workbook stock is loaded. Add a medicine, open its separate detail page, edit cotton-wise boxes, and use FIFO Less. Import a new master Excel later to replace the stock list; database snapshots are kept.</p><div class="panel" style="background:#f7fafc;border:1px solid #dce7ee"><h3>Import / Replace Stock Excel</h3><p class="muted">Upload the next .xlsx file. Current workbook is backed up before replacement. Import replaces only GODAM stock-list rows.</p><input id="godamStockFile" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"><button type="button" id="uploadGodamStock">Import & Replace Stock</button><p id="godamStockStatus" class="muted" role="status" aria-live="polite">Checking saved stock file…</p></div><div id="godamStockListView"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><h3>Medicine Stock List</h3><button type="button" id="godamAddNew">＋ Add Medicine</button></div><input id="godamSearch" placeholder="Search medicine name / batch"><div id="godamStockList" class="muted">Loading stock list…</div></div><div id="godamStockEditView" hidden><button type="button" class="secondary" id="godamBackToList">← Back to Stock List</button><h3 id="godamDetailHeading">Medicine Details</h3><div id="godamStockEditor"></div></div><hr><h3>Saved GODAM STOCK Workbook</h3><div id="godamStockCurrent" class="muted">Loading file…</div><button type="button" class="secondary" id="refreshGodamStock">Refresh File</button></section>
+<section class="panel" id="godamStockHub" hidden><h2>GODAM STOCK</h2><p class="muted">Original PRAVEEN PHARMA GODAM workbook stock is loaded. Add a medicine, open its separate detail page, edit cotton-wise boxes, and use FIFO Less. Import a new master Excel later to replace the stock list; database snapshots are kept.</p><div class="panel" style="background:#f7fafc;border:1px solid #dce7ee"><h3>Import / Replace Stock Excel</h3><p class="muted">Upload the next .xlsx file. Current workbook is backed up before replacement. Import replaces only GODAM stock-list rows.</p><input id="godamStockFile" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"><button type="button" id="uploadGodamStock">Import & Replace Stock</button><p id="godamStockStatus" class="muted" role="status" aria-live="polite">Checking saved stock file…</p></div><section id="godamProfessionalDashboard" aria-label="GODAM Stock Dashboard">
+ <div class="godam-dash-head"><div><span class="godam-eyebrow">PRAVEEN PHARMA · INVENTORY CONTROL</span><h3>Stock Overview</h3><p>Live summary of your saved GODAM inventory</p></div><span class="godam-live">● LIVE STOCK</span></div>
+ <div class="godam-metrics">
+  <article class="godam-metric"><span class="godam-metric-icon">▦</span><div><strong id="gsDashMedicines">0</strong><small>Total Medicines</small></div></article>
+  <article class="godam-metric"><span class="godam-metric-icon">▣</span><div><strong id="gsDashBoxes">0</strong><small>Total Boxes</small></div></article>
+  <article class="godam-metric"><span class="godam-metric-icon">▤</span><div><strong id="gsDashCottons">0</strong><small>Cotton Slots</small></div></article>
+  <article class="godam-metric"><span class="godam-metric-icon">!</span><div><strong id="gsDashLow">0</strong><small>Low Stock Items</small></div></article>
+ </div>
+ <div class="godam-dash-panels">
+  <article class="godam-dash-panel"><h4>Stock Distribution</h4><div class="godam-stock-bar"><span id="gsDashStockBar"></span></div><div class="godam-legend"><span><i class="gs-dot gs-ok"></i> In Stock <b id="gsDashOk">0</b></span><span><i class="gs-dot gs-warn"></i> Check Stock <b id="gsDashCheck">0</b></span><span><i class="gs-dot gs-low"></i> Low Stock <b id="gsDashLowLegend">0</b></span></div></article>
+  <article class="godam-dash-panel"><h4>Expiry Alerts</h4><div class="godam-alert-row"><span class="gs-dot gs-low"></span> Expired / ≤ 3 Months <b id="gsDashExpiryRed">0</b></div><div class="godam-alert-row"><span class="gs-dot gs-warn"></span> 3–6 Months <b id="gsDashExpiryYellow">0</b></div><div class="godam-alert-row"><span class="gs-dot gs-ok"></span> More than 6 Months <b id="gsDashExpiryGreen">0</b></div></article>
+ </div>
+</section><div id="godamStockListView"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><h3>Medicine Stock List</h3><button type="button" id="godamAddNew">＋ Add Medicine</button></div><input id="godamSearch" placeholder="Search medicine name / batch"><div id="godamStockList" class="muted">Loading stock list…</div></div><div id="godamStockEditView" hidden><button type="button" class="secondary" id="godamBackToList">← Back to Stock List</button><h3 id="godamDetailHeading">Medicine Details</h3><div id="godamStockEditor"></div></div><hr><h3>Saved GODAM STOCK Workbook</h3><div id="godamStockCurrent" class="muted">Loading file…</div><button type="button" class="secondary" id="refreshGodamStock">Refresh File</button></section>
 <section class="panel" id="reportsPanel" hidden><h2>Business Reports</h2><div id="reportSummary">Loading reports…</div><button class="secondary" id="refreshReports">Refresh Reports</button></section>
 <section class="panel" id="activityPanel" hidden><h2>Admin Activity History</h2><p class="muted">Records important changes made from this Admin Dashboard.</p><div id="activityList">Loading…</div><button class="secondary" id="refreshActivity">Refresh History</button></section>
 <section class="panel" id="backupPanel" hidden><h2>Security & Backup</h2><h3>Admin login history</h3><p class="muted">Successful sign-ins to this Admin Dashboard are recorded here after the secure Supabase alert function is deployed. Retailer logins are not included.</p><div id="loginHistory">Login history will appear after security setup.</div><button type="button" class="secondary" id="refreshLoginHistory">Refresh login history</button><hr><h3>Data Export & Health Check</h3><p class="muted">Export is a browser download of records accessible to this admin account. It is not a full database backup.</p><button id="exportBackup">Export available data (JSON)</button><button class="secondary" id="runHealth">Run connection checks</button><p id="healthStatus" class="muted" role="status"></p></section>
@@ -595,8 +633,23 @@ async function loadGodamStockRows(){
  if(error){box.textContent="Stock database error: "+error.message;return;}
  godamRows=data||[];renderGodamStockList();
 }
+function renderGodamDashboard(){
+ const rows=godamRows||[], totals=rows.map(godamTotals);
+ const boxes=totals.reduce((n,t)=>n+t.boxes,0),cottons=rows.reduce((n,r)=>n+(r.cotton_lots||[]).length,0);
+ const low=rows.filter((r,i)=>godamStockStatus(totals[i].boxes)==="LOW STOCK").length;
+ const check=rows.filter((r,i)=>godamStockStatus(totals[i].boxes)==="CHECK STOCK").length,ok=rows.length-low-check;
+ const exp=rows.map(r=>godamExpiryStatus(r.expiry_date));
+ const red=exp.filter(x=>x==="EXPIRED"||x==="EXPIRING ≤3 MONTHS").length;
+ const yellow=exp.filter(x=>x==="EXPIRING 3–6 MONTHS").length,green=exp.filter(x=>x==="OK").length;
+ const put=(id,v)=>{const el=$(id);if(el)el.textContent=Number(v).toLocaleString("en-IN");};
+ put("gsDashMedicines",rows.length);put("gsDashBoxes",boxes);put("gsDashCottons",cottons);put("gsDashLow",low);
+ put("gsDashOk",ok);put("gsDashCheck",check);put("gsDashLowLegend",low);
+ put("gsDashExpiryRed",red);put("gsDashExpiryYellow",yellow);put("gsDashExpiryGreen",green);
+ const bar=$("gsDashStockBar");if(bar)bar.style.width=(rows.length?Math.round(ok/rows.length*100):0)+"%";
+}
 function renderGodamStockList(){
  const box=$("godamStockList");if(!box)return;
+ renderGodamDashboard();
  const q=($("godamSearch")?.value||"").trim().toLowerCase();
  const rows=godamRows.filter(r=>([r.product_name,r.pack_size,r.batch_no,r.pack_type].join(" ")).toLowerCase().includes(q));
  if(!rows.length){box.innerHTML='<p class="muted">No matching medicines. Use Add Medicine or import an Excel workbook.</p>';return;}
