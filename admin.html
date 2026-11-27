@@ -351,7 +351,7 @@ button{background:#765be0!important;color:#fff!important}button.secondary{backgr
 <h3>CONTROL CENTRE</h3>
 <div class="nav-grid">
 <button type="button" data-section="dashboardHome" class="active">▦ Dashboard</button>
-<button type="button" data-section="catalogue">▣ Medicine Details</button><button type="button" data-section="photoEditStudio">▧ Photo Edit</button><button type="button" data-section="photoRemoveHub">▧ Photo Remove</button><button type="button" data-section="medicinePublishHub">✓ Publishing</button><button type="button" data-section="medicineDeleteHub">⌫ Medicine Delete</button><button type="button" data-section="medicineCompanies">🏢 Companies</button>
+<button type="button" data-section="catalogue">▣ Medicine Details</button><button type="button" data-section="photoEditStudio">▧ Photo Edit</button><button type="button" data-section="photoRemoveHub">▧ Photo Remove</button><button type="button" data-section="medicinePublishHub">✓ Publishing</button><button type="button" data-section="medicineDeleteHub">⌫ Medicine Delete</button><button type="button" data-section="medicineCompanies">🏢 Companies</button><button type="button" data-section="godamStockHub">▣ GODAM STOCK</button>
 
 <button type="button" data-section="retailerRequests">♙ Retailers</button><button type="button" data-section="publicWebsiteRequests">✉ Website Requests</button><button type="button" data-section="accountsHub">▤ Accounts & Ledger</button><button type="button" data-section="supplierHub">▣ Suppliers & Purchase</button>
 <button type="button" data-section="ordersPanel">▣ Orders</button>
@@ -477,6 +477,7 @@ button{background:#765be0!important;color:#fff!important}button.secondary{backgr
 <p id="settingsStatus" class="muted" role="status"></p>
 <h3>Deleted medicines</h3><p class="muted">Deleted medicines are kept inactive so old orders remain intact. Restore them here when needed.</p><div id="inactiveMedicines">Loading deleted medicines…</div><h3>Previous settings / Rollback</h3><div id="settingsHistory">Loading…</div>
 </section>
+<section class="panel" id="godamStockHub" hidden><h2>GODAM STOCK</h2><p class="muted">PRAVEEN PHARMA godown stock workbook. This file is stored in a private Admin-only area.</p><div class="panel" style="background:#f7fafc;border:1px solid #dce7ee"><h3>Upload / Replace Stock Excel</h3><p class="muted">Choose your PRAVEEN PHARMA GODAM STOCK Excel workbook (.xlsx). Uploading replaces the current main workbook.</p><input id="godamStockFile" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"><button type="button" id="uploadGodamStock">Upload / Replace File</button><p id="godamStockStatus" class="muted" role="status" aria-live="polite">Checking saved stock file…</p></div><h3>Saved GODAM STOCK File</h3><div id="godamStockCurrent" class="muted">Loading file…</div><button type="button" class="secondary" id="refreshGodamStock">Refresh File</button></section>
 <section class="panel" id="reportsPanel" hidden><h2>Business Reports</h2><div id="reportSummary">Loading reports…</div><button class="secondary" id="refreshReports">Refresh Reports</button></section>
 <section class="panel" id="activityPanel" hidden><h2>Admin Activity History</h2><p class="muted">Records important changes made from this Admin Dashboard.</p><div id="activityList">Loading…</div><button class="secondary" id="refreshActivity">Refresh History</button></section>
 <section class="panel" id="backupPanel" hidden><h2>Security & Backup</h2><h3>Admin login history</h3><p class="muted">Successful sign-ins to this Admin Dashboard are recorded here after the secure Supabase alert function is deployed. Retailer logins are not included.</p><div id="loginHistory">Login history will appear after security setup.</div><button type="button" class="secondary" id="refreshLoginHistory">Refresh login history</button><hr><h3>Data Export & Health Check</h3><p class="muted">Export is a browser download of records accessible to this admin account. It is not a full database backup.</p><button id="exportBackup">Export available data (JSON)</button><button class="secondary" id="runHealth">Run connection checks</button><p id="healthStatus" class="muted" role="status"></p></section>
@@ -533,6 +534,7 @@ const SUPABASE_URL="https://hdoftqemjttaegkysjyq.supabase.co";
 const SUPABASE_KEY="sb_publishable_75Bn2frOUV-LeTqXvgUVtg__jIxuA72";
 const ADMIN_ID="9be3d5ee-e09a-4738-9b27-f2fae15e93c7";
 const BUCKET="medicine-images";
+const GODAM_BUCKET="godam-stock-files";
 const $=id=>document.getElementById(id);
 if(!window.supabase?.createClient){const status=$("loginStatus");if(status)status.textContent="Admin connection library did not load. Check internet and refresh this page.";throw new Error("Supabase SDK unavailable");}
 const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
@@ -540,11 +542,41 @@ $("adminLogin").addEventListener("click",adminLogin);$("adminLogin").dataset.log
 let currentUser=null,currentAdminRole=null,allMedicines=[],selectedFile=null,selectedFiles=[],poDraftLines=[];
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 
+async function loadGodamStockFile(){
+ const status=$("godamStockStatus"),box=$("godamStockCurrent");
+ if(!status||!box)return;
+ status.textContent="Checking saved stock file…";box.textContent="Loading…";
+ const {data,error}=await db.storage.from(GODAM_BUCKET).list("main",{limit:20});
+ if(error){status.textContent="Could not load GODAM STOCK file: "+error.message;box.textContent="File list unavailable.";return;}
+ const file=(data||[]).find(x=>x.name==="PRAVEEN_PHARMA_GODAM_STOCK.xlsx"&&x.id);
+ if(!file){status.textContent="No GODAM STOCK Excel file uploaded yet. Choose your workbook above.";box.textContent="No file saved yet.";return;}
+ const path="main/PRAVEEN_PHARMA_GODAM_STOCK.xlsx";
+ const {data:signed,error:signedError}=await db.storage.from(GODAM_BUCKET).createSignedUrl(path,3600);
+ if(signedError){status.textContent="File found, but secure download link could not be created: "+signedError.message;box.textContent="Download link unavailable.";return;}
+ const size=Number(file.metadata?.size||0);
+ const updated=file.updated_at?new Date(file.updated_at).toLocaleString():"Not available";
+ box.innerHTML='<div class="medicine"><div><b>PRAVEEN_PHARMA_GODAM_STOCK.xlsx</b><br><small>'+((size/1024).toFixed(1))+' KB · Updated '+esc(updated)+'</small></div><div class="row"><a class="button" href="'+esc(signed.signedUrl)+'" target="_blank" rel="noopener" style="display:inline-block;text-decoration:none;padding:10px 14px;border-radius:8px;background:#123d6c;color:#fff">Open / Download</a></div></div>';
+ status.textContent="GODAM STOCK file is saved securely.";
+}
+async function uploadGodamStockFile(){
+ const input=$("godamStockFile"),status=$("godamStockStatus"),file=input.files?.[0];
+ if(!file){status.textContent="Please choose your GODAM STOCK .xlsx file first.";return;}
+ if(!/\.xlsx$/i.test(file.name)){status.textContent="Please upload an Excel .xlsx file.";return;}
+ if(file.size>25*1024*1024){status.textContent="File is larger than 25 MB. Choose a smaller workbook.";return;}
+ status.textContent="Uploading GODAM STOCK workbook…";
+ const path="main/PRAVEEN_PHARMA_GODAM_STOCK.xlsx";
+ const {error}=await db.storage.from(GODAM_BUCKET).upload(path,file,{upsert:true,contentType:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
+ if(error){status.textContent="Upload failed: "+error.message;return;}
+ input.value="";
+ await loadGodamStockFile();
+ status.textContent="GODAM STOCK workbook uploaded successfully.";
+ if(typeof logActivity==="function")await logActivity("Godam stock workbook uploaded",{file_name:file.name,file_size:file.size});
+}
 async function renderAdminAccess(){const box=$("adminAccessList");if(currentAdminRole!=="owner"){$("adminAccessPanel").hidden=true;return;}const {data,error}=await db.from("admin_users").select("user_id,email,role,is_active,created_at").order("created_at");if(error){box.textContent="Could not load admin users: "+error.message;return;}const rows=data||[];$("adminAccessCount").textContent=rows.length;$("adminAccessActive").textContent=rows.filter(x=>x.is_active).length;box.innerHTML=rows.map(x=>'<div class="medicine"><div><b>'+esc(x.email||x.user_id)+'</b><br><small>'+esc(x.role.toUpperCase())+' · '+esc(x.user_id)+'</small></div><div><span class="badge">'+(x.is_active?"Active":"Inactive")+'</span>'+(x.role==="owner"?"":(x.is_active?' <button class="danger" data-admin-disable="'+esc(x.user_id)+'">Deactivate</button>':""))+'</div></div>').join("")||"No admin accounts.";box.querySelectorAll("[data-admin-disable]").forEach(b=>b.onclick=()=>deactivateAdmin(b.dataset.adminDisable));}
 function showAdminSection(id){
  if(id==="publicWebsiteRequests")loadWebsiteRequests();
  if(id==="followupPanel"&&window.initFollowupModule)window.initFollowupModule();
- const ids=["dashboardHome","siteLinks","publicWebsiteRequests","retailerRequests","approvedRetailers","accountsHub","supplierHub","ordersPanel","followupPanel","masterSettings","reportsPanel","activityPanel","backupPanel","editor","catalogue","medicineCompanies","photoEditStudio","photoRemoveHub","medicinePublishHub","medicineDeleteHub"];
+ const ids=["dashboardHome","siteLinks","publicWebsiteRequests","retailerRequests","approvedRetailers","accountsHub","supplierHub","ordersPanel","followupPanel","masterSettings","reportsPanel","activityPanel","backupPanel","editor","catalogue","medicineCompanies","photoEditStudio","photoRemoveHub","medicinePublishHub","medicineDeleteHub","godamStockHub"];
  ids.forEach(x=>{const el=$(x);if(el)el.hidden=x!==id;});
  document.querySelectorAll("[data-section]").forEach(b=>b.classList.toggle("active",b.dataset.section===id||(id==="approvedRetailers"&&b.dataset.section==="retailerRequests")));
 }
@@ -1013,6 +1045,7 @@ $("adminPhotoViewer").addEventListener("click",e=>{if(e.target===$("adminPhotoVi
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("adminPhotoViewer").hidden)closeAdminPhoto();});
 document.querySelectorAll("[data-section]").forEach(b=>b.addEventListener("click",()=>showAdminSection(b.dataset.section)));
 document.querySelectorAll("[data-go]").forEach(b=>b.addEventListener("click",()=>showAdminSection(b.dataset.go)));
+$("uploadGodamStock").addEventListener("click",uploadGodamStockFile);$("refreshGodamStock").addEventListener("click",loadGodamStockFile);
 $("navLogout").addEventListener("click",async()=>{await db.auth.signOut();location.reload();});
 $("refreshWebsiteRequests").addEventListener("click",loadWebsiteRequests);$("saveLedgerEntry").addEventListener("click",saveLedgerEntry);$("saveSupplier").addEventListener("click",saveSupplier);$("addPoLine").addEventListener("click",addPoLine);$("createPurchaseOrder").addEventListener("click",createPurchaseOrder);$("saveSettings").addEventListener("click",saveSettings);$("refreshActivity").addEventListener("click",loadActivity);$("reloadSettings").addEventListener("click",loadSettings);$("refreshReports").addEventListener("click",loadReports);$("exportBackup").addEventListener("click",exportBackup);$("runHealth").addEventListener("click",runHealth);$("refreshLoginHistory").addEventListener("click",loadLoginHistory);
 $("dashboardSearch").addEventListener("input",renderDashboardMedicineRows);$("searchPhoto").addEventListener("click",()=>{const q=$("name").value.trim();if(!q){$("saveStatus").textContent="Enter medicine name first.";return;}window.open("https://www.google.com/search?tbm=isch&q="+encodeURIComponent(q+" medicine box strip packaging"),"_blank","noopener");});
