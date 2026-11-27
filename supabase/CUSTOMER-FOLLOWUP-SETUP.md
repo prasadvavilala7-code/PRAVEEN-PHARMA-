@@ -48,7 +48,13 @@ In Admin → Follow-up → Message Templates, enter the exact approved Meta temp
 
 ### Schedule the dispatcher
 
-Enable the `pg_cron` and `pg_net` extensions if they are not already enabled. Store the same `FOLLOWUP_CRON_SECRET` in Supabase Vault under the name `FOLLOWUP_CRON_SECRET`, then schedule the function every five minutes using the Supabase SQL Editor:
+Enable the `pg_cron` and `pg_net` extensions if they are not already enabled. Store the same `FOLLOWUP_CRON_SECRET` in Supabase Vault under the name `FOLLOWUP_CRON_SECRET`. You can add it in the Vault UI or run the following SQL after replacing the placeholder with the same random secret used in Edge Function Secrets:
+
+```sql
+select vault.create_secret('REPLACE_WITH_THE_SAME_RANDOM_SECRET', 'FOLLOWUP_CRON_SECRET', 'Secret used by the customer follow-up cron job');
+```
+
+Then schedule the function every five minutes using the Supabase SQL Editor:
 
 ```sql
 select cron.schedule(
