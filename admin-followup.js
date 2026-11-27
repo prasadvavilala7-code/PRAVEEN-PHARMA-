@@ -366,3 +366,48 @@
 
   window.loadFollowupModule = window.initFollowupModule;
 })();
+
+
+/* GODAM STOCK — approved clean navy + gold professional template */
+(function () {
+  "use strict";
+  const css = `
+    #godamStockHub{--gs-navy:#082b55;--gs-navy2:#123d6d;--gs-gold:#d5aa55;--gs-line:#e3e9f1;--gs-muted:#68788b;background:#f8fafd!important;border:1px solid var(--gs-line)!important;border-top:4px solid var(--gs-gold)!important;border-radius:18px!important;padding:22px!important;color:#142b49!important}
+    #godamStockHub>h2{font-size:25px!important;font-weight:800!important;letter-spacing:-.035em!important;color:var(--gs-navy)!important;margin:0 0 4px!important}
+    #godamStockHub>h2:before{content:"PRAVEEN PHARMA  /  INVENTORY CONTROL";display:block;color:#9a762f;font-size:10px;letter-spacing:.16em;font-weight:800;margin-bottom:7px}
+    #godamStockHub>p.muted{color:var(--gs-muted)!important;font-size:13px!important;margin:0 0 20px!important;max-width:850px}
+    #godamStockHub>.panel{background:#fff!important;border:1px solid var(--gs-line)!important;border-radius:14px!important;box-shadow:0 5px 18px rgba(8,43,85,.045)!important;padding:18px!important;margin:0 0 20px!important}
+    #godamStockHub h3{color:var(--gs-navy)!important;font-size:16px!important;font-weight:750!important;letter-spacing:-.01em}
+    #godamStockHub input,#godamStockHub select,#godamStockHub textarea{background:#fff!important;color:#142b49!important;border:1px solid #d7e0eb!important;border-radius:9px!important;min-height:44px!important}
+    #godamStockHub input:focus,#godamStockHub select:focus,#godamStockHub textarea:focus{border-color:var(--gs-gold)!important;box-shadow:0 0 0 3px #d5aa5526!important}
+    #godamStockHub button{background:var(--gs-navy)!important;color:#fff!important;border:1px solid var(--gs-navy)!important;border-radius:9px!important;box-shadow:none!important;font-size:13px!important;font-weight:700!important;min-height:40px!important}
+    #godamStockHub button:hover{background:var(--gs-navy2)!important;transform:translateY(-1px)}
+    #godamStockHub button.secondary{background:#fff!important;color:var(--gs-navy)!important;border:1px solid #d7e0eb!important}
+    #godamStockHub button.danger{background:#b42318!important;border-color:#b42318!important;color:#fff!important}
+    #godamStockHub #uploadGodamStock{background:var(--gs-gold)!important;color:#172b42!important;border-color:var(--gs-gold)!important}
+    #godamStockHub #godamStockListView{background:#fff;border:1px solid var(--gs-line);border-radius:14px;padding:18px;box-shadow:0 5px 18px rgba(8,43,85,.035)}
+    #godamStockHub #godamStockListView>div:first-child{padding-bottom:10px;border-bottom:1px solid #edf1f5}
+    #godamStockHub #godamSearch{margin:14px 0!important;background:#f9fbfd!important}
+    #godamStockHub #godamStockList{color:#142b49!important}
+    #godamStockHub #godamStockList .medicine{background:#fff;border:1px solid var(--gs-line)!important;border-radius:11px;padding:14px!important;margin:9px 0;box-shadow:0 2px 7px rgba(8,43,85,.035);grid-template-columns:minmax(0,1fr) auto!important}
+    #godamStockHub #godamStockList .medicine:hover{border-color:#d5aa55!important;box-shadow:0 5px 14px rgba(8,43,85,.07)}
+    #godamStockHub #godamStockEditView{background:#fff;border:1px solid var(--gs-line);border-radius:14px;padding:18px;margin-top:14px;box-shadow:0 5px 18px rgba(8,43,85,.04)}
+    #godamStockHub #godamBackToList{margin:0 0 12px!important}
+    #godamStockHub #godamDetailHeading{font-size:20px!important;padding:0 0 12px;border-bottom:2px solid #f0e5ca}
+    #godamStockHub #godamStockEditor{color:#142b49!important}
+    #godamStockHub #godamStockEditor>div{border-color:var(--gs-line)!important}
+    #godamStockHub hr{border:0;border-top:1px solid var(--gs-line);margin:22px 0}
+    #godamStockHub #godamStockCurrent{padding:12px 14px;background:#f5f8fc;border:1px solid var(--gs-line);border-radius:9px}
+    #godamStockHub #godamStockStatus{display:block;padding:10px 12px;background:#f5f8fc;border:1px solid var(--gs-line);border-radius:9px}
+    @media(max-width:600px){#godamStockHub{padding:14px!important;border-radius:13px!important}#godamStockHub>.panel,#godamStockHub #godamStockListView,#godamStockHub #godamStockEditView{padding:13px!important}#godamStockHub #godamStockList .medicine{grid-template-columns:1fr!important;gap:8px!important}}
+  `;
+  function apply() {
+    if (document.getElementById("godamProfessionalTemplate")) return;
+    const style = document.createElement("style");
+    style.id = "godamProfessionalTemplate";
+    style.textContent = css;
+    document.head.appendChild(style);
+  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", apply, { once: true });
+  else apply();
+})();
