@@ -478,7 +478,7 @@ button{background:#765be0!important;color:#fff!important}button.secondary{backgr
 <p id="settingsStatus" class="muted" role="status"></p>
 <h3>Deleted medicines</h3><p class="muted">Deleted medicines are kept inactive so old orders remain intact. Restore them here when needed.</p><div id="inactiveMedicines">Loading deleted medicines…</div><h3>Previous settings / Rollback</h3><div id="settingsHistory">Loading…</div>
 </section>
-<section class="panel" id="godamStockHub" hidden><h2>GODAM STOCK</h2><p class="muted">Temporary demo stock. Later import a different master Excel to replace the active stock list. Previous workbook is backed up.</p><div class="panel" style="background:#f7fafc;border:1px solid #dce7ee"><h3>Import / Replace Stock Excel</h3><p class="muted">Upload the next .xlsx file. Current workbook is backed up before replacement. Import replaces only GODAM stock-list rows.</p><input id="godamStockFile" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"><button type="button" id="uploadGodamStock">Import & Replace Stock</button><p id="godamStockStatus" class="muted" role="status" aria-live="polite">Checking saved stock file…</p></div><div id="godamStockListView"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><h3>Medicine Stock List</h3><button type="button" id="godamAddNew">＋ Add Medicine</button></div><input id="godamSearch" placeholder="Search medicine name / batch"><div id="godamStockList" class="muted">Loading stock list…</div></div><div id="godamStockEditView" hidden><button type="button" class="secondary" id="godamBackToList">← Back to Stock List</button><h3 id="godamDetailHeading">Medicine Details</h3><div id="godamStockEditor"></div></div><hr><h3>Saved GODAM STOCK Workbook</h3><div id="godamStockCurrent" class="muted">Loading file…</div><button type="button" class="secondary" id="refreshGodamStock">Refresh File</button></section>
+<section class="panel" id="godamStockHub" hidden><h2>GODAM STOCK</h2><p class="muted">Original PRAVEEN PHARMA GODAM workbook stock is loaded. Add a medicine, open its separate detail page, edit cotton-wise boxes, and use FIFO Less. Import a new master Excel later to replace the stock list; database snapshots are kept.</p><div class="panel" style="background:#f7fafc;border:1px solid #dce7ee"><h3>Import / Replace Stock Excel</h3><p class="muted">Upload the next .xlsx file. Current workbook is backed up before replacement. Import replaces only GODAM stock-list rows.</p><input id="godamStockFile" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"><button type="button" id="uploadGodamStock">Import & Replace Stock</button><p id="godamStockStatus" class="muted" role="status" aria-live="polite">Checking saved stock file…</p></div><div id="godamStockListView"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><h3>Medicine Stock List</h3><button type="button" id="godamAddNew">＋ Add Medicine</button></div><input id="godamSearch" placeholder="Search medicine name / batch"><div id="godamStockList" class="muted">Loading stock list…</div></div><div id="godamStockEditView" hidden><button type="button" class="secondary" id="godamBackToList">← Back to Stock List</button><h3 id="godamDetailHeading">Medicine Details</h3><div id="godamStockEditor"></div></div><hr><h3>Saved GODAM STOCK Workbook</h3><div id="godamStockCurrent" class="muted">Loading file…</div><button type="button" class="secondary" id="refreshGodamStock">Refresh File</button></section>
 <section class="panel" id="reportsPanel" hidden><h2>Business Reports</h2><div id="reportSummary">Loading reports…</div><button class="secondary" id="refreshReports">Refresh Reports</button></section>
 <section class="panel" id="activityPanel" hidden><h2>Admin Activity History</h2><p class="muted">Records important changes made from this Admin Dashboard.</p><div id="activityList">Loading…</div><button class="secondary" id="refreshActivity">Refresh History</button></section>
 <section class="panel" id="backupPanel" hidden><h2>Security & Backup</h2><h3>Admin login history</h3><p class="muted">Successful sign-ins to this Admin Dashboard are recorded here after the secure Supabase alert function is deployed. Retailer logins are not included.</p><div id="loginHistory">Login history will appear after security setup.</div><button type="button" class="secondary" id="refreshLoginHistory">Refresh login history</button><hr><h3>Data Export & Health Check</h3><p class="muted">Export is a browser download of records accessible to this admin account. It is not a full database backup.</p><button id="exportBackup">Export available data (JSON)</button><button class="secondary" id="runHealth">Run connection checks</button><p id="healthStatus" class="muted" role="status"></p></section>
@@ -559,16 +559,171 @@ async function loadGodamStockFile(){
  box.innerHTML='<div class="medicine"><div><b>PRAVEEN_PHARMA_GODAM_STOCK.xlsx</b><br><small>'+((size/1024).toFixed(1))+' KB · Updated '+esc(updated)+'</small></div><div class="row"><a class="button" href="'+esc(signed.signedUrl)+'" target="_blank" rel="noopener" style="display:inline-block;text-decoration:none;padding:10px 14px;border-radius:8px;background:#123d6c;color:#fff">Open / Download</a></div></div>';
  status.textContent="GODAM STOCK file is saved securely.";
 }
-function godamRemaining(lots,less){let left=Math.max(0,Number(less)||0);return (lots||[]).map(v=>{const n=Math.max(0,Number(v)||0),used=Math.min(n,left);left-=used;return n-used;});}
-function godamTotals(r){const a=godamRemaining(r.cotton_lots,r.less_boxes);return {remaining:a,total:a.reduce((x,y)=>x+y,0)+(Number(r.add_boxes)||0),count:a.filter(x=>x>0).length};}
+function godamRemaining(lots,less,fullLess){
+ const remaining=(lots||[]).map(v=>Math.max(0,Number(v)||0));
+ const full=Math.max(0,Math.min(remaining.length,parseInt(fullLess,10)||0));
+ for(let i=0;i<full;i++)remaining[i]=0;
+ let left=Math.max(0,Number(less)||0);
+ for(let i=0;i<remaining.length&&left>0;i++){const used=Math.min(remaining[i],left);remaining[i]-=used;left-=used;}
+ return remaining;
+}
+function godamTotals(r){
+ const remaining=godamRemaining(r.cotton_lots,r.less_boxes,r.full_cotton_less);
+ const boxes=remaining.reduce((a,b)=>a+b,0)+(Number(r.add_boxes)||0);
+ return {remaining,boxes,cottonCount:remaining.filter(v=>v>0).length,units:boxes*(Number(r.units_per_box)||0)};
+}
+function godamExpiryStatus(value){
+ if(!value)return "EXPIRY NOT ENTERED";
+ const d=new Date(value+"T00:00:00"),now=new Date();now.setHours(0,0,0,0);
+ if(d<now)return "EXPIRED";
+ const three=new Date(now);three.setMonth(three.getMonth()+3);
+ const six=new Date(now);six.setMonth(six.getMonth()+6);
+ if(d<=three)return "EXPIRING ≤3 MONTHS";
+ if(d<=six)return "EXPIRING 3–6 MONTHS";
+ return "OK";
+}
+function godamStockStatus(boxes){return boxes<100?"LOW STOCK":boxes<150?"CHECK STOCK":"OK";}
+function godamUnitsFromPack(pack){
+ const m=String(pack||"").match(/\*(\d+)(?:\s|$)/);
+ return m?Number(m[1]):1;
+}
 let godamRows=[],godamEditingId=null;
-async function loadGodamStockRows(){const box=$("godamStockList");if(!box)return;box.textContent="Loading stock…";const {data,error}=await db.from("godam_stock_products").select("*").order("product_name");if(error){box.textContent="Stock database error: "+error.message;return;}godamRows=data||[];if(!godamRows.length){const {data:d,error:e}=await db.from("godam_stock_products").insert({product_name:"DEMO MEDICINE",pack_type:"TABLET",pack_size:"10 x 10",batch_no:"DEMO001",expiry_date:"2028-06-30",cotton_lots:[20,20,20],less_boxes:25,units_per_box:100,remarks:"Temporary demo entry. Replace by importing your master workbook.",is_demo:true,created_by:currentUser?.id}).select().single();if(!e&&d)godamRows=[d];}renderGodamStockList();}
-function renderGodamStockList(){const box=$("godamStockList");if(!box)return;const q=($("godamSearch")?.value||"").toLowerCase().trim();const rows=godamRows.filter(r=>(r.product_name+" "+(r.batch_no||"")).toLowerCase().includes(q));if(!rows.length){box.textContent="No medicines yet. Add Medicine or import Excel.";return;}box.innerHTML=rows.map(r=>{const t=godamTotals(r);return '<button type="button" class="medicine" data-godam-open="'+esc(r.id)+'" style="width:100%;display:flex;justify-content:space-between;text-align:left;background:#fff;color:#24352d;border:1px solid #dce7ee;padding:14px;margin:8px 0"><span><b>'+esc(r.product_name)+'</b><br><small>'+esc(r.pack_size||"No pack size")+' · Batch '+esc(r.batch_no||"—")+'</small></span><span><b>'+t.total+' Boxes</b><br><small>'+t.count+' Cotton</small></span></button>';}).join("");box.querySelectorAll("[data-godam-open]").forEach(b=>b.onclick=()=>openGodamDetail(b.dataset.godamOpen));}
-function openGodamDetail(id){godamEditingId=id||null;const r=godamRows.find(x=>x.id===id)||{product_name:"",pack_type:"",pack_size:"",batch_no:"",mfd:"",expiry_date:"",cotton_lots:[],add_boxes:0,less_boxes:0,units_per_box:"",remarks:""};$("godamStockListView").hidden=true;$("godamStockEditView").hidden=false;$("godamDetailHeading").textContent=id?"Medicine Stock Details":"Add New Medicine";$("godamStockEditor").innerHTML='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px"><label>Medicine Name<input id="gsName" value="'+esc(r.product_name)+'"></label><label>Pack Type<input id="gsType" value="'+esc(r.pack_type||"")+'"></label><label>Pack Size<input id="gsPack" value="'+esc(r.pack_size||"")+'"></label><label>Batch No.<input id="gsBatch" value="'+esc(r.batch_no||"")+'"></label><label>MFD<input id="gsMfd" type="date" value="'+esc(r.mfd||"")+'"></label><label>Expiry Date<input id="gsExpiry" type="date" value="'+esc(r.expiry_date||"")+'"></label><label>Units per Box<input id="gsUnits" type="number" min="0" value="'+esc(r.units_per_box??"")+'"></label><label>Add Boxes (Blue)<input id="gsAdd" type="number" min="0" value="'+esc(r.add_boxes||0)+'"></label><label>Less Boxes (Pink · FIFO)<input id="gsLess" type="number" min="0" value="'+esc(r.less_boxes||0)+'"></label></div><label>Cotton-wise Opening Boxes (comma separated)<input id="gsLots" value="'+esc((r.cotton_lots||[]).join(", "))+'" placeholder="20, 20, 20"></label><p class="muted">FIFO: Less first Cotton 1, then Cotton 2, then Cotton 3.</p><label>Remarks<textarea id="gsRemarks">'+esc(r.remarks||"")+'</textarea></label><div class="panel" style="background:#f4f8fb"><b>Remaining Cotton-wise Stock</b><div id="gsRemaining"></div><p><b>Current Total: <span id="gsTotal"></span> Boxes</b> · Cotton Count: <b id="gsCount"></b></p></div><button type="button" id="gsSave">Save Medicine</button><button type="button" class="secondary" id="gsCancel">Cancel</button>'+(id?'<button type="button" class="danger" id="gsDelete">Delete Medicine</button>':'');const update=()=>{const lots=$("gsLots").value.split(/[,;+]/).map(x=>Math.max(0,parseInt(x.trim(),10)||0));const rem=godamRemaining(lots,$("gsLess").value);$("gsRemaining").innerHTML=rem.map((v,i)=>'<div>Cotton '+(i+1)+': <b>'+v+' Boxes</b></div>').join("")||"No cotton entries";$("gsTotal").textContent=rem.reduce((a,b)=>a+b,0)+(Number($("gsAdd").value)||0);$("gsCount").textContent=rem.filter(x=>x>0).length;};["gsLots","gsLess","gsAdd"].forEach(x=>$(x).addEventListener("input",update));update();$("gsSave").onclick=saveGodamMedicine;$("gsCancel").onclick=()=>{$("godamStockEditView").hidden=true;$("godamStockListView").hidden=false;};if(id)$("gsDelete").onclick=()=>deleteGodamMedicine(id);}
-async function saveGodamMedicine(){const name=$("gsName").value.trim();if(!name){alert("Enter Medicine Name.");return;}const lots=$("gsLots").value.split(/[,;+]/).map(x=>Math.max(0,parseInt(x.trim(),10)||0));const p={product_name:name,pack_type:$("gsType").value.trim(),pack_size:$("gsPack").value.trim(),batch_no:$("gsBatch").value.trim(),mfd:$("gsMfd").value||null,expiry_date:$("gsExpiry").value||null,cotton_lots:lots,add_boxes:Math.max(0,Number($("gsAdd").value)||0),less_boxes:Math.max(0,Number($("gsLess").value)||0),units_per_box:Math.max(0,parseInt($("gsUnits").value,10)||0)||null,remarks:$("gsRemarks").value.trim(),created_by:currentUser?.id,updated_at:new Date().toISOString()};const {error}=godamEditingId?await db.from("godam_stock_products").update(p).eq("id",godamEditingId):await db.from("godam_stock_products").insert(p);if(error){alert("Save failed: "+error.message);return;}await loadGodamStockRows();$("godamStockEditView").hidden=true;$("godamStockListView").hidden=false;}
-async function deleteGodamMedicine(id){if(!confirm("Delete this medicine from GODAM stock list?"))return;const {error}=await db.from("godam_stock_products").delete().eq("id",id);if(error){alert(error.message);return;}await loadGodamStockRows();$("godamStockEditView").hidden=true;$("godamStockListView").hidden=false;}
-function parseGodamWorkbook(file){return new Promise((resolve,reject)=>{if(!window.XLSX){reject(new Error("Excel reader did not load. Refresh Admin."));return;}const rd=new FileReader();rd.onload=e=>{try{const wb=XLSX.read(e.target.result,{type:"array",cellDates:true});const sh=wb.Sheets["Stock Register"]||wb.Sheets[wb.SheetNames[0]];const data=XLSX.utils.sheet_to_json(sh,{header:1,defval:""});const out=[];for(let i=1;i<data.length;i++){const r=data[i],name=String(r[1]||"").trim();if(!name)continue;const lots=String(r[7]||"").split("+").map(x=>parseInt(x.replace(/[^0-9]/g,""),10)||0).filter(x=>x>0);const date=v=>{if(!v)return null;if(v instanceof Date)return v.toISOString().slice(0,10);if(typeof v==="number"){const d=XLSX.SSF.parse_date_code(v);return d?new Date(Date.UTC(d.y,d.m-1,d.d)).toISOString().slice(0,10):null;}const d=new Date(v);return isNaN(d)?null:d.toISOString().slice(0,10);};out.push({product_name:name,pack_type:String(r[2]||""),pack_size:String(r[3]||""),batch_no:String(r[4]||""),mfd:date(r[5]),expiry_date:date(r[6]),cotton_lots:lots,add_boxes:Math.max(0,parseInt(r[10],10)||0),less_boxes:Math.max(0,parseInt(r[11],10)||0),units_per_box:Math.max(0,parseInt(r[13],10)||0)||null,remarks:String(r[17]||""),is_demo:false,created_by:currentUser?.id});}resolve(out);}catch(err){reject(err);}};rd.onerror=()=>reject(new Error("Could not read Excel file."));rd.readAsArrayBuffer(file);});}
-async function uploadGodamStockFile(){const input=$("godamStockFile"),status=$("godamStockStatus"),file=input.files?.[0];if(!file){status.textContent="Choose an .xlsx file first.";return;}if(!/\.xlsx$/i.test(file.name)||file.size>25*1024*1024){status.textContent="Choose a valid .xlsx file under 25 MB.";return;}let rows;try{rows=await parseGodamWorkbook(file);}catch(e){status.textContent=e.message;return;}if(!rows.length){status.textContent="No medicine rows found. Expected Stock Register sheet and medicine names in column B.";return;}if(!confirm("Replace "+godamRows.length+" current stock items with "+rows.length+" medicines from "+file.name+"? Current workbook backup will be saved first."))return;status.textContent="Backing up current workbook and importing…";const path="main/PRAVEEN_PHARMA_GODAM_STOCK.xlsx";const {data:old}=await db.storage.from(GODAM_BUCKET).download(path);if(old){const stamp=new Date().toISOString().replace(/[:.]/g,"-");const {error}=await db.storage.from(GODAM_BUCKET).upload("backups/PRAVEEN_PHARMA_GODAM_STOCK-"+stamp+".xlsx",old,{upsert:false,contentType:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});if(error){status.textContent="Backup failed; replacement cancelled: "+error.message;return;}}const payload=rows.map(x=>({...x,source_file:file.name}));const {data:imported,error:importError}=await db.rpc("replace_godam_stock_rows",{p_rows:payload});if(importError){status.textContent="Stock import failed; previous stock list was kept: "+importError.message;return;}const {error:up}=await db.storage.from(GODAM_BUCKET).upload(path,file,{upsert:true,contentType:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});if(up){status.textContent="Stock list imported but workbook upload failed: "+up.message;return;}input.value="";await loadGodamStockRows();await loadGodamStockFile();status.textContent="Imported "+rows.length+" medicines. Previous workbook backed up.";if(typeof logActivity==="function")await logActivity("GODAM stock list replaced from Excel",{file_name:file.name,rows:rows.length});}
+async function loadGodamStockRows(){
+ const box=$("godamStockList");if(!box)return;
+ box.textContent="Loading medicine stock…";
+ const {data,error}=await db.from("godam_stock_products").select("*").order("product_name").order("batch_no");
+ if(error){box.textContent="Stock database error: "+error.message;return;}
+ godamRows=data||[];renderGodamStockList();
+}
+function renderGodamStockList(){
+ const box=$("godamStockList");if(!box)return;
+ const q=($("godamSearch")?.value||"").trim().toLowerCase();
+ const rows=godamRows.filter(r=>([r.product_name,r.pack_size,r.batch_no,r.pack_type].join(" ")).toLowerCase().includes(q));
+ if(!rows.length){box.innerHTML='<p class="muted">No matching medicines. Use Add Medicine or import an Excel workbook.</p>';return;}
+ box.innerHTML=rows.map(r=>{
+  const t=godamTotals(r),stock=godamStockStatus(t.boxes),expiry=godamExpiryStatus(r.expiry_date);
+  return '<button type="button" class="medicine" data-godam-open="'+esc(r.id)+'" style="width:100%;display:flex;justify-content:space-between;align-items:center;gap:12px;text-align:left;background:#fff;color:#24352d;border:1px solid #dce7ee;border-radius:10px;padding:14px;margin:8px 0"><span style="min-width:0"><b>'+esc(r.product_name)+'</b><br><small>'+esc(r.pack_type||"")+' · '+esc(r.pack_size||"")+' · Batch '+esc(r.batch_no||"—")+'</small><br><small>'+esc(expiry)+'</small></span><span style="text-align:right;white-space:nowrap"><b>'+t.boxes+' Boxes</b><br><small>'+t.cottonCount+' Cotton · '+t.units+' Units</small><br><small>'+esc(stock)+'</small></span></button>';
+ }).join("");
+ box.querySelectorAll("[data-godam-open]").forEach(b=>b.onclick=()=>openGodamDetail(b.dataset.godamOpen));
+}
+function godamReadCottonInputs(){
+ return [...$("gsCottonRows").querySelectorAll("[data-cotton-index]")].map(el=>Math.max(0,parseInt(el.value,10)||0));
+}
+function godamRenderCottonRows(lots){
+ $("gsCottonRows").innerHTML=(lots||[]).map((v,i)=>'<div style="display:grid;grid-template-columns:90px minmax(90px,1fr) auto;gap:8px;align-items:center;margin:7px 0"><b>Cotton '+(i+1)+'</b><input type="number" min="0" step="1" data-cotton-index="'+i+'" value="'+Math.max(0,Number(v)||0)+'" aria-label="Cotton '+(i+1)+' boxes"><button type="button" class="secondary" data-cotton-remove="'+i+'" style="padding:8px 12px">Remove</button></div>').join("")||'<p class="muted">No cotton lots added yet.</p>';
+ $("gsCottonRows").querySelectorAll("[data-cotton-index]").forEach(el=>el.addEventListener("input",godamUpdatePreview));
+ $("gsCottonRows").querySelectorAll("[data-cotton-remove]").forEach(btn=>btn.addEventListener("click",()=>{const a=godamReadCottonInputs();a.splice(Number(btn.dataset.cottonRemove),1);godamRenderCottonRows(a);godamUpdatePreview();}));
+}
+function godamUpdatePreview(){
+ const lots=godamReadCottonInputs(),remaining=godamRemaining(lots,$("gsLess").value,$("gsFullLess").value);
+ const added=Math.max(0,Number($("gsAdd").value)||0),units=Math.max(0,Number($("gsUnits").value)||0);
+ const total=remaining.reduce((a,b)=>a+b,0)+added;
+ $("gsRemaining").innerHTML=remaining.map((v,i)=>'<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #e7edf1"><span>Cotton '+(i+1)+'</span><b>'+v+' Boxes</b></div>').join("")||'<span class="muted">No cotton entries</span>';
+ $("gsTotal").textContent=total;$("gsCount").textContent=remaining.filter(v=>v>0).length;$("gsUnitsTotal").textContent=total*units;
+ $("gsStockAlert").textContent=godamStockStatus(total);$("gsExpiryAlert").textContent=godamExpiryStatus($("gsExpiry").value);
+}
+function openGodamDetail(id){
+ godamEditingId=id||null;
+ const r=godamRows.find(x=>x.id===id)||{product_name:"",pack_type:"",pack_size:"",batch_no:"",mfd:"",expiry_date:"",cotton_lots:[],cotton_entry_raw:"",add_boxes:0,less_boxes:0,full_cotton_less:0,units_per_box:"",remarks:""};
+ $("godamStockListView").hidden=true;$("godamStockEditView").hidden=false;
+ $("godamDetailHeading").textContent=id?"Medicine Stock Details":"Add New Medicine";
+ $("godamStockEditor").innerHTML=
+ '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px">'+
+ '<label>Medicine Name<input id="gsName" value="'+esc(r.product_name)+'"></label>'+
+ '<label>Pack Type<input id="gsType" value="'+esc(r.pack_type||"")+'"></label>'+
+ '<label>Pack Size<input id="gsPack" value="'+esc(r.pack_size||"")+'"></label>'+
+ '<label>Batch No.<input id="gsBatch" value="'+esc(r.batch_no||"")+'"></label>'+
+ '<label>MFD<input id="gsMfd" type="date" value="'+esc(r.mfd||"")+'"></label>'+
+ '<label>Expiry Date<input id="gsExpiry" type="date" value="'+esc(r.expiry_date||"")+'"></label>'+
+ '</div>'+
+ '<div class="panel" style="background:#f7fafc;border:1px solid #e2eaf0;margin-top:12px"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><b>Cotton-wise Opening Boxes</b><button type="button" class="secondary" id="gsAddCotton">＋ Add Cotton</button></div><div id="gsCottonRows"></div>'+
+ '<small class="muted">Each Cotton value can be edited separately. FIFO Less will reduce Cotton 1 first, then Cotton 2, and continue.</small>'+
+ (r.cotton_entry_raw?'<p class="muted" style="margin-top:8px">Original Excel entry: <b>'+esc(r.cotton_entry_raw)+'</b></p>':'')+'</div>'+
+ '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-top:12px">'+
+ '<label>Add Boxes <span style="color:#2877c7">(Blue)</span><input id="gsAdd" type="number" min="0" step="1" value="'+esc(r.add_boxes||0)+'"></label>'+
+ '<label>Less Boxes <span style="color:#c45b79">(Pink · FIFO)</span><input id="gsLess" type="number" min="0" step="1" value="'+esc(r.less_boxes||0)+'"></label>'+
+ '<label>Full Cotton Less (No.)<input id="gsFullLess" type="number" min="0" step="1" value="'+esc(r.full_cotton_less||0)+'"></label>'+
+ '<label>Units per Box<input id="gsUnits" type="number" min="0" step="1" value="'+esc(r.units_per_box??"")+'"></label></div>'+
+ '<p class="muted">When Pack Size changes, Units per Box is suggested from the pack text. You can edit it if needed.</p>'+
+ '<div class="panel" style="background:#f4f8fb;border:1px solid #dce7ee;margin-top:12px"><b>Live Stock Preview</b><div id="gsRemaining" style="margin-top:8px"></div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-top:12px"><div><small>Current Total</small><h3><span id="gsTotal">0</span> Boxes</h3></div><div><small>Remaining Cotton</small><h3 id="gsCount">0</h3></div><div><small>Total Strips / Units</small><h3 id="gsUnitsTotal">0</h3></div><div><small>Stock Alert</small><b id="gsStockAlert">—</b></div><div><small>Expiry Alert</small><b id="gsExpiryAlert">—</b></div></div></div>'+
+ '<label>Remarks<textarea id="gsRemarks">'+esc(r.remarks||"")+'</textarea></label>'+
+ '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button type="button" id="gsSave">Save Medicine</button><button type="button" class="secondary" id="gsCancel">Cancel</button>'+(id?'<button type="button" class="danger" id="gsDelete">Delete Medicine</button>':'')+'</div>';
+ godamRenderCottonRows(r.cotton_lots||[]);
+ $("gsAddCotton").onclick=()=>{const a=godamReadCottonInputs();a.push(0);godamRenderCottonRows(a);godamUpdatePreview();};
+ ["gsAdd","gsLess","gsFullLess","gsUnits","gsExpiry"].forEach(k=>$(k).addEventListener("input",godamUpdatePreview));
+ $("gsPack").addEventListener("change",()=>{$("gsUnits").value=godamUnitsFromPack($("gsPack").value);godamUpdatePreview();});
+ godamUpdatePreview();
+ $("gsSave").onclick=saveGodamMedicine;
+ $("gsCancel").onclick=()=>{$("godamStockEditView").hidden=true;$("godamStockListView").hidden=false;};
+ if(id)$("gsDelete").onclick=()=>deleteGodamMedicine(id);
+}
+async function saveGodamMedicine(){
+ const name=$("gsName").value.trim();if(!name){alert("Enter Medicine Name.");return;}
+ const lots=godamReadCottonInputs();
+ const original=godamRows.find(x=>x.id===godamEditingId);
+ const sameLots=original&&JSON.stringify(lots)===JSON.stringify(original.cotton_lots||[]);
+ const payload={product_name:name,pack_type:$("gsType").value.trim(),pack_size:$("gsPack").value.trim(),batch_no:$("gsBatch").value.trim(),mfd:$("gsMfd").value||null,expiry_date:$("gsExpiry").value||null,cotton_lots:lots,cotton_entry_raw:sameLots?(original.cotton_entry_raw||null):(lots.length?lots.join(" + "):null),add_boxes:Math.max(0,Number($("gsAdd").value)||0),less_boxes:Math.max(0,Number($("gsLess").value)||0),full_cotton_less:Math.max(0,parseInt($("gsFullLess").value,10)||0),units_per_box:Math.max(0,parseInt($("gsUnits").value,10)||0)||null,remarks:$("gsRemarks").value.trim(),created_by:currentUser?.id,updated_at:new Date().toISOString()};
+ const {error}=godamEditingId?await db.from("godam_stock_products").update(payload).eq("id",godamEditingId):await db.from("godam_stock_products").insert(payload);
+ if(error){alert("Save failed: "+error.message);return;}
+ await loadGodamStockRows();$("godamStockEditView").hidden=true;$("godamStockListView").hidden=false;
+}
+async function deleteGodamMedicine(id){
+ if(!confirm("Delete this medicine from GODAM stock list?"))return;
+ const {error}=await db.from("godam_stock_products").delete().eq("id",id);
+ if(error){alert(error.message);return;}
+ await loadGodamStockRows();$("godamStockEditView").hidden=true;$("godamStockListView").hidden=false;
+}
+function godamParseRawLots(raw){
+ if(raw===null||raw===undefined||String(raw).trim()==="")return [];
+ const part=String(raw).split("=")[0];
+ return part.split("+").map(v=>{const n=String(v).trim().replace(/,/g,"");return n===""?0:Math.max(0,parseInt(n,10)||0);});
+}
+function parseGodamWorkbook(file){
+ return new Promise((resolve,reject)=>{
+  if(!window.XLSX){reject(new Error("Excel reader did not load. Refresh Admin."));return;}
+  const rd=new FileReader();
+  rd.onload=e=>{try{
+   const wb=XLSX.read(e.target.result,{type:"array",cellDates:true});
+   const sh=wb.Sheets["Stock Register"]||wb.Sheets[wb.SheetNames[0]];
+   const data=XLSX.utils.sheet_to_json(sh,{header:1,defval:null,raw:true});
+   const out=[];
+   const date=v=>{if(!v)return null;if(v instanceof Date)return v.toISOString().slice(0,10);if(typeof v==="number"){const d=XLSX.SSF.parse_date_code(v);return d?new Date(Date.UTC(d.y,d.m-1,d.d)).toISOString().slice(0,10):null;}const d=new Date(v);return Number.isNaN(d.getTime())?null:d.toISOString().slice(0,10);};
+   for(let i=1;i<data.length;i++){
+    const r=data[i]||[],name=String(r[1]??"").trim();if(!name)continue;
+    const raw=r[7]===null||r[7]===undefined?null:String(r[7]);
+    const helper=r.slice(21,41).map(v=>v===null||v===undefined||v===""?null:Math.max(0,parseInt(v,10)||0));
+    let lots;
+    if(helper.some(v=>v!==null)){let last=helper.length-1;while(last>=0&&helper[last]===null)last--;lots=helper.slice(0,last+1).map(v=>v===null?0:v);}
+    else lots=godamParseRawLots(raw);
+    const units=Math.max(0,parseInt(r[13],10)||0)||godamUnitsFromPack(r[3]);
+    out.push({product_name:name,pack_type:String(r[2]??""),pack_size:String(r[3]??""),batch_no:r[4]===null?null:String(r[4]??""),mfd:date(r[5]),expiry_date:date(r[6]),cotton_lots:lots,cotton_entry_raw:raw,add_boxes:Math.max(0,parseInt(r[10],10)||0),less_boxes:Math.max(0,parseInt(r[11],10)||0),full_cotton_less:Math.max(0,parseInt(r[18],10)||0),units_per_box:units||null,remarks:r[17]===null?null:String(r[17]),source_file:file.name,is_demo:false});
+   }
+   resolve(out);
+  }catch(err){reject(err);}};
+  rd.onerror=()=>reject(new Error("Could not read Excel file."));
+  rd.readAsArrayBuffer(file);
+ });
+}
+async function uploadGodamStockFile(){
+ const input=$("godamStockFile"),status=$("godamStockStatus"),file=input.files?.[0];
+ if(!file){status.textContent="Choose an .xlsx file first.";return;}
+ if(!/\.xlsx$/i.test(file.name)||file.size>25*1024*1024){status.textContent="Choose a valid .xlsx file under 25 MB.";return;}
+ let rows;try{rows=await parseGodamWorkbook(file);}catch(e){status.textContent=e.message;return;}
+ if(!rows.length){status.textContent="No medicine rows found. Expected Stock Register sheet with Medicine Name in column B.";return;}
+ if(!confirm("Replace "+godamRows.length+" current stock items with "+rows.length+" medicines from "+file.name+"? A database snapshot will be saved automatically before replacement."))return;
+ status.textContent="Backing up current stock and importing…";
+ const path="main/PRAVEEN_PHARMA_GODAM_STOCK.xlsx";
+ const {data:old}=await db.storage.from(GODAM_BUCKET).download(path);
+ if(old){const stamp=new Date().toISOString().replace(/[:.]/g,"-");const {error:backupError}=await db.storage.from(GODAM_BUCKET).upload("backups/PRAVEEN_PHARMA_GODAM_STOCK-"+stamp+".xlsx",old,{upsert:false,contentType:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});if(backupError){status.textContent="Workbook backup failed; replacement cancelled: "+backupError.message;return;}}
+ const {data:imported,error:importError}=await db.rpc("replace_godam_stock_rows",{p_rows:rows});
+ if(importError){status.textContent="Import failed; existing stock rows were kept: "+importError.message;return;}
+ const {error:uploadError}=await db.storage.from(GODAM_BUCKET).upload(path,file,{upsert:true,contentType:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
+ input.value="";await loadGodamStockRows();
+ if(uploadError){status.textContent="Imported "+(imported||rows.length)+" medicines. Database backup saved. Workbook file copy could not be saved: "+uploadError.message;return;}
+ await loadGodamStockFile();
+ status.textContent="Imported "+(imported||rows.length)+" medicines. Previous database stock snapshot saved.";
+ if(typeof logActivity==="function")await logActivity("GODAM stock list replaced from Excel",{file_name:file.name,rows:rows.length});
+}
 
 async function renderAdminAccess(){const box=$("adminAccessList");if(currentAdminRole!=="owner"){$("adminAccessPanel").hidden=true;return;}const {data,error}=await db.from("admin_users").select("user_id,email,role,is_active,created_at").order("created_at");if(error){box.textContent="Could not load admin users: "+error.message;return;}const rows=data||[];$("adminAccessCount").textContent=rows.length;$("adminAccessActive").textContent=rows.filter(x=>x.is_active).length;box.innerHTML=rows.map(x=>'<div class="medicine"><div><b>'+esc(x.email||x.user_id)+'</b><br><small>'+esc(x.role.toUpperCase())+' · '+esc(x.user_id)+'</small></div><div><span class="badge">'+(x.is_active?"Active":"Inactive")+'</span>'+(x.role==="owner"?"":(x.is_active?' <button class="danger" data-admin-disable="'+esc(x.user_id)+'">Deactivate</button>':""))+'</div></div>').join("")||"No admin accounts.";box.querySelectorAll("[data-admin-disable]").forEach(b=>b.onclick=()=>deactivateAdmin(b.dataset.adminDisable));}
 function showAdminSection(id){
