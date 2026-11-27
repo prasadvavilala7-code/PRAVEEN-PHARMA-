@@ -133,3 +133,9 @@ grant select, insert, update, delete on public.followup_logs to authenticated;
 insert into public.followup_settings (id)
 values (true)
 on conflict (id) do nothing;
+
+grant select, insert, update, delete on public.followup_settings to service_role;
+grant select, insert, update, delete on public.followup_contacts to service_role;
+grant select, insert, update, delete on public.followup_templates to service_role;
+grant select, insert, update, delete on public.followup_schedule to service_role;
+grant select, insert, update, delete on public.followup_logs to service_role;
