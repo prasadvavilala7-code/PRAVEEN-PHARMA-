@@ -60,10 +60,6 @@ create policy "Public catalogue reads approved medicines"
   using (
     is_active = true
     and public_approved = true
-    and exists (
-      select 1 from public.medicine_companies mc
-      where mc.id = medicines.company_id and mc.is_approved = true
-    )
   );
 
 -- Approved retailers can read only the same published catalogue (including price columns).
@@ -101,11 +97,7 @@ as
 select m.id, m.name, m.composition, m.pack_size, m.category, m.image_url, m.company_id
 from public.medicines m
 where m.is_active = true
-  and m.public_approved = true
-  and exists (
-    select 1 from public.medicine_companies mc
-    where mc.id = m.company_id and mc.is_approved = true
-  );
+  and m.public_approved = true;
 
 create or replace view public.public_medicines
 with (security_invoker = true)
@@ -114,11 +106,7 @@ select m.id, m.name, m.composition, m.pack_size, m.category, m.image_url,
        m.common_price, m.gst_rate, m.company_id
 from public.medicines m
 where m.is_active = true
-  and m.public_approved = true
-  and exists (
-    select 1 from public.medicine_companies mc
-    where mc.id = m.company_id and mc.is_approved = true
-  );
+  and m.public_approved = true;
 
 revoke all on public.public_medicine_catalogue from anon, authenticated;
 revoke all on public.public_medicines from anon, authenticated;
@@ -129,6 +117,6 @@ commit;
 
 -- Expected behaviour after commit:
 -- * Existing medicines have public_approved=false and remain hidden until Admin approval.
--- * A medicine appears only when BOTH its company and medicine are approved and it is active.
+-- * A medicine appears on the Customer Brochure when the medicine itself is Published and active; company approval does not block it.
 -- * Admin's existing admin_all_medicines policy remains in place.
 -- * Retailer table access is limited to published rows; anon cannot read price/GST columns.
