@@ -83,11 +83,30 @@ footer{background:var(--navy);color:#e3eaf3;text-align:center;padding:22px 12px;
   $("medicineModal").classList.add("open");document.body.style.overflow="hidden";
  }
  function closeModals(){document.querySelectorAll(".modal-backdrop").forEach(x=>x.classList.remove("open"));document.body.style.overflow="";}
+ function openPhoto(photo){
+  if(!photo||!photo.src)return;
+  $("photoModalImage").src=photo.currentSrc||photo.src;
+  $("photoModalImage").alt=photo.alt||"Medicine product photo";
+  $("photoModal").classList.add("open");
+  document.body.style.overflow="hidden";
+ }
+ // Desktop: double-click the photo to view it full size; double-click elsewhere on a card for details.
  $("grid").addEventListener("dblclick",e=>{
   const photo=e.target.closest(".photos img");
-  if(photo){$("photoModalImage").src=photo.src;$("photoModal").classList.add("open");document.body.style.overflow="hidden";return;}
+  if(photo){e.preventDefault();e.stopPropagation();openPhoto(photo);return;}
   const card=e.target.closest(".card");if(!card)return;
   const m=products.find(x=>String(x.id)===card.dataset.medicineId);if(m)openMedicineInfo(m);
+ });
+ // Android/iOS: translate a quick double-tap on a photo into the same photo viewer action.
+ let lastPhotoTap={image:null,time:0};
+ $("grid").addEventListener("pointerup",e=>{
+  if(e.pointerType!=="touch")return;
+  const photo=e.target.closest(".photos img");
+  if(!photo){lastPhotoTap={image:null,time:0};return;}
+  const now=Date.now();
+  if(lastPhotoTap.image===photo&&now-lastPhotoTap.time<450){
+   e.preventDefault();openPhoto(photo);lastPhotoTap={image:null,time:0};
+  }else lastPhotoTap={image:photo,time:now};
  });
  document.querySelectorAll("[data-close-modal]").forEach(b=>b.addEventListener("click",closeModals));
  document.querySelectorAll(".modal-backdrop").forEach(b=>b.addEventListener("click",e=>{if(e.target===b)closeModals();}));
