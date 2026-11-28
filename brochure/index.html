@@ -57,7 +57,7 @@ footer{background:var(--navy);color:#e3eaf3;text-align:center;padding:22px 12px;
  function render(){
   const q=searchKey($("search").value),cat=$("category").value;
   const rows=products.filter(m=>{
-   const matchesCategory=!cat||(m.category||"Uncategorised")===cat;
+   const matchesCategory=!cat||searchKey(m.category||"Uncategorised")===cat;
    const searchable=[m.name,m.composition,m.pack_size,m.category].map(searchKey);
    const matchesSearch=!q||searchable.some(value=>value.includes(q));
    return matchesCategory&&matchesSearch;
@@ -78,8 +78,10 @@ footer{background:var(--navy);color:#e3eaf3;text-align:center;padding:22px 12px;
   const {data,error}=await db.from("public_medicine_details").select("id,name,composition,pack_size,category,image_url,image_gallery,mechanism_of_action,uses,benefits,side_effects,precautions,info_source_url,info_status,info_checked_at").order("name");
   if(error){$("status").textContent="Could not load published products. Please try again later.";console.error(error);return;}
   products=data||[];
-  const categories=Array.from(new Set(products.map(m=>m.category||"Uncategorised"))).sort();
-  $("category").innerHTML='<option value="">All categories</option>'+categories.map(c=>'<option value="'+esc(c)+'">'+esc(c)+'</option>').join("");
+  const categoryMap=new Map();
+  products.forEach(m=>{const label=String(m.category||"Uncategorised").trim()||"Uncategorised";const key=searchKey(label);if(key&&!categoryMap.has(key))categoryMap.set(key,label.toUpperCase());});
+  const categories=Array.from(categoryMap.entries()).sort((a,b)=>a[1].localeCompare(b[1]));
+  $("category").innerHTML='<option value="">All categories</option>'+categories.map(([key,label])=>'<option value="'+esc(key)+'">'+esc(label)+'</option>').join("");
   render();
  }
 
