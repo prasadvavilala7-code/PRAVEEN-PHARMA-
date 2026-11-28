@@ -339,7 +339,33 @@ button{background:#765be0!important;color:#fff!important}button.secondary{backgr
 #godamProfessionalDashboard .godam-alert-row b{margin-left:auto;color:#102b50;font-size:14px}
 @media(max-width:700px){#godamProfessionalDashboard .godam-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}#godamProfessionalDashboard .godam-dash-panels{grid-template-columns:1fr}#godamProfessionalDashboard .godam-metric{padding:13px;gap:9px}#godamProfessionalDashboard .godam-metric strong{font-size:21px}}
 @media(max-width:380px){#godamProfessionalDashboard .godam-metrics{grid-template-columns:1fr 1fr}#godamProfessionalDashboard .godam-legend{grid-template-columns:1fr}}
-</style></head>
+</style><style id="godamEmeraldDashboardTheme">
+/* GODAM STOCK dashboard only — White + Emerald Green sleek theme */
+#godamProfessionalDashboard{--gd-ink:#173b31;--gd-muted:#71847b;--gd-green:#07865b;--gd-green-dark:#056746;--gd-green-soft:#e9f7f0;--gd-line:#e1eee7;margin:18px 0 22px;padding:20px;background:#fff;border:1px solid var(--gd-line);border-radius:16px;color:var(--gd-ink);box-shadow:0 5px 20px rgba(17,75,51,.045)}
+#godamProfessionalDashboard .godam-dash-head{align-items:center;margin-bottom:17px}
+#godamProfessionalDashboard .godam-eyebrow{color:var(--gd-green);font-size:10px;letter-spacing:.13em}
+#godamProfessionalDashboard h3{color:var(--gd-ink);font-size:21px;font-weight:750;letter-spacing:-.035em;margin:4px 0}
+#godamProfessionalDashboard p{color:var(--gd-muted);font-size:12px}
+#godamProfessionalDashboard .godam-live{color:var(--gd-green-dark);background:var(--gd-green-soft);border:1px solid #d4eee0;padding:7px 10px;border-radius:8px;font-size:10px;letter-spacing:.04em}
+#godamProfessionalDashboard .godam-metrics{gap:10px}
+#godamProfessionalDashboard .godam-metric{padding:16px;background:#fff;border:1px solid var(--gd-line);border-radius:12px;box-shadow:0 3px 12px rgba(17,75,51,.035);gap:12px}
+#godamProfessionalDashboard .godam-metric-icon{width:40px;height:40px;border-radius:10px;background:var(--gd-green-soft);color:var(--gd-green);font-size:21px}
+#godamProfessionalDashboard .godam-metric strong{color:var(--gd-ink);font-size:24px;font-weight:750;letter-spacing:-.03em}
+#godamProfessionalDashboard .godam-metric small{color:var(--gd-muted);font-size:11px;font-weight:600}
+#godamProfessionalDashboard .godam-dash-panels{gap:10px;margin-top:10px}
+#godamProfessionalDashboard .godam-dash-panel{padding:16px;background:#fff;border:1px solid var(--gd-line);border-radius:12px;box-shadow:0 3px 12px rgba(17,75,51,.03)}
+#godamProfessionalDashboard h4{color:var(--gd-ink);font-size:13px;font-weight:750;margin-bottom:14px}
+#godamProfessionalDashboard .godam-stock-bar{height:9px;background:#f4e8df}
+#godamProfessionalDashboard .godam-stock-bar span{background:linear-gradient(90deg,#079765,#42bd87)}
+#godamProfessionalDashboard .godam-legend span{color:var(--gd-muted);font-size:10px}
+#godamProfessionalDashboard .godam-legend b,#godamProfessionalDashboard .godam-alert-row b{color:var(--gd-ink)}
+#godamProfessionalDashboard .gs-ok{background:#18a66b}
+#godamProfessionalDashboard .gs-warn{background:#e4a83b}
+#godamProfessionalDashboard .gs-low{background:#df625c}
+#godamProfessionalDashboard .godam-alert-row{border-top:1px solid #edf3ef;color:#61776d;font-size:11px;padding:10px 0}
+@media(max-width:700px){#godamProfessionalDashboard{padding:15px;border-radius:13px}#godamProfessionalDashboard .godam-metric{padding:12px;gap:8px}#godamProfessionalDashboard .godam-metric-icon{width:34px;height:34px;font-size:18px}#godamProfessionalDashboard .godam-metric strong{font-size:20px}#godamProfessionalDashboard h3{font-size:19px}}
+</style>
+</head>
 <body>
 <header><div class="admin-app-head"><div><h1>PRAVEEN PHARMA</h1><p>Admin Dashboard · Medicine Catalogue</p></div><button id="installAdminApp" class="secondary" type="button" hidden>Install Admin App</button></div></header>
 <main>
