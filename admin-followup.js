@@ -337,7 +337,7 @@
     if (!message) { say("Enter the bulk follow-up message first.", true); return; }
     const phone = normalizedPhone(contact.phone);
     if (phone.length < 10) { FU_BULK.index++; say("Skipped invalid phone number for " + contact.customer_name, true); return; }
-    const opened = window.open("https://wa.me/" + phone + "?text=" + encodeURIComponent(message), "_blank", "noopener");
+    const opened = window.open("https://wa.me/" + phone + "?text=" + encodeURIComponent(message), "_blank", "");
     if (!opened) { say("WhatsApp tab was blocked. Allow pop-ups and tap Open Next WhatsApp again.", true); return; }
     const { error } = await db.from("followup_logs").insert({ contact_id: contact.id, channel: "manual_bulk", recipient_phone: contact.phone, message_text: message, status: "opened", created_by: currentUser?.id || null });
     if (error) throw error;
