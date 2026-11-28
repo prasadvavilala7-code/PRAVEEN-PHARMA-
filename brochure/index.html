@@ -79,37 +79,31 @@ footer{background:var(--navy);color:#e3eaf3;text-align:center;padding:22px 12px;
 
  function openMedicineInfo(m){
   const fields=[["Uses / Indications",m.uses],["Composition / Formula",m.composition],["Pack Size",m.pack_size],["Benefits",m.benefits],["Side Effects",m.side_effects],["Precautions",m.precautions],["How it works",m.mechanism_of_action]];
-  $("medicineModalContent").innerHTML='<h2>'+esc(m.name)+'</h2>'+fields.map(([k,v])=>'<div class="detail"><b>'+esc(k)+'</b><p>'+esc(v||"Not provided by Admin.")+'</p></div>').join("")+'<small class="verify">'+(m.info_status==="matched_official_label"?"Official ingredient-label match recorded by Admin.":"Information not marked as officially verified.")+'</small>';
+  const urls=[];const first=safeUrl(m.image_url);if(first)urls.push(first);
+  if(Array.isArray(m.image_gallery))m.image_gallery.forEach(x=>{const u=safeUrl(typeof x==="string"?x:(x&&x.url));if(u&&!urls.includes(u))urls.push(u);});
+  const photos=urls.length?'<div class="photos medicine-detail-photos">'+urls.map((u,i)=>'<img src="'+esc(u)+'" alt="'+esc(m.name)+' product photo '+(i+1)+'" loading="lazy" title="Tap to enlarge photo">').join("")+'</div>':'<div class="photo-empty">Product photo not added</div>';
+  $("medicineModalContent").innerHTML='<h2>'+esc(m.name)+'</h2>'+photos+'<p class="verify">Tap a product photo above to view it full size.</p>'+fields.map(([k,v])=>'<div class="detail"><b>'+esc(k)+'</b><p>'+esc(v||"Not provided by Admin.")+'</p></div>').join("")+'<small class="verify">'+(m.info_status==="matched_official_label"?"Official ingredient-label match recorded by Admin.":"Information not marked as officially verified.")+'</small>';
   $("medicineModal").classList.add("open");document.body.style.overflow="hidden";
  }
  function closeModals(){document.querySelectorAll(".modal-backdrop").forEach(x=>x.classList.remove("open"));document.body.style.overflow="";}
+ function closePhoto(){ $("photoModal").classList.remove("open"); $("photoModalImage").removeAttribute("src"); document.body.style.overflow=$("medicineModal").classList.contains("open")?"hidden":""; }
  function openPhoto(photo){
   if(!photo||!photo.src)return;
   $("photoModalImage").src=photo.currentSrc||photo.src;
   $("photoModalImage").alt=photo.alt||"Medicine product photo";
-  $("photoModal").classList.add("open");
-  document.body.style.overflow="hidden";
+  $("photoModal").classList.add("open");document.body.style.overflow="hidden";
  }
- // Desktop: double-click the photo to view it full size; double-click elsewhere on a card for details.
- $("grid").addEventListener("dblclick",e=>{
-  const photo=e.target.closest(".photos img");
-  if(photo){e.preventDefault();e.stopPropagation();openPhoto(photo);return;}
+ // A single tap/click anywhere on a medicine card opens its details first.
+ $("grid").addEventListener("click",e=>{
   const card=e.target.closest(".card");if(!card)return;
   const m=products.find(x=>String(x.id)===card.dataset.medicineId);if(m)openMedicineInfo(m);
  });
- // Android/iOS: translate a quick double-tap on a photo into the same photo viewer action.
- let lastPhotoTap={image:null,time:0};
- $("grid").addEventListener("pointerup",e=>{
-  if(e.pointerType!=="touch")return;
-  const photo=e.target.closest(".photos img");
-  if(!photo){lastPhotoTap={image:null,time:0};return;}
-  const now=Date.now();
-  if(lastPhotoTap.image===photo&&now-lastPhotoTap.time<450){
-   e.preventDefault();openPhoto(photo);lastPhotoTap={image:null,time:0};
-  }else lastPhotoTap={image:photo,time:now};
+ // Only a photo inside the medicine-details view opens the full-size photo viewer.
+ $("medicineModalContent").addEventListener("click",e=>{
+  const photo=e.target.closest(".medicine-detail-photos img");if(photo){e.preventDefault();e.stopPropagation();openPhoto(photo);}
  });
- document.querySelectorAll("[data-close-modal]").forEach(b=>b.addEventListener("click",closeModals));
- document.querySelectorAll(".modal-backdrop").forEach(b=>b.addEventListener("click",e=>{if(e.target===b)closeModals();}));
+ document.querySelectorAll("[data-close-modal]").forEach(b=>b.addEventListener("click",()=>{if(b.closest("#photoModal"))closePhoto();else closeModals();}));
+ document.querySelectorAll(".modal-backdrop").forEach(b=>b.addEventListener("click",e=>{if(e.target!==b)return;if(b.id==="photoModal")closePhoto();else closeModals();}));
  document.addEventListener("keydown",e=>{if(e.key==="Escape")closeModals();});
 
  $("search").addEventListener("input",render);
