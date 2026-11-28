@@ -14,13 +14,13 @@ main{max-width:1320px;margin:28px auto;padding:0 18px}.intro{display:flex;justif
 .grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}.card{background:#fff;border:1px solid var(--line);border-radius:8px;overflow:hidden;box-shadow:0 3px 12px #122c4710;display:flex;flex-direction:column;min-width:0}.stripe{height:8px;background:var(--green)}.body{padding:14px;display:flex;flex-direction:column;flex:1}.topline,.meta{display:flex;justify-content:space-between;gap:8px;align-items:center}.type{border:1px solid #d9e0e7;border-radius:4px;padding:3px 8px;font-size:10px;font-weight:800;color:var(--green);text-transform:uppercase}.category{font-size:10px;color:var(--muted);text-align:right}h2{font-size:17px;line-height:1.2;margin:10px 0 3px;color:var(--navy);overflow-wrap:anywhere}.meta{font-size:10px;font-weight:700;margin:10px 0;color:#344256}.photos{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:3px 0 10px}.photos.one{grid-template-columns:1fr}.photos img{width:100%;height:140px;object-fit:contain;border:1px solid #e1e6eb;border-radius:5px;background:#fff}.photo-empty{height:140px;border:1px dashed #d5dde5;border-radius:5px;display:grid;place-items:center;text-align:center;color:#8994a2;background:#fafbfd;font-size:11px}.detail{margin-top:8px}.detail b{display:block;font-size:11px;color:#202c3c;margin-bottom:3px}.detail p{font-size:11px;color:#5d6877;margin:0;white-space:pre-line;overflow-wrap:anywhere}.composition{padding-top:9px;border-top:1px solid #edf0f3}.more{margin-top:10px;border-top:1px solid #edf0f3;padding-top:8px}.more summary{font-size:11px;font-weight:700;color:var(--green);cursor:pointer}.more .detail{margin-top:9px}.verify{display:block;margin-top:10px;font-size:10px;color:#718092}.verify a{color:var(--green)}.empty{background:#fff;border:1px dashed #cbd5df;padding:34px 18px;text-align:center;border-radius:8px;color:var(--muted);grid-column:1/-1}
 footer{background:var(--navy);color:#e3eaf3;text-align:center;padding:22px 12px;margin-top:40px;font-size:12px}footer strong{color:#e3c77f}
 .card{cursor:zoom-in}.photos img{cursor:zoom-in}
-.modal-backdrop{position:fixed;inset:0;background:rgba(5,18,34,.78);display:none;align-items:center;justify-content:center;padding:18px;z-index:9999}
-.modal-backdrop.open{display:flex}.modal-panel{position:relative;width:min(760px,100%);max-height:90vh;overflow:auto;background:#fff;border-radius:12px;padding:22px;box-shadow:0 18px 60px #0005}
+.modal-backdrop{position:fixed;inset:0;background:linear-gradient(135deg,rgba(3,16,34,.96),rgba(9,38,75,.94));display:none;align-items:stretch;justify-content:stretch;padding:0;z-index:9999}
+.modal-backdrop.open{display:flex}.modal-panel{position:relative;width:100%;height:100%;max-height:100dvh;overflow:auto;background:linear-gradient(180deg,#fff 0%,#f5f8fb 100%);border-radius:0;padding:clamp(18px,4vw,48px);box-shadow:none}
 .modal-close{position:sticky;top:0;float:right;border:0;border-radius:7px;background:var(--navy);color:white;padding:8px 12px;font-size:18px;cursor:pointer;z-index:2}
-.modal-panel h2{font-size:28px;line-height:1.2;margin:12px 44px 12px 0}.modal-panel .detail{padding:12px 0;border-bottom:1px solid #edf0f3}.modal-panel .detail b{font-size:14px}.modal-panel .detail p{font-size:14px;white-space:pre-line}.medicine-zoom-card{width:100%;}.medicine-zoom-card .photos{margin:12px 0 16px}.medicine-zoom-card .photos img,.medicine-zoom-card .photo-empty{height:260px}.medicine-zoom-card .topline{margin-top:6px}
+.modal-panel h2{font-size:clamp(30px,5vw,54px);line-height:1.08;margin:18px 54px 16px 0;color:#09264b}.modal-panel .detail{padding:15px 0;border-bottom:1px solid #e5ebf1}.modal-panel .detail b{font-size:14px;color:#17633e}.modal-panel .detail p{font-size:15px;white-space:pre-line;line-height:1.65}.medicine-zoom-card{width:min(1100px,100%);margin:0 auto;padding:8px 0 30px}.medicine-zoom-card .photos{margin:20px 0 22px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}.medicine-zoom-card .photos img,.medicine-zoom-card .photo-empty{height:min(38vh,360px);border-radius:14px;background:#fff;box-shadow:0 8px 28px #09264b12}.medicine-zoom-card .topline{margin-top:6px}.medicine-zoom-card .detail{display:inline-block;vertical-align:top;width:calc(50% - 10px);margin-right:10px;padding:18px 16px;background:#fff;border:1px solid #e7edf3;border-radius:12px;margin-top:12px}.medicine-zoom-card .verify{font-size:12px;color:#687586}
 .photo-modal-panel{width:min(900px,100%);height:min(90vh,900px);display:flex;align-items:center;justify-content:center;background:#101a27;padding:12px}
 .photo-modal-panel img{max-width:100%;max-height:calc(90vh - 24px);object-fit:contain}.photo-modal-panel .modal-close{position:absolute;right:14px;top:14px}
-@media(max-width:500px){.modal-panel{padding:16px}.modal-panel h2{font-size:20px}}
+@media(max-width:650px){.modal-panel{padding:18px 16px}.modal-panel h2{font-size:30px}.medicine-zoom-card .detail{display:block;width:100%;margin-right:0}.medicine-zoom-card .photos img,.medicine-zoom-card .photo-empty{height:32vh;min-height:190px}}
 
 @media(max-width:1050px){.grid{grid-template-columns:repeat(3,minmax(0,1fr))}}@media(max-width:760px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.intro{display:block}.intro p{margin-top:8px}.headnote{display:none}}@media(max-width:500px){.grid{grid-template-columns:1fr}.tools{flex-direction:column}.photos img,.photo-empty{height:170px}}
 </style>
@@ -93,11 +93,17 @@ footer{background:var(--navy);color:#e3eaf3;text-align:center;padding:22px 12px;
   $("photoModalImage").alt=photo.alt||"Medicine product photo";
   $("photoModal").classList.add("open");document.body.style.overflow="hidden";
  }
- // A single tap/click anywhere on a medicine card opens its details first.
- $("grid").addEventListener("click",e=>{
+ // Double-click anywhere on a medicine card opens its full-screen premium details.
+ function showCardMedicine(card){if(!card)return;const m=products.find(x=>String(x.id)===card.dataset.medicineId);if(m)openMedicineInfo(m);}
+ $("grid").addEventListener("dblclick",e=>{showCardMedicine(e.target.closest(".card"));});
+ // Mobile equivalent: double-tap anywhere on the same medicine card.
+ let lastMedicineTap=0,lastMedicineCard=null;
+ $("grid").addEventListener("touchend",e=>{
   const card=e.target.closest(".card");if(!card)return;
-  const m=products.find(x=>String(x.id)===card.dataset.medicineId);if(m)openMedicineInfo(m);
- });
+  const now=Date.now();
+  if(card===lastMedicineCard&&now-lastMedicineTap<420){e.preventDefault();showCardMedicine(card);lastMedicineTap=0;lastMedicineCard=null;}
+  else{lastMedicineTap=now;lastMedicineCard=card;}
+ },{passive:false});
  // Only a photo inside the medicine-details view opens the full-size photo viewer.
  $("medicineModalContent").addEventListener("click",e=>{
   const photo=e.target.closest(".medicine-detail-photos img");if(photo){e.preventDefault();e.stopPropagation();openPhoto(photo);}
