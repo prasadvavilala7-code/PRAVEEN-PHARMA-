@@ -536,7 +536,7 @@ button{background:#765be0!important;color:#fff!important}button.secondary{backgr
   <article class="godam-metric"><span class="godam-metric-icon">▦</span><div><strong id="gsDashMedicines">0</strong><small>Total Medicines</small></div></article>
   <article class="godam-metric"><span class="godam-metric-icon">▣</span><div><strong id="gsDashBoxes">0</strong><small>Total Boxes</small></div></article>
   <article class="godam-metric"><span class="godam-metric-icon">▤</span><div><strong id="gsDashCottons">0</strong><small>Cotton Slots</small></div></article>
-  <article class="godam-metric"><span class="godam-metric-icon">!</span><div><strong id="gsDashLow">0</strong><small>Low Stock Items</small></div></article>
+  <article class="godam-metric" id="gsDashLowCard" role="button" tabindex="0" aria-label="Show low stock items" title="Click to view low stock items" style="cursor:pointer"><span class="godam-metric-icon">!</span><div><strong id="gsDashLow">0</strong><small>Low Stock Items · View items</small></div></article>
  </div>
  <div class="godam-dash-panels">
   <article class="godam-dash-panel"><h4>Stock Distribution</h4><div class="godam-stock-bar"><span id="gsDashStockBar"></span></div><div class="godam-legend"><span><i class="gs-dot gs-ok"></i> In Stock <b id="gsDashOk">0</b></span><span><i class="gs-dot gs-warn"></i> Check Stock <b id="gsDashCheck">0</b></span><span><i class="gs-dot gs-low"></i> Low Stock <b id="gsDashLowLegend">0</b></span></div></article>
@@ -671,19 +671,22 @@ function renderGodamDashboard(){
  put("gsDashMedicines",rows.length);put("gsDashBoxes",boxes);put("gsDashCottons",cottons);put("gsDashLow",low);
  put("gsDashOk",ok);put("gsDashCheck",check);put("gsDashLowLegend",low);
  put("gsDashExpiryRed",red);put("gsDashExpiryYellow",yellow);put("gsDashExpiryGreen",green);
+ const lowCard=$("gsDashLowCard");if(lowCard){const showLow=()=>{window.godamLowOnly=true;$("godamSearch").value="";renderGodamStockList();$("godamStockListView").scrollIntoView({behavior:"smooth",block:"start"});};lowCard.onclick=showLow;lowCard.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();showLow();}};}
  const bar=$("gsDashStockBar");if(bar)bar.style.width=(rows.length?Math.round(ok/rows.length*100):0)+"%";
 }
 function renderGodamStockList(){
  const box=$("godamStockList");if(!box)return;
  renderGodamDashboard();
  const q=($("godamSearch")?.value||"").trim().toLowerCase();
- const rows=godamRows.filter(r=>([r.product_name,r.pack_size,r.batch_no,r.pack_type].join(" ")).toLowerCase().includes(q));
- if(!rows.length){box.innerHTML='<p class="muted">No matching medicines. Use Add Medicine or import an Excel workbook.</p>';return;}
- box.innerHTML=rows.map(r=>{
+ const rows=godamRows.filter(r=>(!window.godamLowOnly||godamStockStatus(godamTotals(r).boxes)==="LOW STOCK")&&([r.product_name,r.pack_size,r.batch_no,r.pack_type].join(" ")).toLowerCase().includes(q));
+ const filterNote=window.godamLowOnly?'<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 12px;margin:8px 0;background:#fff4f2;border:1px solid #f4d6d2;border-radius:9px"><b style="color:#b83e35">Showing LOW STOCK items only</b><button type="button" class="secondary" id="godamClearLowFilter">Show All Stock</button></div>':"";
+ if(!rows.length){box.innerHTML=filterNote+'<p class="muted">No matching medicines. Use Add Medicine or import an Excel workbook.</p>';const clear=$("godamClearLowFilter");if(clear)clear.onclick=()=>{window.godamLowOnly=false;renderGodamStockList();};return;}
+ box.innerHTML=filterNote+rows.map(r=>{
   const t=godamTotals(r),stock=godamStockStatus(t.boxes),expiry=godamExpiryStatus(r.expiry_date);
   return '<button type="button" class="medicine" data-godam-open="'+esc(r.id)+'" style="width:100%;display:flex;justify-content:space-between;align-items:center;gap:12px;text-align:left;background:#fff;color:#24352d;border:1px solid #dce7ee;border-radius:10px;padding:14px;margin:8px 0"><span style="min-width:0"><b>'+esc(r.product_name)+'</b><br><small>'+esc(r.pack_type||"")+' · '+esc(r.pack_size||"")+' · Batch '+esc(r.batch_no||"—")+'</small><br><small>'+esc(expiry)+'</small></span><span style="text-align:right;white-space:nowrap"><b>'+t.boxes+' Boxes</b><br><small>'+t.cottonCount+' Cotton · '+t.units+' Units</small><br><small>'+esc(stock)+'</small></span></button>';
  }).join("");
  box.querySelectorAll("[data-godam-open]").forEach(b=>b.onclick=()=>openGodamDetail(b.dataset.godamOpen));
+ const clear=$("godamClearLowFilter");if(clear)clear.onclick=()=>{window.godamLowOnly=false;renderGodamStockList();};
 }
 function godamReadCottonInputs(){
  return [...$("gsCottonRows").querySelectorAll("[data-cotton-index]")].map(el=>Math.max(0,parseInt(el.value,10)||0));
