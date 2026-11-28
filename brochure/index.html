@@ -53,7 +53,7 @@ footer{background:var(--navy);color:#e3eaf3;text-align:center;padding:22px 12px;
   const chosen=urls.slice(0,2);
   return '<div class="photos '+(chosen.length===1?'one':'')+'">'+chosen.map((u,i)=>'<img src="'+esc(u)+'" alt="'+esc(m.name)+' product photo '+(i+1)+'" loading="lazy">').join("")+'</div>';
  }
- function searchKey(v){return String(v==null?"":v).toLocaleLowerCase().normalize("NFD").replace(/[\\u0300-\\u036f]/g,"").replace(/[^a-z0-9]/g,"");}
+ function searchKey(v){return String(v==null?"":v).toLocaleLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]/g,"");}
  function render(){
   const q=searchKey($("search").value),cat=$("category").value;
   const rows=products.filter(m=>{
