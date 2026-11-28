@@ -288,6 +288,64 @@
     say("Follow-up settings saved.");
   }
 
+  // Bulk follow-up queue: only customers with recorded WhatsApp opt-in are eligible.
+  let FU_BULK = { ids: [], index: 0 };
+  function renderBulkRecipients() {
+    const box = byId("fuBulkRecipients");
+    if (!box) return;
+    const eligible = FU.contacts.filter(c => c.whatsapp_opt_in && !c.do_not_contact && normalizedPhone(c.phone).length >= 10);
+    box.innerHTML = eligible.length ? eligible.map(c =>
+      '<label class="fu-check" style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #34364d"><input type="checkbox" data-fu-bulk-id="' + escape(c.id) + '" checked style="width:auto;min-height:0;margin:0"><span>' + escape(c.customer_name) + ' · ' + escape(c.phone) + '</span></label>'
+    ).join("") : '<p class="muted">No customers with valid numbers and recorded WhatsApp consent.</p>';
+    const count = box.querySelectorAll("[data-fu-bulk-id]:checked").length;
+    if (byId("fuBulkCount")) byId("fuBulkCount").textContent = count + " selected · " + eligible.length + " eligible";
+  }
+  function setupBulkFollowup() {
+    const card = document.querySelector('[data-fu-view="manual"] .fu-card');
+    if (!card || byId("fuBulkPanel")) return;
+    const panel = document.createElement("div");
+    panel.id = "fuBulkPanel";
+    panel.className = "fu-card";
+    panel.style.marginTop = "18px";
+    panel.innerHTML = '<h3>Bulk WhatsApp Follow-up</h3><p class="muted">Select all opted-in customers and process them one by one. WhatsApp still requires you to press Send in each chat.</p><p id="fuBulkCount" class="fu-status">Loading eligible customers…</p><div style="display:flex;gap:8px;flex-wrap:wrap;margin:10px 0"><button type="button" class="secondary" id="fuBulkSelectAll">Select All Eligible</button><button type="button" class="secondary" id="fuBulkSelectNone">Clear Selection</button></div><div id="fuBulkRecipients" style="max-height:260px;overflow:auto"></div><p id="fuBulkProgress" class="fu-status" aria-live="polite">No bulk follow-up started.</p><button type="button" id="fuBulkStart">Start Bulk Follow-up</button><button type="button" class="secondary" id="fuBulkNext" disabled>Open Next WhatsApp</button><button type="button" class="secondary" id="fuBulkReset">Reset</button>';
+    card.appendChild(panel);
+    renderBulkRecipients();
+    byId("fuBulkSelectAll").onclick = () => { panel.querySelectorAll("[data-fu-bulk-id]").forEach(x => x.checked = true); renderBulkCountOnly(); };
+    byId("fuBulkSelectNone").onclick = () => { panel.querySelectorAll("[data-fu-bulk-id]").forEach(x => x.checked = false); renderBulkCountOnly(); };
+    byId("fuBulkRecipients").addEventListener("change", renderBulkCountOnly);
+    byId("fuBulkStart").onclick = () => {
+      const ids = [...panel.querySelectorAll("[data-fu-bulk-id]:checked")].map(x => x.dataset.fuBulkId);
+      if (!ids.length) { say("Select at least one opted-in customer.", true); return; }
+      if (!window.confirm("Start bulk follow-up for " + ids.length + " opted-in customers? Each WhatsApp message must still be reviewed and sent manually.")) return;
+      FU_BULK = { ids, index: 0 };
+      byId("fuBulkNext").disabled = false;
+      byId("fuBulkProgress").textContent = "Ready: 0 / " + ids.length + " opened. Tap Open Next WhatsApp for each customer.";
+    };
+    byId("fuBulkNext").onclick = () => openNextBulkChat().catch(e => say(e.message || String(e), true));
+    byId("fuBulkReset").onclick = () => { FU_BULK = { ids: [], index: 0 }; byId("fuBulkNext").disabled = true; byId("fuBulkProgress").textContent = "Bulk queue reset."; };
+  }
+  function renderBulkCountOnly() {
+    const box = byId("fuBulkRecipients");
+    if (box && byId("fuBulkCount")) byId("fuBulkCount").textContent = box.querySelectorAll("[data-fu-bulk-id]:checked").length + " selected · " + box.querySelectorAll("[data-fu-bulk-id]").length + " eligible";
+  }
+  async function openNextBulkChat() {
+    if (FU_BULK.index >= FU_BULK.ids.length) { byId("fuBulkNext").disabled = true; byId("fuBulkProgress").textContent = "Completed: " + FU_BULK.ids.length + " WhatsApp chats opened. Send status is not confirmed by this page."; return; }
+    const id = FU_BULK.ids[FU_BULK.index];
+    const contact = FU.contacts.find(c => c.id === id);
+    const message = byId("fuManualMessage").value.trim();
+    if (!contact || !contact.whatsapp_opt_in || contact.do_not_contact) { FU_BULK.index++; byId("fuBulkProgress").textContent = "Skipped a contact whose consent is no longer active."; return; }
+    if (!message) { say("Enter the bulk follow-up message first.", true); return; }
+    const phone = normalizedPhone(contact.phone);
+    if (phone.length < 10) { FU_BULK.index++; say("Skipped invalid phone number for " + contact.customer_name, true); return; }
+    const opened = window.open("https://wa.me/" + phone + "?text=" + encodeURIComponent(message), "_blank", "noopener");
+    if (!opened) { say("WhatsApp tab was blocked. Allow pop-ups and tap Open Next WhatsApp again.", true); return; }
+    const { error } = await db.from("followup_logs").insert({ contact_id: contact.id, channel: "manual_bulk", recipient_phone: contact.phone, message_text: message, status: "opened", created_by: currentUser?.id || null });
+    if (error) throw error;
+    FU_BULK.index++;
+    byId("fuBulkProgress").textContent = "Opened " + FU_BULK.index + " / " + FU_BULK.ids.length + ": " + contact.customer_name + ". Press Send in WhatsApp, then return here for the next customer.";
+    if (FU_BULK.index >= FU_BULK.ids.length) byId("fuBulkNext").disabled = true;
+  }
+
   function renderManual() {
     const contact = FU.contacts.find(c => c.id === byId("fuManualContact").value);
     const allowed = !!(contact && contact.whatsapp_opt_in && !contact.do_not_contact && FU.settings?.manual_enabled !== false);
@@ -353,6 +411,7 @@
       byId("fuCreateSchedule").addEventListener("click", () => createSchedule().catch(e => say(e.message || String(e), true)));
       byId("fuSaveSettings").addEventListener("click", () => saveSettings().catch(e => say(e.message || String(e), true)));
       byId("fuManualContact").addEventListener("change", renderManual);
+      setupBulkFollowup();
       byId("fuManualSend").addEventListener("click", () => sendManual().catch(e => say(e.message || String(e), true)));
       document.querySelectorAll("[data-fu-tab]").forEach(b => b.addEventListener("click", () => setTab(b.dataset.fuTab)));
       byId("fuBaseDate").value = new Date().toISOString().slice(0,10);
