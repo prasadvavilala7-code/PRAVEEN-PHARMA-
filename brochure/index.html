@@ -55,7 +55,7 @@ footer{background:var(--navy);color:#e3eaf3;text-align:center;padding:22px 12px;
  }
  function searchKey(v){return String(v==null?"":v).toLocaleLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]/g,"");}
  function render(){
-  const q=searchKey($("search").value),cat=$("category").value;
+  const q=searchKey($("search").value),cat=searchKey($("category").value);
   const rows=products.filter(m=>{
    const matchesCategory=!cat||searchKey(m.category||"Uncategorised")===cat;
    const searchable=[m.name,m.composition,m.pack_size,m.category].map(searchKey);
