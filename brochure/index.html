@@ -54,10 +54,11 @@ footer{background:var(--navy);color:#e3eaf3;text-align:center;padding:22px 12px;
   return '<div class="photos '+(chosen.length===1?'one':'')+'">'+chosen.map((u,i)=>'<img src="'+esc(u)+'" alt="'+esc(m.name)+' product photo '+(i+1)+'" loading="lazy">').join("")+'</div>';
  }
  function searchKey(v){return String(v==null?"":v).toLocaleLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]/g,"");}
+ function categoryKey(v){const k=searchKey(v);const aliases={tablet:"tablets",capsule:"capsules",syrup:"syrups",cream:"creams",ointment:"ointments",powder:"powders"};return aliases[k]||k;}
  function render(){
-  const q=searchKey($("search").value),cat=searchKey($("category").value);
+  const q=searchKey($("search").value),cat=categoryKey($("category").value);
   const rows=products.filter(m=>{
-   const matchesCategory=!cat||searchKey(m.category||"Uncategorised")===cat;
+   const matchesCategory=!cat||categoryKey(m.category||"Uncategorised")===cat;
    const searchable=[m.name,m.composition,m.pack_size,m.category].map(searchKey);
    const matchesSearch=!q||searchable.some(value=>value.includes(q));
    return matchesCategory&&matchesSearch;
@@ -79,7 +80,7 @@ footer{background:var(--navy);color:#e3eaf3;text-align:center;padding:22px 12px;
   if(error){$("status").textContent="Could not load published products. Please try again later.";console.error(error);return;}
   products=data||[];
   const categoryMap=new Map();
-  products.forEach(m=>{const label=String(m.category||"Uncategorised").trim()||"Uncategorised";const key=searchKey(label);if(key&&!categoryMap.has(key))categoryMap.set(key,label.toUpperCase());});
+  products.forEach(m=>{const label=String(m.category||"Uncategorised").trim()||"Uncategorised";const key=categoryKey(label);const display={tablets:"TABLETS",capsules:"CAPSULES",syrups:"SYRUPS",creams:"CREAMS",ointments:"OINTMENTS",powders:"POWDERS"}[key]||label.toUpperCase();if(key&&!categoryMap.has(key))categoryMap.set(key,display);});
   const categories=Array.from(categoryMap.entries()).sort((a,b)=>a[1].localeCompare(b[1]));
   $("category").innerHTML='<option value="">All categories</option>'+categories.map(([key,label])=>'<option value="'+esc(key)+'">'+esc(label)+'</option>').join("");
   render();
