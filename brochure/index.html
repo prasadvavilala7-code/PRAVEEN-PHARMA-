@@ -53,9 +53,15 @@ footer{background:var(--navy);color:#e3eaf3;text-align:center;padding:22px 12px;
   const chosen=urls.slice(0,2);
   return '<div class="photos '+(chosen.length===1?'one':'')+'">'+chosen.map((u,i)=>'<img src="'+esc(u)+'" alt="'+esc(m.name)+' product photo '+(i+1)+'" loading="lazy">').join("")+'</div>';
  }
+ function searchKey(v){return String(v==null?"":v).toLocaleLowerCase().normalize("NFD").replace(/[\\u0300-\\u036f]/g,"").replace(/[^a-z0-9]/g,"");}
  function render(){
-  const q=$("search").value.trim().toLowerCase(),cat=$("category").value;
-  const rows=products.filter(m=>(!cat||(m.category||"Uncategorised")===cat)&&((m.name||"").toLowerCase().includes(q)||(m.composition||"").toLowerCase().includes(q)||(m.pack_size||"").toLowerCase().includes(q)));
+  const q=searchKey($("search").value),cat=$("category").value;
+  const rows=products.filter(m=>{
+   const matchesCategory=!cat||(m.category||"Uncategorised")===cat;
+   const searchable=[m.name,m.composition,m.pack_size,m.category].map(searchKey);
+   const matchesSearch=!q||searchable.some(value=>value.includes(q));
+   return matchesCategory&&matchesSearch;
+  });
   $("status").textContent=rows.length+" published product"+(rows.length===1?"":"s");
   $("grid").innerHTML=rows.map(m=>{
    const category=m.category||"General";
